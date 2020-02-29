@@ -8,7 +8,9 @@ import {
 export { Joi }
 import { convert } from "@yeongjet/joi-to-json-schema"
 
-const createValidator = <TIn>(schema: Joi.Schema): ValidatorType<TIn, ValidationError> => {
+const createValidator = <TIn>(
+  schema: Joi.Schema,
+): ValidatorType<TIn, ValidationError> => {
   const validator = (object: TIn): Result<TIn, ValidationError> => {
     const r = schema.validate(object, { abortEarly: false })
     if (r.error) {
