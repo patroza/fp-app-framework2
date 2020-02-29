@@ -8,12 +8,13 @@ const processReceivedEvent = ({
   resolveEvent: resolveEventType
   publish: publishType
 }) => async (body: string) => {
-  const { type, payload } = JSON.parse(body) as EventDTO
+  const { payload, type } = JSON.parse(body) as EventDTO
   const event = resolveEvent({ type, payload })
   if (!event) {
     return
   }
-  await publish(event)
+  // TODO: process the result
+  return await publish(event)()
 }
 
 export interface EventDTO {

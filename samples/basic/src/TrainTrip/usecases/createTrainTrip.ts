@@ -3,38 +3,43 @@ import {
   CombinedValidationError,
   combineValidationErrors,
   createCommandWithDeps,
-  DbError,
   InvalidStateError,
   toFieldError,
   ValidationError,
 } from "@fp-app/framework"
 import {
   err,
-  flatMap,
-  map,
-  mapErr,
   ok,
-  pipe,
-  PipeFunction,
   Result,
   resultTuple,
   tee,
-  toTup,
-} from "@fp-app/neverthrow-extensions"
+  pipe,
+  E,
+  TE,
+  liftType,
+  chainTupTask,
+  compose,
+} from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
-import TrainTrip, { CreateTrainTripInfo } from "../TrainTrip"
+import TrainTrip from "../TrainTrip"
 import { DbContextKey, defaultDependencies, getTripKey } from "./types"
 
 const createCommand = createCommandWithDeps({ db: DbContextKey, getTrip: getTripKey, ...defaultDependencies })
 
 const createTrainTrip = createCommand<Input, string, CreateError>("createTrainTrip", ({ db, getTrip }) =>
-  pipe(
-    flatMap(validateCreateTrainTripInfo),
-    flatMap(toTup(({ templateId }) => getTrip(templateId))),
-    map(([trip, proposal]) => TrainTrip.create(proposal, trip)),
-    map(tee(db.trainTrips.add)),
-    map(trainTrip => trainTrip.id),
+  compose(
+    TE.chain(i => pipe(TE.fromEither(validateCreateTrainTripInfo(i)), TE.mapLeft(liftType<CreateError>()))),
+    chainTupTask(i => pipe(getTrip(i.templateId), TE.mapLeft(liftType<CreateError>()))),
+    TE.chain(([trip, proposal]) =>
+      TE.fromEither(
+        pipe(
+          E.right<CreateError, TrainTrip>(TrainTrip.create(proposal, trip)),
+          E.map(tee(db.trainTrips.add)),
+          E.map(trainTrip => trainTrip.id),
+        ),
+      ),
+    ),
   ),
 )
 
@@ -45,43 +50,45 @@ export interface Input {
   startDate: string
 }
 
-const validateCreateTrainTripInfo: PipeFunction<Input, CreateTrainTripInfo, ValidationError> = pipe(
-  flatMap(({ pax, startDate, templateId }) =>
+// the problem is that the fp-ts compose doesnt return a data last function, but data first ;-)
+
+const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
+  pipe(
     resultTuple(
-      PaxDefinition.create(pax).pipe(mapErr(toFieldError("pax"))),
-      FutureDate.create(startDate).pipe(mapErr(toFieldError("startDate"))),
-      validateString(templateId).pipe(mapErr(toFieldError("templateId"))),
-    ).pipe(mapErr(combineValidationErrors)),
-  ),
+      pipe(PaxDefinition.create(pax), E.mapLeft(toFieldError("pax"))),
+      pipe(FutureDate.create(startDate), E.mapLeft(toFieldError("startDate"))),
+      pipe(validateString(templateId), E.mapLeft(toFieldError("templateId"))),
+    ),
+    E.mapLeft(combineValidationErrors),
 
-  // Alt 1
-  // flatMap(input =>
-  //   resultTuple3(
-  //     input,
-  //     ({ pax }) => PaxDefinition.create(pax).pipe(mapErr(toFieldError('pax'))),
-  //     ({ startDate }) => FutureDate.create(startDate).pipe(mapErr(toFieldError('startDate'))),
-  //     ({ templateId }) => validateString(templateId).pipe(mapErr(toFieldError('templateId'))),
-  //   ).mapErr(combineValidationErrors),
-  // ),
+    E.map(([pax, startDate, templateId]) => ({
+      pax,
+      startDate,
+      templateId,
+    })),
 
-  // Alt 2
-  // Why doesn't this work?
-  // flatMap(resultTuple2(
-  //   ({pax}) => PaxDefinition.create(pax).pipe(mapErr(toFieldError('pax'))),
-  //   ({startDate}) => FutureDate.create(startDate).pipe(mapErr(toFieldError('startDate'))),
-  //   ({templateId}) => validateString(templateId).pipe(mapErr(toFieldError('templateId'))),
-  // )),
-  // mapErr(combineValidationErrors),
+    // Alt 1
+    // flatMap(input =>
+    //   resultTuple3(
+    //     input,
+    //     ({ pax }) => PaxDefinition.create(pax).compose(mapErr(toFieldError('pax'))),
+    //     ({ startDate }) => FutureDate.create(startDate).compose(mapErr(toFieldError('startDate'))),
+    //     ({ templateId }) => validateString(templateId).compose(mapErr(toFieldError('templateId'))),
+    //   ).mapErr(combineValidationErrors),
+    // ),
 
-  map(([pax, startDate, templateId]) => ({
-    pax,
-    startDate,
-    templateId,
-  })),
-)
+    // Alt 2
+    // Why doesn't this work?
+    // flatMap(resultTuple2(
+    //   ({pax}) => PaxDefinition.create(pax).compose(mapErr(toFieldError('pax'))),
+    //   ({startDate}) => FutureDate.create(startDate).compose(mapErr(toFieldError('startDate'))),
+    //   ({templateId}) => validateString(templateId).compose(mapErr(toFieldError('templateId'))),
+    // )),
+    // mapErr(combineValidationErrors),
+  )
 
 // TODO
 const validateString = <T extends string>(str: string): Result<T, ValidationError> =>
   str ? ok(str as T) : err(new ValidationError("not a valid str"))
 
-type CreateError = CombinedValidationError | InvalidStateError | ValidationError | ApiError | DbError
+type CreateError = CombinedValidationError | InvalidStateError | ValidationError | ApiError

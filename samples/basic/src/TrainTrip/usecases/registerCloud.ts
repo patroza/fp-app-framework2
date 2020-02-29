@@ -1,5 +1,5 @@
 import { createCommandWithDeps, DbError } from "@fp-app/framework"
-import { flatMap, map, pipe, toTup } from "@fp-app/neverthrow-extensions"
+import { pipe, TE, liftType, compose } from "@fp-app/fp-ts-extensions"
 import { DbContextKey, defaultDependencies, sendCloudSyncKey } from "./types"
 
 const createCommand = createCommandWithDeps({
@@ -9,11 +9,16 @@ const createCommand = createCommandWithDeps({
 })
 
 const registerCloud = createCommand<Input, void, DbError>("registerCloud", ({ db, sendCloudSync }) =>
-  pipe(
-    map(({ trainTripId }) => trainTripId),
-    flatMap(db.trainTrips.load),
-    flatMap(toTup(sendCloudSync)),
-    map(([opportunityId, trainTrip]) => trainTrip.assignOpportunity(opportunityId)),
+  compose(
+    TE.map(({ trainTripId }) => trainTripId),
+    TE.chain(db.trainTrips.load),
+    TE.chain(trainTrip =>
+      pipe(
+        sendCloudSync(trainTrip), // tup
+        TE.map(opportunityId => trainTrip.assignOpportunity(opportunityId)),
+        TE.mapLeft(liftType<DbError>()),
+      ),
+    ),
   ),
 )
 

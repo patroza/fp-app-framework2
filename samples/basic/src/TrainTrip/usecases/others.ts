@@ -1,13 +1,7 @@
 //// Separate endpoint sample; unused.
 
-import {
-  createCommandWithDeps,
-  ForbiddenError,
-  InvalidStateError,
-  RecordNotFound,
-  ValidationError,
-} from "@fp-app/framework"
-import { flatMap, pipe, toFlatTup, toTup } from "@fp-app/neverthrow-extensions"
+import { createCommandWithDeps, ForbiddenError, InvalidStateError, ValidationError, DbError } from "@fp-app/framework"
+import { TE, pipe, chainTupTask, chainFlatTupTask, liftType, compose } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
 import { DbContextKey, defaultDependencies } from "./types"
@@ -17,10 +11,16 @@ const createCommand = createCommandWithDeps({ db: DbContextKey, ...defaultDepend
 export const changeStartDate = createCommand<ChangeStartDateInput, void, ChangeStartDateError>(
   "changeStartDate",
   ({ db }) =>
-    pipe(
-      flatMap(toTup(({ startDate }) => FutureDate.create(startDate))),
-      flatMap(toFlatTup(([, i]) => db.trainTrips.load(i.trainTripId))),
-      flatMap(([trainTrip, sd]) => trainTrip.changeStartDate(sd)),
+    compose(
+      chainTupTask(({ startDate }) =>
+        pipe(TE.fromEither(FutureDate.create(startDate)), TE.mapLeft(liftType<ChangeStartDateError>())),
+      ),
+      chainFlatTupTask(([, i]) =>
+        pipe(db.trainTrips.load(i.trainTripId), TE.mapLeft(liftType<ChangeStartDateError>())),
+      ),
+      TE.chain(([trainTrip, sd]) =>
+        pipe(TE.fromEither(trainTrip.changeStartDate(sd)), TE.mapLeft(liftType<ChangeStartDateError>())),
+      ),
     ),
 )
 
@@ -28,20 +28,25 @@ export interface ChangeStartDateInput {
   trainTripId: string
   startDate: string
 }
-type ChangeStartDateError = ValidationError | ForbiddenError | RecordNotFound
+type ChangeStartDateError = ValidationError | ForbiddenError | DbError
 
 export const changeTravelClass = createCommand<ChangeTravelClassInput, void, ChangeTravelClassError>(
   "changeTravelClass",
   ({ db }) =>
-    pipe(
-      flatMap(toTup(({ travelClass }) => TravelClassDefinition.create(travelClass))),
-      flatMap(toFlatTup(([, i]) => db.trainTrips.load(i.trainTripId))),
-      flatMap(([trainTrip, sl]) => trainTrip.changeTravelClass(sl)),
+    compose(
+      chainTupTask(({ travelClass }) =>
+        pipe(TE.fromEither(TravelClassDefinition.create(travelClass)), TE.mapLeft(liftType<ChangeTravelClassError>())),
+      ),
+      chainFlatTupTask(([, i]) =>
+        pipe(db.trainTrips.load(i.trainTripId), TE.mapLeft(liftType<ChangeTravelClassError>())),
+      ),
+      TE.chain(([trainTrip, sl]) =>
+        pipe(TE.fromEither(trainTrip.changeTravelClass(sl)), TE.mapLeft(liftType<ChangeTravelClassError>())),
+      ),
     ),
 )
-
 export interface ChangeTravelClassInput {
   trainTripId: string
   travelClass: TravelClassName
 }
-type ChangeTravelClassError = ForbiddenError | InvalidStateError | ValidationError | RecordNotFound
+type ChangeTravelClassError = ForbiddenError | InvalidStateError | ValidationError | DbError

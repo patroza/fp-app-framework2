@@ -20,6 +20,7 @@ import {
 } from "./mediator"
 import { processReceivedEvent } from "./pubsub"
 import SimpleContainer, { DependencyScope, factoryOf, Key } from "./SimpleContainer"
+import { Either } from "fp-ts/lib/Either"
 
 const logger = getLogger("registry")
 
@@ -74,7 +75,7 @@ export default function createDependencyNamespace(namespace: string, requestScop
     })
 
   const setupRequestContext = <T>(
-    cb: (context: RequestContextBase, bindEmitter: (typeof ns)["bindEmitter"]) => Promise<T>,
+    cb: (context: RequestContextBase, bindEmitter: typeof ns["bindEmitter"]) => Promise<T>,
   ) =>
     ns.runPromise(() =>
       using(container.createScope(), () => {
@@ -85,7 +86,7 @@ export default function createDependencyNamespace(namespace: string, requestScop
     )
 
   const publishDomainEventHandler = publish(evt =>
-    (domainHandlerMap.get(evt.constructor) || []).map(x => container.getF(x as any)),
+    (domainHandlerMap.get(evt.constructor) || []).map(x => container.getF(x)),
   )
   const getIntegrationEventHandlers = (evt: Event) => integrationHandlerMap.get(evt.constructor)
   const publishIntegrationEventHandler = publish(evt =>
@@ -126,9 +127,12 @@ export default function createDependencyNamespace(namespace: string, requestScop
       })(evt)
     })
 
-  const requestInNewContext: requestInNewScopeType = (key: any, evt: any) =>
-    setupChildContext(() => container.getF(requestKey)(key, evt))
-  container.registerSingletonF(requestKey, factoryOf(request, i => i(key => container.getConcrete(key))))
+  const requestInNewContext: requestInNewScopeType = <TInput, TOutput>(key: any, evt: any) => () =>
+    setupChildContext<Either<TInput, TOutput>>(() => container.getF(requestKey)(key, evt)() as any)
+  container.registerSingletonF(
+    requestKey,
+    factoryOf(request, i => i(key => container.getConcrete(key))),
+  )
   container.registerInstanceF(requestInNewScopeKey, requestInNewContext)
 
   // In a perfect world, the decorators also enhance the type here

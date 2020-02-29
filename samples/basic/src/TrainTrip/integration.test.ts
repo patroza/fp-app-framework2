@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 jest.mock("@fp-app/framework/src/infrastructure/executePostCommitHandlers")
 
 import { CustomerRequestedChangesDTO } from "@/resolveIntegrationEvent"
@@ -5,13 +6,13 @@ import {
   CombinedValidationError,
   executePostCommitHandlers,
   generateShortUuid,
-  InvalidStateError,
   logger,
   noop,
   RecordNotFound,
   setLogger,
 } from "@fp-app/framework"
-import { Err, Ok } from "@fp-app/neverthrow-extensions"
+import { Result, isErr, isOk } from "@fp-app/fp-ts-extensions"
+import moment from "moment"
 import createRoot from "../root"
 import changeTrainTrip, { StateProposition } from "./usecases/changeTrainTrip"
 import createTrainTrip from "./usecases/createTrainTrip"
@@ -50,25 +51,43 @@ beforeEach(() =>
 
     const result = await root.request(createTrainTrip, {
       pax: { adults: 2, children: 0, babies: 0, infants: 0, teenagers: 0 },
-      startDate: "2020-01-01",
+      startDate: moment()
+        .add(1, "year")
+        .format("YYYY-MM-DD"),
       templateId,
-    })
+    })()
 
-    trainTripId = result._unsafeUnwrap()
+    trainTripId = unsafeUnwrap(result)
+    // eslint-disable-next-line jest/no-standalone-expect
     expect(executePostCommitHandlersMock).toBeCalledTimes(1)
     executePostCommitHandlersMock.mockClear()
   }),
 )
 
+const unsafeUnwrap = <A, E>(e: Result<A, E>) => {
+  if (isErr(e)) {
+    throw new Error(JSON.stringify(e))
+  }
+  return e.right
+}
+
+const unsafeUnwrapErr = <A, E>(e: Result<A, E>) => {
+  if (isOk(e)) {
+    throw new Error(JSON.stringify(e))
+  }
+  return e.left
+}
+
 describe("usecases", () => {
   describe("get", () => {
     it("works", () =>
       createRootAndBind(async () => {
-        const result = await root.request(getTrainTrip, { trainTripId })
+        const r = root.request(getTrainTrip, { trainTripId })
+        const result = await r()
 
-        expect(result).toBeInstanceOf(Ok)
+        expect(isOk(result)).toBe(true)
         // We don't want to leak accidentally domain objects
-        expect(result._unsafeUnwrap()).toEqual({
+        expect(unsafeUnwrap(result)).toEqual({
           allowUserModification: true,
           createdAt: expect.any(String),
           id: expect.any(String),
@@ -81,7 +100,7 @@ describe("usecases", () => {
           ],
         })
 
-        logger.log(result._unsafeUnwrap())
+        logger.log(unsafeUnwrap(result))
         expect(executePostCommitHandlersMock).toBeCalledTimes(0)
       }))
   })
@@ -95,14 +114,14 @@ describe("usecases", () => {
           travelClass: "first",
         }
 
-        const result = await root.request(changeTrainTrip, { trainTripId, ...state })
-        const newTrainTripResult = await root.request(getTrainTrip, { trainTripId })
+        const result = await root.request(changeTrainTrip, { trainTripId, ...state })()
+        const newTrainTripResult = await root.request(getTrainTrip, { trainTripId })()
 
-        expect(result).toBeInstanceOf(Ok)
-        expect(newTrainTripResult).toBeInstanceOf(Ok)
+        expect(isOk(result)).toBe(true)
+        expect(isOk(newTrainTripResult)).toBe(true)
         // We don't want to leak accidentally domain objects
-        expect(result._unsafeUnwrap()).toBe(void 0)
-        const r = newTrainTripResult._unsafeUnwrap()
+        expect(unsafeUnwrap(result)).toBe(void 0)
+        const r = unsafeUnwrap(newTrainTripResult)
         expect(r.travelClass).toBe(state.travelClass)
         expect(r.startDate).toEqual(state.startDate!)
         expect(r.pax).toEqual(state.pax)
@@ -112,14 +131,13 @@ describe("usecases", () => {
 
     it("errors on non existent travel class", () =>
       createRootAndBind(async () => {
-        const state: StateProposition = { travelClass: "business" }
+        const state: StateProposition = { travelClass: "doesntexist" }
 
-        const r = await root.request(changeTrainTrip, { trainTripId, ...state })
-
-        expect(r.isErr()).toBe(true)
-        const error = r._unsafeUnwrapErr()
-        expect(error).toBeInstanceOf(InvalidStateError)
-        expect(error.message).toBe("business not available currently")
+        const r = await root.request(changeTrainTrip, { trainTripId, ...state })()
+        expect(isErr(r)).toBe(true)
+        const error = unsafeUnwrapErr(r)
+        expect(error).toBeInstanceOf(CombinedValidationError)
+        expect(error.message).toBe("travelClass: doesntexist is not a valid travel class name")
         expect(executePostCommitHandlersMock).toBeCalledTimes(0)
       }))
 
@@ -127,10 +145,10 @@ describe("usecases", () => {
       createRootAndBind(async () => {
         const state: StateProposition = { travelClass: "bogus", pax: { children: 0 } as any, startDate: "2000-01-01" }
 
-        const r = await root.request(changeTrainTrip, { trainTripId, ...state })
+        const r = await root.request(changeTrainTrip, { trainTripId, ...state })()
 
-        expect(r.isErr()).toBe(true)
-        const error = r._unsafeUnwrapErr()
+        expect(isErr(r)).toBe(true)
+        const error = unsafeUnwrapErr(r)
         expect(error).toBeInstanceOf(CombinedValidationError)
         const cve = error as CombinedValidationError
         expect(cve.errors.length).toBe(3)
@@ -139,19 +157,19 @@ describe("usecases", () => {
   })
 
   describe("able to lock the TrainTrip", () => {
-    it("changes state accordingly", () =>
+    it("locks traintrip accordingly", () =>
       createRootAndBind(async () => {
-        const currentTrainTripResult = await root.request(getTrainTrip, { trainTripId })
+        const currentTrainTripResult = await root.request(getTrainTrip, { trainTripId })()
 
-        const result = await root.request(lockTrainTrip, { trainTripId })
+        const result = await root.request(lockTrainTrip, { trainTripId })()
 
-        const newTrainTripResult = await root.request(getTrainTrip, { trainTripId })
-        expect(result).toBeInstanceOf(Ok)
+        const newTrainTripResult = await root.request(getTrainTrip, { trainTripId })()
+        expect(isOk(result)).toBe(true)
         // We don't want to leak accidentally domain objects
-        expect(result._unsafeUnwrap()).toBe(void 0)
-        expect(currentTrainTripResult).toBeInstanceOf(Ok)
-        expect(currentTrainTripResult._unsafeUnwrap().allowUserModification).toBe(true)
-        expect(newTrainTripResult._unsafeUnwrap().allowUserModification).toBe(false)
+        expect(unsafeUnwrap(result)).toBe(void 0)
+        expect(isOk(currentTrainTripResult)).toBe(true)
+        expect(unsafeUnwrap(currentTrainTripResult).allowUserModification).toBe(true)
+        expect(unsafeUnwrap(newTrainTripResult).allowUserModification).toBe(false)
         expect(executePostCommitHandlersMock).toBeCalledTimes(1)
       }))
   })
@@ -159,18 +177,18 @@ describe("usecases", () => {
   describe("able to delete the TrainTrip", () => {
     it("deletes accordingly", () =>
       createRootAndBind(async () => {
-        const currentTrainTripResult = await root.request(getTrainTrip, { trainTripId })
+        const currentTrainTripResult = await root.request(getTrainTrip, { trainTripId })()
 
-        const result = await root.request(deleteTrainTrip, { trainTripId })
+        const result = await root.request(deleteTrainTrip, { trainTripId })()
 
-        const newTrainTripResult = await root.request(getTrainTrip, { trainTripId })
-        expect(result).toBeInstanceOf(Ok)
+        const newTrainTripResult = await root.request(getTrainTrip, { trainTripId })()
+        expect(isOk(result)).toBe(true)
         // We don't want to leak accidentally domain objects
-        expect(result._unsafeUnwrap()).toBe(void 0)
-        expect(currentTrainTripResult).toBeInstanceOf(Ok)
-        expect(currentTrainTripResult._unsafeUnwrap().allowUserModification).toBe(true)
-        expect(newTrainTripResult).toBeInstanceOf(Err)
-        expect(newTrainTripResult._unsafeUnwrapErr()).toBeInstanceOf(RecordNotFound)
+        expect(unsafeUnwrap(result)).toBe(void 0)
+        expect(isOk(currentTrainTripResult)).toBe(true)
+        expect(unsafeUnwrap(currentTrainTripResult).allowUserModification).toBe(true)
+        expect(isErr(newTrainTripResult)).toBe(true)
+        expect(unsafeUnwrapErr(newTrainTripResult)).toBeInstanceOf(RecordNotFound)
         expect(executePostCommitHandlersMock).toBeCalledTimes(0)
       }))
   })
@@ -178,10 +196,9 @@ describe("usecases", () => {
   describe("register Cloud", () => {
     it("works", () =>
       createRootAndBind(async () => {
-        const result = await root.request(registerCloud, { trainTripId })
-
-        expect(result).toBeInstanceOf(Ok)
-        expect(result._unsafeUnwrap()).toBe(void 0)
+        const result = await root.request(registerCloud, { trainTripId })()
+        expect(isOk(result)).toBe(true)
+        expect(unsafeUnwrap(result)).toBe(void 0)
         expect(executePostCommitHandlersMock).toBeCalledTimes(0)
       }))
   })
@@ -197,8 +214,8 @@ describe("integration events", () => {
         }
         await root.publishInNewContext(JSON.stringify(p), generateShortUuid())
 
-        const newTrainTripResult = await root.request(getTrainTrip, { trainTripId })
-        expect(newTrainTripResult._unsafeUnwrap().allowUserModification).toBe(false)
+        const newTrainTripResult = await root.request(getTrainTrip, { trainTripId })()
+        expect(unsafeUnwrap(newTrainTripResult).allowUserModification).toBe(false)
       }))
   })
 })

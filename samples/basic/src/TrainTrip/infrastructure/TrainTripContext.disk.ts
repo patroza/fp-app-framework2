@@ -2,7 +2,7 @@ import TrainTrip, { TravelClassConfiguration } from "@/TrainTrip/TrainTrip"
 import { TrainTripContext } from "@/TrainTrip/usecases/types"
 import { autoinject, ContextBase, DbError, DomainEventHandler, Event, RecordContext } from "@fp-app/framework"
 import { DiskRecordContext } from "@fp-app/io.diskdb"
-import { ok, Result } from "@fp-app/neverthrow-extensions"
+import { ok, AsyncResult } from "@fp-app/fp-ts-extensions"
 import { parse, stringify } from "flatted"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import { TravelClassName } from "../TravelClassDefinition"
@@ -37,23 +37,16 @@ export default class DiskDBContext extends ContextBase implements TrainTripConte
   protected getAndClearEvents(): Event[] {
     return this.trainTripsi.intGetAndClearEvents()
   }
-  protected saveImpl(): Promise<Result<void, DbError>> {
+  protected saveImpl(): AsyncResult<void, DbError> {
     return this.trainTripsi.intSave(
-      async i => ok(await this.readContext.create(i.id, TrainTripToView(i))),
-      async i => ok(await this.readContext.delete(i.id)),
+      i => async () => ok(await this.readContext.create(i.id, TrainTripToView(i))),
+      i => async () => ok(await this.readContext.delete(i.id)),
     )
   }
 }
 
-const TrainTripToView = ({
-  isLocked,
-  createdAt,
-  id,
-  pax,
-  currentTravelClassConfiguration,
-  startDate,
-  travelClassConfiguration,
-}: TrainTrip): TrainTripView => {
+const TrainTripToView = (trip: TrainTrip): TrainTripView => {
+  const { createdAt, currentTravelClassConfiguration, id, isLocked, pax, startDate, travelClassConfiguration } = trip
   return {
     id,
 
@@ -63,7 +56,7 @@ const TrainTripToView = ({
     pax: pax.value,
     startDate,
     travelClass: currentTravelClassConfiguration.travelClass.name,
-    travelClasses: travelClassConfiguration.map(({ travelClass: { templateId, name } }) => ({ templateId, name })),
+    travelClasses: travelClassConfiguration.map(({ travelClass: { name, templateId } }) => ({ templateId, name })),
   }
 }
 
@@ -71,12 +64,12 @@ const serializeTrainTrip = ({ events, ...rest }: any) => stringify(rest)
 
 function deserializeDbTrainTrip(serializedTrainTrip: string) {
   const {
-    id,
     createdAt,
     currentTravelClassConfiguration,
+    id,
     lockedAt,
-    startDate,
     pax: paxInput,
+    startDate,
     travelClassConfiguration,
     ...rest
   } = parse(serializedTrainTrip) as TrainTripDTO
@@ -107,7 +100,7 @@ const mapTravelClassConfigurationDTO = ({ travelClass, ...slRest }: { travelClas
   return slc
 }
 
-const mapTravelClassDTO = ({ createdAt, templateId, name }: TravelClassDTO): TravelClass => {
+const mapTravelClassDTO = ({ createdAt, name, templateId }: TravelClassDTO): TravelClass => {
   const sl = new TravelClass(templateId, name)
   Object.assign(sl, { createdAt: new Date(createdAt) })
   return sl

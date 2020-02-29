@@ -1,4 +1,3 @@
-import { StateProposition as ValidatedStateProposition } from "@/TrainTrip/TrainTrip"
 import {
   combineValidationErrors,
   createCommandWithDeps,
@@ -9,17 +8,17 @@ import {
   ValidationError,
 } from "@fp-app/framework"
 import {
-  flatMap,
-  map,
-  mapErr,
   ok,
-  pipe,
-  PipeFunction,
   resultTuple,
-  toFlatTup,
-  toTup,
   valueOrUndefined,
-} from "@fp-app/neverthrow-extensions"
+  pipe,
+  chainTupTask,
+  E,
+  chainFlatTupTask,
+  TE,
+  liftType,
+  compose,
+} from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
@@ -28,10 +27,12 @@ import { DbContextKey, defaultDependencies } from "./types"
 const createCommand = createCommandWithDeps({ db: DbContextKey, ...defaultDependencies })
 
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>("changeTrainTrip", ({ db }) =>
-  pipe(
-    flatMap(toTup(validateStateProposition)),
-    flatMap(toFlatTup(([, i]) => db.trainTrips.load(i.trainTripId))),
-    flatMap(([trainTrip, proposal]) => trainTrip.proposeChanges(proposal)),
+  compose(
+    chainTupTask(i => pipe(TE.fromEither(validateStateProposition(i)), TE.mapLeft(liftType<ChangeTrainTripError>()))),
+    chainFlatTupTask(([, i]) => pipe(db.trainTrips.load(i.trainTripId), TE.mapLeft(liftType<ChangeTrainTripError>()))),
+    TE.chain(([trainTrip, proposal]) =>
+      pipe(TE.fromEither(trainTrip.proposeChanges(proposal)), TE.mapLeft(liftType<ChangeTrainTripError>())),
+    ),
   ),
 )
 
@@ -47,21 +48,21 @@ export interface StateProposition {
   travelClass?: string
 }
 
-const validateStateProposition: PipeFunction<StateProposition, ValidatedStateProposition, ValidationError> = pipe(
-  flatMap(({ travelClass, pax, startDate, ...rest }) =>
+const validateStateProposition = ({ pax, startDate, travelClass, ...rest }: StateProposition) =>
+  pipe(
     resultTuple(
-      valueOrUndefined(travelClass, TravelClassDefinition.create).pipe(mapErr(toFieldError("travelClass"))),
-      valueOrUndefined(startDate, FutureDate.create).pipe(mapErr(toFieldError("startDate"))),
-      valueOrUndefined(pax, PaxDefinition.create).pipe(mapErr(toFieldError("pax"))),
+      pipe(valueOrUndefined(travelClass, TravelClassDefinition.create), E.mapLeft(toFieldError("travelClass"))),
+      pipe(valueOrUndefined(startDate, FutureDate.create), E.mapLeft(toFieldError("startDate"))),
+      pipe(valueOrUndefined(pax, PaxDefinition.create), E.mapLeft(toFieldError("pax"))),
       ok(rest),
-    ).pipe(mapErr(combineValidationErrors)),
-  ),
-  map(([travelClass, startDate, pax, rest]) => ({
-    ...rest,
-    pax,
-    startDate,
-    travelClass,
-  })),
-)
+    ),
+    E.mapLeft(combineValidationErrors),
+    E.map(([travelClass, startDate, pax, rest]) => ({
+      ...rest,
+      pax,
+      startDate,
+      travelClass,
+    })),
+  )
 
 type ChangeTrainTripError = ForbiddenError | InvalidStateError | ValidationError | DbError

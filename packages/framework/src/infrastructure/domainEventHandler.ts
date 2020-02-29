@@ -1,4 +1,4 @@
-import { err, map, Result, success, tee } from "@fp-app/neverthrow-extensions"
+import { err, success, pipe, AsyncResult, E, isErr, tee } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { EventHandlerWithDependencies } from "./mediator"
 import { publishType } from "./mediator/publish"
@@ -18,43 +18,47 @@ export default class DomainEventHandler {
   ) {}
 
   // Note: Eventhandlers in this case have unbound errors..
-  async commitAndPostEvents<T, TErr>(
+  commitAndPostEvents<T, TErr>(
     getAndClearEvents: () => Event[],
-    commit: () => Promise<Result<T, TErr>>,
-  ): Promise<Result<T, TErr | Error>> {
-    // 1. pre-commit: post domain events
-    // 2. commit!
-    // 3. post-commit: post integration events
+    commit: () => AsyncResult<T, TErr>,
+  ): AsyncResult<T, TErr | Error> {
+    return async () => {
+      // 1. pre-commit: post domain events
+      // 2. commit!
+      // 3. post-commit: post integration events
 
-    this.processedEvents = []
-    const updateEvents = () => (this.events = this.events.concat(getAndClearEvents()))
-    updateEvents()
-    let processedEvents: Event[] = []
-    // loop until we have all events captured, event events of events.
-    // lets hope we don't get stuck in stackoverflow ;-)
-    while (this.events.length) {
-      const events = this.events
-      this.events = []
-      processedEvents = processedEvents.concat(events)
-      const r = await this.publishEvents(events)
-      if (r.isErr()) {
-        this.events = processedEvents
-        return err(r.error)
-      }
+      this.processedEvents = []
+      const updateEvents = () => (this.events = this.events.concat(getAndClearEvents()))
       updateEvents()
+      let processedEvents: Event[] = []
+      // loop until we have all events captured, event events of events.
+      // lets hope we don't get stuck in stackoverflow ;-)
+      while (this.events.length) {
+        const events = this.events
+        this.events = []
+        processedEvents = processedEvents.concat(events)
+        const r = await this.publishEvents(events)()
+        if (isErr(r)) {
+          this.events = processedEvents
+          return err(r.left)
+        }
+        updateEvents()
+      }
+      this.processedEvents = processedEvents
+      return pipe(await commit()(), E.map(tee(() => this.publishIntegrationEvents())))
     }
-    this.processedEvents = processedEvents
-    return await commit().pipe(tee(map(this.publishIntegrationEvents)))
   }
 
-  private readonly publishEvents = async (events: Event[]): Promise<Result<void, Error>> => {
-    for (const evt of events) {
-      const r = await this.publish(evt)
-      if (r.isErr()) {
-        return err(r.error)
+  private readonly publishEvents = (events: Event[]): AsyncResult<void, Error> => {
+    return async () => {
+      for (const evt of events) {
+        const r = await this.publish(evt)()
+        if (isErr(r)) {
+          return err(r.left)
+        }
       }
+      return success()
     }
-    return success()
   }
 
   private readonly publishIntegrationEvents = () => {

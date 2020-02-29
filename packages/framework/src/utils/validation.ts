@@ -1,4 +1,4 @@
-import { err, ok, Result } from "@fp-app/neverthrow-extensions"
+import { err, ok, Result } from "@fp-app/fp-ts-extensions"
 import Joi from "@hapi/joi"
 import { CombinedValidationError, FieldValidationError, ValidationError } from "../errors"
 export { Joi }
@@ -27,9 +27,12 @@ const predicate = <T, E extends ValidationError>(pred: (inp: T) => boolean, errM
   return err(new ValidationError(errMsg))
 }
 
-const valueEquals = <T>({ value }: { value: T }, otherValue: T, extracter?: (v: T) => any) =>
+const valueEquals = <T, TExtracted>({ value }: { value: T }, otherValue: T, extracter?: (v: T) => TExtracted) =>
   extracter ? extracter(value) === extracter(otherValue) : value === otherValue
-const valueEquals2 = <T>({ value }: { value: T }, { value: otherValue }: { value: T }, extracter?: (v: T) => any) =>
-  extracter ? extracter(value) === extracter(otherValue) : value === otherValue
+const valueEquals2 = <T, TExtracted>(
+  { value }: { value: T },
+  { value: otherValue }: { value: T },
+  extracter?: (v: T) => TExtracted,
+) => (extracter ? extracter(value) === extracter(otherValue) : value === otherValue)
 
 export { createValidator, predicate, valueEquals, valueEquals2 }

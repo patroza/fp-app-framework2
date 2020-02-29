@@ -18,38 +18,44 @@ import {
   requestType,
   ValidationError,
 } from "@fp-app/framework"
-import { flatMap, Result, startWithVal } from "@fp-app/neverthrow-extensions"
+import { Result, pipe, TE, E, liftType } from "@fp-app/fp-ts-extensions"
 
-export default function generateKoaHandler<I, T, E extends ErrorBase, E2 extends ValidationError>(
+export default function generateKoaHandler<TDeps, I, T, E extends ErrorBase, E2 extends ValidationError>(
   request: requestType,
-  handler: NamedHandlerWithDependencies<any, I, T, E>,
+  handler: NamedHandlerWithDependencies<TDeps, I, T, E>,
   validate: (i: I) => Result<I, E2>,
   handleErrorOrPassthrough: ErrorHandlerType<Koa.Context, DbError | E | E2> = defaultErrorPassthrough,
   responseTransform?: <TOutput>(input: T, ctx: Koa.Context) => TOutput,
 ) {
-  return async (ctx: Koa.Context) => {
-    try {
-      const input = { ...ctx.request.body, ...ctx.request.query, ...ctx.params } // query, headers etc
+  const generateTask = (ctx: Koa.Context) => {
+    const input: I = { ...ctx.request.body, ...ctx.request.query, ...ctx.params } // query, headers etc
 
-      // DbError, because request handler is enhanced with it (decorator)
-      // E2 because the validator enhances it.
-      const result = await startWithVal(input)<DbError | E | E2>().pipe(
-        flatMap(validate),
-        flatMap(validatedInput => request(handler, validatedInput)),
-      )
-      result.match(
-        output => {
+    // DbError, because request handler is enhanced with it (decorator)
+    // E2 because the validator enhances it.
+    const task = pipe(
+      TE.fromEither(pipe(validate(input), E.mapLeft(liftType<DbError | E | E2>()))),
+      TE.chain(validatedInput => pipe(request(handler, validatedInput), TE.mapLeft(liftType<DbError | E | E2>()))),
+      TE.bimap(
+        err => (handleErrorOrPassthrough(ctx)(err) ? handleDefaultError(ctx)(err) : undefined),
+        result => {
           if (responseTransform) {
-            ctx.body = responseTransform(output, ctx)
+            ctx.body = responseTransform(result, ctx)
           } else {
-            ctx.body = output
+            ctx.body = result
           }
-          if (ctx.method === "POST" && output) {
+          if (ctx.method === "POST" && result) {
             ctx.status = 201
           }
         },
-        err => (handleErrorOrPassthrough(ctx)(err) ? handleDefaultError(ctx)(err) : undefined),
-      )
+      ),
+    )
+    return task
+  }
+
+  return async (ctx: Koa.Context) => {
+    try {
+      const task = generateTask(ctx)
+      await task()
     } catch (err) {
       logger.error(err)
       ctx.status = 500
