@@ -84,9 +84,9 @@ const getTplLevelName = (tpl: Template) =>
 
 // Typescript support for partial application is not really great, so we try currying instead for now
 // https://stackoverflow.com/questions/50400120/using-typescript-for-partial-application
-// eslint-disable-next-line @typescript-eslint/require-await
 const getTemplateFake = (_: {
   templateApiUrl: string
+  // eslint-disable-next-line @typescript-eslint/require-await
 }): getTemplateType => templateId => async () => {
   const tpl = mockedTemplates()[templateId] as Template | undefined
   if (!tpl) {
@@ -116,9 +116,9 @@ const getPricingFake = ({
 
 const getFakePriceFromTemplate = () => ({ price: { amount: 100, currency: "EUR" } })
 
-// eslint-disable-next-line @typescript-eslint/require-await
 const createTravelPlanFake = (_: {
   travelPlanApiUrl: string
+  // eslint-disable-next-line @typescript-eslint/require-await
 }): createTravelPlanType => () => async () => ok<string, ConnectionError>(v4())
 
 const sendCloudSyncFake = (_: {
