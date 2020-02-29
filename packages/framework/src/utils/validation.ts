@@ -6,11 +6,11 @@ import {
   ValidationError,
 } from "../errors"
 export { Joi }
-import convert from "joi-to-json-schema"
+import { convert } from "@yeongjet/joi-to-json-schema"
 
-const createValidator = <TIn>(schema: any): ValidatorType<TIn, ValidationError> => {
+const createValidator = <TIn>(schema: Joi.Schema): ValidatorType<TIn, ValidationError> => {
   const validator = (object: TIn): Result<TIn, ValidationError> => {
-    const r = Joi.validate(object, schema, { abortEarly: false })
+    const r = schema.validate(object, { abortEarly: false })
     if (r.error) {
       return err(
         new CombinedValidationError(
