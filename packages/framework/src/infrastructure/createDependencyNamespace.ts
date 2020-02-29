@@ -60,7 +60,7 @@ export default function createDependencyNamespace(
   const bindLogger = (fnc: (...args2: any[]) => void) => (...args: any[]) => {
     const context = hasDependencyScope() && container.getO(requestScopeKey)
     const datetime = new Date()
-    const timestamp = format(datetime, "YYYY-MM-DD HH:mm:ss")
+    const timestamp = format(datetime, "yyyy-MM-dd HH:mm:ss")
     const scope = getLoggingScope()
     const items =
       scope && scope.items.reduce((prev, cur) => ({ ...prev, ...cur }), {} as any)
