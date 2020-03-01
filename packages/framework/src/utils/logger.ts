@@ -20,6 +20,7 @@ const setLogger = (l: logLevels & Partial<AddLogging>) => Object.assign(logger, 
 const loggers = new Map<string, typeof logger>()
 const getLogger = (name: string) => {
   if (loggers.has(name)) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return loggers.get(name)!
   }
 
