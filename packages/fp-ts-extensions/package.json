@@ -6,6 +6,7 @@
   "license": "MIT",
   "dependencies": {
     "fp-ts": "2.5.3",
+    "ts-toolbelt": "^6.3.5",
     "tsconfig-paths": "^3.8.0",
     "typescript": "~3.7.5"
   },
