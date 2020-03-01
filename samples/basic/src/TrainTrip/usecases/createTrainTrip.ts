@@ -12,13 +12,13 @@ import {
   ok,
   Result,
   resultTuple,
-  tee,
   pipe,
   E,
   TE,
   liftType,
   chainTupTask,
   compose,
+  EDo,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
@@ -48,7 +48,7 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
         TE.fromEither(
           pipe(
             E.right<CreateError, TrainTrip>(TrainTrip.create(proposal, trip)),
-            E.map(tee(db.trainTrips.add)),
+            EDo(db.trainTrips.add),
             E.map(trainTrip => trainTrip.id),
           ),
         ),

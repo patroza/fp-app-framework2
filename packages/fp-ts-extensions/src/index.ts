@@ -44,6 +44,15 @@ export const boolToEither = <T>(
   return ok(value)
 }
 
+export const errorishToEither = <T extends { error?: TE }, TE extends Error>(
+  value: T,
+): E.Either<TE, T> => {
+  if (value.error) {
+    return err(value.error)
+  }
+  return ok(value)
+}
+
 export { map, pipe }
 
 // useful tools for .compose( continuations
@@ -77,13 +86,14 @@ export function chainTeeTask(f: any) {
   )
 }
 
+export const EDo = <T>(func: (input: T) => void) => E.map(tee(func))
+export const TEDo = <T>(func: (input: T) => void) => TE.map(tee(func))
+
 // TODO: Should come with map already wrapped aroun it
-export function tee<T, T2 extends T, TDontCare, E>(
-  f: (x: T2) => Promise<TDontCare>,
+export function tee<T, TDontCare>(
+  f: (x: T) => Promise<TDontCare>,
 ): (input: T) => Promise<T>
-export function tee<T, T2 extends T, TDontCare, E>(
-  f: (x: T2) => TDontCare,
-): (input: T) => T
+export function tee<T, TDontCare>(f: (x: T) => TDontCare): (input: T) => T
 export function tee(f: any) {
   return (input: any) => {
     const r = f(input)
