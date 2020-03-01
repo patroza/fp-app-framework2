@@ -35,12 +35,11 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
     const validate = tools.liftE(validateStateProposition)
     return compose(
       chainTupTask(toTE(validate)),
-      chainFlatTupTask(tools.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
-      TE.chain(
-        tools.liftTE(([trainTrip, proposal]) =>
-          TE.fromEither(trainTrip.proposeChanges(proposal)),
-        ),
-      ),
+      chainFlatTupTask(([, i]) => tools.liftTE(db.trainTrips.load)(i.trainTripId)),
+      TE.chain(([trainTrip, proposal]) => {
+        const proposeChanges = pipe(trainTrip.proposeChanges, tools.liftE, toTE)
+        return proposeChanges(proposal)
+      }),
     )
   },
 )

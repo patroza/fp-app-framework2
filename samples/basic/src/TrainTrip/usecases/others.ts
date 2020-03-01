@@ -18,8 +18,6 @@ import {
 import FutureDate from "../FutureDate"
 import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
 import { DbContextKey, defaultDependencies } from "./types"
-import { flow } from "fp-ts/lib/function"
-import { flowRight } from "lodash/fp"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -32,12 +30,12 @@ export const changeStartDate = createCommand<
   ChangeStartDateError
 >("changeStartDate", ({ db, tools }) =>
   compose(
-    chainTupTask(
-      tools.liftTE(({ startDate }) => TE.fromEither(FutureDate.create(startDate))),
+    chainTupTask(({ startDate }) =>
+      pipe(FutureDate.create, tools.liftE, toTE)(startDate),
     ),
-    chainFlatTupTask(tools.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
-    TE.chain(
-      tools.liftTE(([trainTrip, sd]) => TE.fromEither(trainTrip.changeStartDate(sd))),
+    chainFlatTupTask(([, i]) => tools.liftTE(db.trainTrips.load)(i.trainTripId)),
+    TE.chain(([trainTrip, sd]) =>
+      pipe(trainTrip.changeStartDate, tools.liftE, toTE)(sd),
     ),
   ),
 )

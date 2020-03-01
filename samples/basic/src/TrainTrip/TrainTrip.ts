@@ -88,7 +88,7 @@ export default class TrainTrip extends Entity {
     Object.assign(this, rest)
   }
 
-  proposeChanges(state: StateProposition) {
+  proposeChanges = (state: StateProposition) => {
     const liftErr = liftE<ValidationError | InvalidStateError | ForbiddenError>()
     return pipe(
       this.confirmUserChangeAllowed(),
