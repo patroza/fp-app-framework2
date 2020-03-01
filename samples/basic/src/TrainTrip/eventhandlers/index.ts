@@ -19,7 +19,7 @@ import {
   ApiError,
   InvalidStateError,
 } from "@fp-app/framework"
-import { pipe, TE, tryExecute, chainTupTask } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, tryExecute, chainTupTask, compose } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"
 
@@ -66,16 +66,20 @@ const createDomainEventHandler = createDomainEventHandlerWithDeps({
 createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
   /* on */ TrainTripStateChanged,
   "RefreshTripInfo",
-  ({ db, getTrip, tools }) => ({ trainTripId }) => {
-    const liftedGetTrip = tools.liftTE(getTrip)
-    return pipe(
+  ({ db, getTrip, tools }) => ({ trainTripId }) =>
+    pipe(
       db.trainTrips.load(trainTripId),
-      chainTupTask(trainTrip =>
-        liftedGetTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId),
+      chainTupTask(
+        compose(
+          TE.map(
+            trainTrip =>
+              trainTrip.currentTravelClassConfiguration.travelClass.templateId,
+          ),
+          TE.chain(pipe(getTrip, tools.liftTE)),
+        ),
       ),
       TE.map(([trip, trainTrip]) => trainTrip.updateTrip(trip)),
-    )
-  },
+    ),
 )
 
 createIntegrationEventHandler<UserInputReceived, void, never>(

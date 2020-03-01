@@ -104,6 +104,8 @@ export function tee(f: any) {
   }
 }
 
+export const regainType = <T, TOut>(f: (i: T) => TOut) => <T2 extends T>(i: T2) => f(i)
+
 // Easily pass input -> (input -> output) -> [output, input]
 export function chainTupTask<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
   return TE.chain((input: TInput) =>
@@ -580,7 +582,7 @@ export function compose<TInput, TError, TOutput>(...a: any[]) {
     )
 }
 
-export const toTE = <T, TI extends T, T2, TE>(func: (i: T) => Either<TE, T2>) => (
+export const toTE = <T, T2, TE>(func: (i: T) => Either<TE, T2>) => <TI extends T>(
   i: TI,
 ) => TE.fromEither(func(i))
 

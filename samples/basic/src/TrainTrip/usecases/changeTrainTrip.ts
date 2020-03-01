@@ -71,7 +71,12 @@ export interface StateProposition {
   travelClass?: string
 }
 
-const validateStateProposition = ({ pax, startDate, travelClass, ...rest }: Input) =>
+const validateStateProposition = ({
+  pax,
+  startDate,
+  travelClass,
+  ...rest
+}: StateProposition) =>
   pipe(
     resultTuple(
       pipe(
