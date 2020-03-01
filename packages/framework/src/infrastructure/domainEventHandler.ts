@@ -1,4 +1,15 @@
-import { err, success, pipe, AsyncResult, isErr, TEDo } from "@fp-app/fp-ts-extensions"
+import {
+  err,
+  success,
+  pipe,
+  AsyncResult,
+  isErr,
+  TEDo,
+  ok,
+  TE,
+  liftType,
+  E,
+} from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { EventHandlerWithDependencies } from "./mediator"
 import { publishType } from "./mediator/publish"
@@ -18,36 +29,40 @@ export default class DomainEventHandler {
   ) {}
 
   // Note: Eventhandlers in this case have unbound errors..
-  commitAndPostEvents<T, TErr>(
+  commitAndPostEvents = <T, TErr>(
     getAndClearEvents: () => Event[],
     commit: () => AsyncResult<T, TErr>,
-  ): AsyncResult<T, TErr | Error> {
-    return async () => {
-      // 1. pre-commit: post domain events
-      // 2. commit!
-      // 3. post-commit: post integration events
+  ) =>
+    pipe(
+      this.executeEvents(getAndClearEvents),
+      TE.chain(() => pipe(commit(), TE.mapLeft(liftType<Error | TErr>()))),
+      TEDo(this.publishIntegrationEvents),
+    )
 
-      this.processedEvents = []
-      const updateEvents = () => (this.events = this.events.concat(getAndClearEvents()))
-      updateEvents()
-      let processedEvents: Event[] = []
-      // loop until we have all events captured, event events of events.
-      // lets hope we don't get stuck in stackoverflow ;-)
-      while (this.events.length) {
-        const events = this.events
-        this.events = []
-        processedEvents = processedEvents.concat(events)
-        const r = await this.publishEvents(events)()
-        if (isErr(r)) {
-          this.events = processedEvents
-          return err(r.left)
-        }
-        updateEvents()
+  private readonly executeEvents = (getAndClearEvents: () => Event[]) => async () => {
+    // 1. pre-commit: post domain events
+    // 2. commit!
+    // 3. post-commit: post integration events
+
+    this.processedEvents = []
+    const updateEvents = () => (this.events = this.events.concat(getAndClearEvents()))
+    updateEvents()
+    let processedEvents: Event[] = []
+    // loop until we have all events captured, event events of events.
+    // lets hope we don't get stuck in stackoverflow ;-)
+    while (this.events.length) {
+      const events = this.events
+      this.events = []
+      processedEvents = processedEvents.concat(events)
+      const r = await this.publishEvents(events)()
+      if (isErr(r)) {
+        this.events = processedEvents
+        return err(r.left)
       }
-      this.processedEvents = processedEvents
-      const finalize = pipe(commit(), TEDo(this.publishIntegrationEvents))
-      return await finalize()
+      updateEvents()
     }
+    this.processedEvents = processedEvents
+    return ok(void 0)
   }
 
   private readonly publishEvents = (events: Event[]): AsyncResult<void, Error> => {
