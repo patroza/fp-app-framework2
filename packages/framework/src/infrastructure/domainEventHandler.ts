@@ -8,7 +8,6 @@ import {
   ok,
   TE,
   liftType,
-  E,
 } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { EventHandlerWithDependencies } from "./mediator"

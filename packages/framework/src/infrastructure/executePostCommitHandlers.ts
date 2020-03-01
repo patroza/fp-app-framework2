@@ -8,18 +8,12 @@ const executePostCommitHandlers = ({
   executeIntegrationEvent,
 }: {
   executeIntegrationEvent: requestInNewScopeType
-}) => (eventsMap: eventsMapType) => {
-  const processEvents = pipe(
-    TE.tryCatch(
-      () => tryProcessEvents(executeIntegrationEvent, eventsMap),
-      x => x as Error,
-    ),
-    TE.mapLeft(err =>
+}) => (eventsMap: eventsMapType) =>
+  process.nextTick(() =>
+    tryProcessEvents(executeIntegrationEvent, eventsMap).catch(err =>
       logger.error("Unexpected error during applying IntegrationEvents", err),
     ),
   )
-  process.nextTick(processEvents)
-}
 
 async function tryProcessEvents(
   executeIntegrationEvent: requestInNewScopeType,

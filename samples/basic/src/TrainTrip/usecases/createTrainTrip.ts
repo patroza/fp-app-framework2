@@ -17,7 +17,6 @@ import {
   TE,
   liftType,
   chainTupTask,
-  compose,
   EDo,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
@@ -33,14 +32,10 @@ const createCommand = createCommandWithDeps({
 
 const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
-  ({ db, getTrip }) =>
-    compose(
-      TE.chain(i =>
-        pipe(
-          TE.fromEither(validateCreateTrainTripInfo(i)),
-          TE.mapLeft(liftType<CreateError>()),
-        ),
-      ),
+  ({ db, getTrip }) => input =>
+    pipe(
+      TE.fromEither(validateCreateTrainTripInfo(input)),
+      TE.mapLeft(liftType<CreateError>()),
       chainTupTask(i =>
         pipe(getTrip(i.templateId), TE.mapLeft(liftType<CreateError>())),
       ),
