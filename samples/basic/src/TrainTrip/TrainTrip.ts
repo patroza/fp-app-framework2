@@ -141,7 +141,7 @@ export default class TrainTrip extends Entity {
 
   ////////////
   //// Separate sample; not used other than testing
-  changeStartDate(startDate: FutureDate) {
+  changeStartDate = (startDate: FutureDate) => {
     return pipe(
       this.confirmUserChangeAllowed(),
       mapStaticE(startDate),

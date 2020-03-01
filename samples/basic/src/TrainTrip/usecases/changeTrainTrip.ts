@@ -31,17 +31,33 @@ const createCommand = createCommandWithDeps({
 
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
-  ({ db, tools }) => {
-    const validate = tools.liftE(validateStateProposition)
-    return compose(
-      chainTupTask(toTE(validate)),
-      chainFlatTupTask(([, i]) => tools.liftTE(db.trainTrips.load)(i.trainTripId)),
-      TE.chain(([trainTrip, proposal]) => {
-        const proposeChanges = pipe(trainTrip.proposeChanges, tools.liftE, toTE)
-        return proposeChanges(proposal)
-      }),
-    )
-  },
+  ({ db, tools }) =>
+    compose(
+      chainTupTask(pipe(validateStateProposition, tools.liftE, toTE)),
+      chainFlatTupTask(
+        compose(
+          TE.map(([, i]) => i.trainTripId),
+          TE.chain(pipe(db.trainTrips.load, tools.liftTE)),
+        ),
+      ),
+      TE.chain(
+        ([trainTrip, proposal]) =>
+          pipe(trainTrip.proposeChanges, tools.liftE, toTE, f => f(proposal)),
+        // ALT1
+        // compose(
+        //   TE.map(
+        //     ([trainTrip, proposal]) =>
+        //       [pipe(trainTrip.proposeChanges, tools.liftE, toTE), proposal] as const,
+        //   ),
+        //   TE.chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
+        // ),
+        // ALT2
+        //{
+        //  const proposeChanges = pipe(trainTrip.proposeChanges, tools.liftE, toTE)
+        //  return proposeChanges(proposal)
+        //}
+      ),
+    ),
 )
 export default changeTrainTrip
 
@@ -55,12 +71,7 @@ export interface StateProposition {
   travelClass?: string
 }
 
-const validateStateProposition = ({
-  pax,
-  startDate,
-  travelClass,
-  ...rest
-}: StateProposition) =>
+const validateStateProposition = ({ pax, startDate, travelClass, ...rest }: Input) =>
   pipe(
     resultTuple(
       pipe(

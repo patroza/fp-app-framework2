@@ -14,7 +14,6 @@ import {
   compose,
   pipe,
   toTE,
-  mapper,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
@@ -32,22 +31,35 @@ export const changeStartDate = createCommand<
 >("changeStartDate", ({ db, tools }) =>
   compose(
     chainTupTask(
-      pipe(
-        FutureDate.create,
-        tools.liftE,
-        toTE,
-        mapper(i => i.startDate),
+      compose(
+        TE.map(i => i.startDate),
+        TE.chain(pipe(FutureDate.create, tools.liftE, toTE)),
       ),
+      // ALT
+      // pipe(
+      //   FutureDate.create,
+      //   tools.liftE,
+      //   toTE,
+      //   mapper(i => i.startDate),
+      // ),
     ),
     chainFlatTupTask(
-      pipe(
-        db.trainTrips.load,
-        tools.liftTE,
-        mapper(([, i]) => i.trainTripId),
+      compose(
+        TE.map(([, i]) => i.trainTripId),
+        TE.chain(pipe(db.trainTrips.load, tools.liftTE)),
       ),
+      // ALT
+      // pipe(
+      //   db.trainTrips.load,
+      //   tools.liftTE,
+      //   mapper(([, i]) => i.trainTripId),
+      // ),
     ),
-    TE.chain(([trainTrip, sd]) =>
-      pipe(trainTrip.changeStartDate, tools.liftE, toTE)(sd),
+    TE.chain(
+      ([trainTrip, startDate]) =>
+        pipe(trainTrip.changeStartDate, tools.liftE, toTE, f => f(startDate)),
+      // ALT
+      // pipe(trainTrip.changeStartDate, tools.liftE, toTE)(startDate),
     ),
   ),
 )
