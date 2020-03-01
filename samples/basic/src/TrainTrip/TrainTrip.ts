@@ -21,7 +21,7 @@ import {
   E,
   pipe,
   liftE,
-  chainTee,
+  mapStaticE,
 } from "@fp-app/fp-ts-extensions"
 import isEqual from "lodash/fp/isEqual"
 import FutureDate from "./FutureDate"
@@ -93,7 +93,7 @@ export default class TrainTrip extends Entity {
     const liftErr = liftE<ValidationError | InvalidStateError | ForbiddenError>()
     return pipe(
       this.confirmUserChangeAllowed(),
-      E.map(() => state),
+      mapStaticE(state),
       E.chain(liftErr(this.applyDefinedChanges)),
       E.map(this.createChangeEvents),
     )
@@ -145,7 +145,7 @@ export default class TrainTrip extends Entity {
   changeStartDate(startDate: FutureDate) {
     return pipe(
       this.confirmUserChangeAllowed(),
-      E.map(() => startDate),
+      mapStaticE(startDate),
       E.map(this.intChangeStartDate),
       E.map(this.createChangeEvents),
     )
@@ -154,7 +154,7 @@ export default class TrainTrip extends Entity {
   changePax(pax: PaxDefinition) {
     return pipe(
       this.confirmUserChangeAllowed(),
-      E.map(() => pax),
+      mapStaticE(pax),
       E.map(this.intChangePax),
       E.map(this.createChangeEvents),
     )

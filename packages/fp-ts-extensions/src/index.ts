@@ -62,16 +62,14 @@ export const toValue = <TNew>(value: TNew) => () => value
 export const toVoid = toValue<void>(void 0)
 // export const endResult = mapStatic<void>(void 0)
 
+export const mapStaticE = <TCurrent, TNew>(value: TNew) =>
+  E.map<TCurrent, TNew>(toValue(value))
+
 export function chainTee<T, TDontCare, E>(
   f: PipeFunction2<T, TDontCare, E>,
 ): (inp: Result<T, E>) => Result<T, E>
 export function chainTee(f: any) {
-  return E.chain((input: any) =>
-    pipe(
-      f(input),
-      E.map(() => input),
-    ),
-  )
+  return E.chain((input: any) => pipe(f(input), mapStaticE(input)))
 }
 
 /**
@@ -84,12 +82,7 @@ export function chainTeeTask<T, TDontCare, E>(
   f: PipeFunction<T, TDontCare, E>,
 ): (inp: AsyncResult<T, E>) => AsyncResult<T, E>
 export function chainTeeTask(f: any) {
-  return TE.chain((input: any) =>
-    pipe(
-      f(input),
-      TE.map(() => input),
-    ),
-  )
+  return TE.chain((input: any) => pipe(f(input), mapStatic(input)))
 }
 
 export const EDo = <T>(func: (input: T) => void) => E.map(tee(func))
