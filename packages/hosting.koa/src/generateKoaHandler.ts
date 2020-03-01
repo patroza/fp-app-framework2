@@ -18,7 +18,7 @@ import {
   requestType,
   ValidationError,
 } from "@fp-app/framework"
-import { Result, pipe, TE, E, liftType } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, TE, liftTE } from "@fp-app/fp-ts-extensions"
 
 export default function generateKoaHandler<
   TDeps,
@@ -38,17 +38,14 @@ export default function generateKoaHandler<
 ) {
   const generateTask = (ctx: Koa.Context) => {
     const input: I = { ...ctx.request.body, ...ctx.request.query, ...ctx.params } // query, headers etc
+    const liftErr = liftTE<DbError | E | E2>()
+    const handleRequest = (i: I) => request(handler, i)
 
     // DbError, because request handler is enhanced with it (decorator)
     // E2 because the validator enhances it.
     const task = pipe(
-      TE.fromEither(pipe(validate(input), E.mapLeft(liftType<DbError | E | E2>()))),
-      TE.chain(validatedInput =>
-        pipe(
-          request(handler, validatedInput),
-          TE.mapLeft(liftType<DbError | E | E2>()),
-        ),
-      ),
+      TE.fromEither(validate(input)),
+      TE.chain(liftErr(handleRequest)),
       TE.bimap(
         err =>
           handleErrorOrPassthrough(ctx)(err) ? handleDefaultError(ctx)(err) : undefined,

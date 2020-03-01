@@ -20,6 +20,7 @@ import {
   valueOrUndefined,
   E,
   pipe,
+  liftE,
 } from "@fp-app/fp-ts-extensions"
 import isEqual from "lodash/fp/isEqual"
 import FutureDate from "./FutureDate"
@@ -88,14 +89,10 @@ export default class TrainTrip extends Entity {
   }
 
   proposeChanges(state: StateProposition) {
+    const liftErr = liftE<ValidationError | InvalidStateError | ForbiddenError>()
     return pipe(
       this.confirmUserChangeAllowed(),
-      E.chain(() =>
-        pipe(
-          this.applyDefinedChanges(state),
-          E.mapLeft(liftType<ValidationError | InvalidStateError | ForbiddenError>()),
-        ),
-      ),
+      E.chain(liftErr(() => this.applyDefinedChanges(state))),
       E.map(this.createChangeEvents),
     )
   }

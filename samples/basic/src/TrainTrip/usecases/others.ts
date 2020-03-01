@@ -9,11 +9,11 @@ import {
 } from "@fp-app/framework"
 import {
   TE,
-  pipe,
   chainTupTask,
   chainFlatTupTask,
-  liftType,
   compose,
+  liftE,
+  liftTE,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
@@ -30,26 +30,20 @@ export const changeStartDate = createCommand<
   ChangeStartDateError
 >("changeStartDate", ({ db }) =>
   compose(
-    chainTupTask(({ startDate }) =>
-      pipe(
-        TE.fromEither(FutureDate.create(startDate)),
-        TE.mapLeft(liftType<ChangeStartDateError>()),
-      ),
+    chainTupTask(
+      sdLift.TE(({ startDate }) => TE.fromEither(FutureDate.create(startDate))),
     ),
-    chainFlatTupTask(([, i]) =>
-      pipe(
-        db.trainTrips.load(i.trainTripId),
-        TE.mapLeft(liftType<ChangeStartDateError>()),
-      ),
-    ),
-    TE.chain(([trainTrip, sd]) =>
-      pipe(
-        TE.fromEither(trainTrip.changeStartDate(sd)),
-        TE.mapLeft(liftType<ChangeStartDateError>()),
-      ),
+    chainFlatTupTask(sdLift.TE(([, i]) => db.trainTrips.load(i.trainTripId))),
+    TE.chain(
+      sdLift.TE(([trainTrip, sd]) => TE.fromEither(trainTrip.changeStartDate(sd))),
     ),
   ),
 )
+
+const sdLift = {
+  E: liftE<ChangeStartDateError>(),
+  TE: liftTE<ChangeStartDateError>(),
+}
 
 export interface ChangeStartDateInput {
   trainTripId: string
@@ -63,26 +57,22 @@ export const changeTravelClass = createCommand<
   ChangeTravelClassError
 >("changeTravelClass", ({ db }) =>
   compose(
-    chainTupTask(({ travelClass }) =>
-      pipe(
+    chainTupTask(
+      tcLift.TE(({ travelClass }) =>
         TE.fromEither(TravelClassDefinition.create(travelClass)),
-        TE.mapLeft(liftType<ChangeTravelClassError>()),
       ),
     ),
-    chainFlatTupTask(([, i]) =>
-      pipe(
-        db.trainTrips.load(i.trainTripId),
-        TE.mapLeft(liftType<ChangeTravelClassError>()),
-      ),
-    ),
-    TE.chain(([trainTrip, sl]) =>
-      pipe(
-        TE.fromEither(trainTrip.changeTravelClass(sl)),
-        TE.mapLeft(liftType<ChangeTravelClassError>()),
-      ),
+    chainFlatTupTask(tcLift.TE(([, i]) => db.trainTrips.load(i.trainTripId))),
+    TE.chain(
+      tcLift.TE(([trainTrip, sl]) => TE.fromEither(trainTrip.changeTravelClass(sl))),
     ),
   ),
 )
+const tcLift = {
+  E: liftE<ChangeTravelClassError>(),
+  TE: liftTE<ChangeTravelClassError>(),
+}
+
 export interface ChangeTravelClassInput {
   trainTripId: string
   travelClass: TravelClassName
