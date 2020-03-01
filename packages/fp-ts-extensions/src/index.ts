@@ -45,12 +45,12 @@ export const boolToEither = <T>(
 }
 
 export const errorishToEither = <T extends { error?: TE }, TE extends Error>(
-  value: T,
+  errorish: T,
 ): E.Either<TE, T> => {
-  if (value.error) {
-    return err(value.error)
+  if (errorish.error) {
+    return err(errorish.error)
   }
-  return ok(value)
+  return ok(errorish)
 }
 
 export { map, pipe }
