@@ -195,9 +195,9 @@ const createDomainEventHandlerWithDeps = <TDependencies>(deps: TDependencies) =>
 }
 
 type ToolDeps<TE> = {
-  liftE: <T, TI, TI2 extends TI, TE2 extends TE>(
+  liftE: <T, TI, TE2 extends TE>(
     e: (i: TI) => Either<TE2, T>,
-  ) => (i: TI2) => Either<TE, T>
+  ) => (i: TI) => Either<TE, T>
   liftTE: <T, TI, TE2 extends TE>(
     e: (i: TI) => TaskEither<TE2, T>,
   ) => (i: TI) => TaskEither<TE, T>
