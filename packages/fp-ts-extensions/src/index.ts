@@ -349,14 +349,8 @@ export type AnyResult<T = any, TErr = any> = Result<T, TErr>
 // We create tuples in reverse, under the assumption that the further away we are
 // from previous statements, the less important their output becomes..
 // Alternatively we can always create two variations :)
-export function chainFlatTupTask<
-  TInput,
-  TInputB,
-  TInput2 extends readonly [TInput, TInputB],
-  T,
-  E
->(
-  f: (x: TInput2) => AsyncResult<T, E>,
+export function chainFlatTupTask<TInput, TInputB, T, E>(
+  f: (x: readonly [TInput, TInputB]) => AsyncResult<T, E>,
 ): (
   input: AsyncResult<readonly [TInput, TInputB], E>,
 ) => AsyncResult<readonly [T, TInput, TInputB], E>
@@ -480,6 +474,45 @@ export function resultTuple3(
 
 export const success = <TErr>() => ok<void, TErr>(void 0)
 
+export function apply2<T1, T2, TOut>(
+  func: (...args: readonly [T1, T2]) => TOut,
+): (args: readonly [T1, T2]) => TOut
+export function apply2<T1, T2, T3, TOut>(
+  func: (...args: readonly [T1, T2, T3]) => TOut,
+): (args: readonly [T1, T2, T3]) => TOut
+export function apply2(func: any) {
+  return (args: any) => func(...args)
+}
+
+export function reverseApply<T1, T2, TOut>(
+  func: (...args: readonly [T2, T1]) => TOut,
+): (args: readonly [T1, T2]) => TOut
+export function reverseApply<T1, T2, T3, TOut>(
+  func: (...args: readonly [T3, T2, T1]) => TOut,
+): (args: readonly [T1, T2, T3]) => TOut
+export function reverseApply(func: any) {
+  return (args: any) => func(...args.reverse())
+}
+
+// TODO: unbound - although who needs more than 3 anyway.
+/*
+export const apply2 = <T1, T2, TOut>(func: (t1: T1, t2: T2) => TOut) => (
+  ...args: readonly [T1, T2]
+) => func(...args)
+export const reverseApply = <T1, T2, TOut>(func: (t2: T2, t1: T1) => TOut) => (
+  ...args: readonly [T1, T2]
+) =>
+  // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+  // @ts-ignore
+  func(...(args.reverse() as any))
+
+const reverse = <A extends Array<any>>(a: A): List.Reverse<A> =>
+  (a.reverse() as unknown) as List.Reverse<A>
+
+type Flip = <A extends Array<any>, R>(f: (...a: A) => R) => (...a: List.Reverse<A>) => R
+const flip: Flip = fn => (...args) => fn(...(reverse(args) as any))
+*/
+
 // const compose = (...args) => <T>(input: T) =>
 //   pipe(
 //     TE.right(input),
@@ -507,8 +540,32 @@ export function compose<TInput, TError, B, C, TOutput>(
 export function compose<TInput, TError, B, C, D, TOutput>(
   ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
   bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
-  cd: (b: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
-  de: (c: TE.TaskEither<TError, D>) => TE.TaskEither<TError, TOutput>,
+  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
+  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, TOutput>,
+): (input: TInput) => TE.TaskEither<TError, TOutput>
+export function compose<TInput, TError, B, C, D, E, TOutput>(
+  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
+  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
+  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
+  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
+  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, TOutput>,
+): (input: TInput) => TE.TaskEither<TError, TOutput>
+export function compose<TInput, TError, B, C, D, E, F, TOutput>(
+  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
+  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
+  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
+  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
+  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, F>,
+  fg: (f: TE.TaskEither<TError, F>) => TE.TaskEither<TError, TOutput>,
+): (input: TInput) => TE.TaskEither<TError, TOutput>
+export function compose<TInput, TError, B, C, D, E, F, G, TOutput>(
+  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
+  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
+  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
+  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
+  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, F>,
+  fg: (f: TE.TaskEither<TError, F>) => TE.TaskEither<TError, G>,
+  gh: (g: TE.TaskEither<TError, G>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function compose<TInput, TError, TOutput>(...a: any[]) {
