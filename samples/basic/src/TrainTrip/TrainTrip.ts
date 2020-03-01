@@ -159,7 +159,7 @@ export default class TrainTrip extends Entity {
     )
   }
 
-  changeTravelClass(travelClass: TravelClassDefinition) {
+  changeTravelClass = (travelClass: TravelClassDefinition) => {
     const liftErr = liftE<ForbiddenError | InvalidStateError>()
     return pipe(
       this.confirmUserChangeAllowed(),

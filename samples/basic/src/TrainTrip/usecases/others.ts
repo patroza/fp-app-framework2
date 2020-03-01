@@ -7,10 +7,19 @@ import {
   ValidationError,
   DbError,
 } from "@fp-app/framework"
-import { TE, chainTupTask, chainFlatTupTask, compose } from "@fp-app/fp-ts-extensions"
+import {
+  TE,
+  chainTupTask,
+  chainFlatTupTask,
+  compose,
+  pipe,
+  toTE,
+} from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
 import { DbContextKey, defaultDependencies } from "./types"
+import { flow } from "fp-ts/lib/function"
+import { flowRight } from "lodash/fp"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -46,14 +55,35 @@ export const changeTravelClass = createCommand<
 >("changeTravelClass", ({ db, tools }) =>
   compose(
     chainTupTask(
-      tools.liftTE(({ travelClass }) =>
-        TE.fromEither(TravelClassDefinition.create(travelClass)),
+      compose(
+        TE.map(({ travelClass }) => travelClass),
+        TE.chain(toTE(tools.liftE(TravelClassDefinition.create))),
       ),
     ),
-    chainFlatTupTask(tools.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
-    TE.chain(
-      tools.liftTE(([trainTrip, sl]) => TE.fromEither(trainTrip.changeTravelClass(sl))),
+    // chainTupTask(({ travelClass }) =>
+    //   toTE(tools.liftE(TravelClassDefinition.create))(travelClass),
+    // ),
+    chainFlatTupTask(
+      compose(
+        TE.map(([, i]) => i.trainTripId),
+        TE.chain(tools.liftTE(db.trainTrips.load)),
+      ),
     ),
+    // I want to write this as: map([, i] => i.trainTripid), chain(db.trainTrips.load§)
+    // chainFlatTupTask(tools.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
+    // This means:
+    // TE.chain(input => {
+    //   const load = tools.liftTE(db.trainTrips.load)
+    //   const f = ([, i]: typeof input) => load(i.trainTripId)
+    //   return pipe(
+    //     f(input),
+    //     TE.map(x => [x, input[0], input[1]] as const),
+    //   )
+    // }),
+    TE.chain(([trainTrip, sl]) => {
+      const changeTravelClass = pipe(trainTrip.changeTravelClass, tools.liftE, toTE)
+      return changeTravelClass(sl)
+    }),
   ),
 )
 
