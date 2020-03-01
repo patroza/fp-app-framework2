@@ -22,6 +22,8 @@ import {
   startWithVal,
   pipe,
   TE,
+  liftTE,
+  toTE,
 } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
@@ -53,22 +55,15 @@ const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
         .map(sl => pipe(getTemplate(sl.id), map(tplToTravelClass))),
     ),
   )
+  const liftErr = liftTE<ApiError | InvalidStateError>()
   return pipe(
     seq,
-    TE.mapLeft(liftType<ApiError | InvalidStateError>()),
-    // TODO: should be chain Trip.create
-    TE.chain(i =>
-      pipe(
-        TE.fromEither(Trip.create(i)),
-        TE.mapLeft(liftType<ApiError | InvalidStateError>()),
-      ),
-    ),
-    TE.chain(trip =>
-      pipe(
+    TE.chain(liftErr(toTE(Trip.create))),
+    TE.chain(
+      liftErr(trip =>
         TE.fromEither(
           TripWithSelectedTravelClass.create(trip, currentTravelClass.name),
         ),
-        TE.mapLeft(liftType<ApiError | InvalidStateError>()),
       ),
     ),
   )

@@ -18,7 +18,7 @@ import {
   requestType,
   ValidationError,
 } from "@fp-app/framework"
-import { Result, pipe, TE, liftTE } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, TE, liftTE, ok, toTE } from "@fp-app/fp-ts-extensions"
 
 export default function generateKoaHandler<
   TDeps,
@@ -44,7 +44,8 @@ export default function generateKoaHandler<
     // DbError, because request handler is enhanced with it (decorator)
     // E2 because the validator enhances it.
     const task = pipe(
-      TE.fromEither(validate(input)),
+      toTE(ok)(input),
+      TE.chain(toTE(validate)),
       TE.chain(liftErr(handleRequest)),
       TE.bimap(
         err =>

@@ -576,6 +576,10 @@ export function compose<TInput, TError, TOutput>(...a: any[]) {
     )
 }
 
+export const toTE = <T, TI extends T, T2, TE>(func: (i: T) => Either<TE, T2>) => (
+  i: TI,
+) => TE.fromEither(func(i))
+
 export function composeE<TInput, TError, TOutput>(
   ab: (c: E.Either<TError, TInput>) => E.Either<TError, TOutput>,
 ): (input: TInput) => E.Either<TError, TOutput>
