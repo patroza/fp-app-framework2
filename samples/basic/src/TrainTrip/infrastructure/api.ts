@@ -95,7 +95,7 @@ const getTemplateFake = (_: {
   return ok(tpl)
 }
 
-const mockedTemplates: () => { [key: string]: Template } = () => ({
+const mockedTemplates: () => Record<string, Template> = () => ({
   "template-id1": {
     id: "template-id1",
     travelClasses: { second: { id: "template-id1" }, first: { id: "template-id2" } },

@@ -3,7 +3,7 @@ import { Disposable, noop, typedKeysOf } from "./misc"
 
 type logLevels = Pick<typeof console, "log" | "error" | "warn" | "debug">
 interface AddLogging {
-  addToLoggingContext: (item: { [key: string]: any }) => Disposable
+  addToLoggingContext: (item: Record<string, any>) => Disposable
 }
 type logger = logLevels & AddLogging
 

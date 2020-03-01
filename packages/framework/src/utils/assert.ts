@@ -18,7 +18,7 @@ const assert = ((testValue: boolean, format: string, ...extra) =>
  * Asserts that any of the specified properties are not null
  * @param {Object} properties
  */
-const propertiesAreNotNull = (properties: { [key: string]: any }) => {
+const propertiesAreNotNull = (properties: Record<string, any>) => {
   for (const prop of Object.keys(properties)) {
     isNotNull(properties[prop], prop)
   }

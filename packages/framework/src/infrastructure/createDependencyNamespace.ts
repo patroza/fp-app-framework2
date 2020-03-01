@@ -50,7 +50,7 @@ export default function createDependencyNamespace(
   const getLoggingScope = (): LoggingScope =>
     getNamespace(namespace).get(loggingScopeKey)
 
-  const addToLoggingContext = (item: { [key: string]: any }) => {
+  const addToLoggingContext = (item: Record<string, any>) => {
     getLoggingScope().items.push(item)
     return {
       dispose: () => removeElement(getLoggingScope().items, item),
