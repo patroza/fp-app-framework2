@@ -290,6 +290,14 @@ export const conditional = <TInput, TOutput, TErrorOutput>(
 
 export const liftType = <T>() => <TInput extends T>(e: TInput) => e as T
 
+export const liftE = <TE>() => <T, TI, TE2 extends TE>(
+  e: (i: TI) => Either<TE2, T>,
+) => (i: TI) => pipe(e(i), E.mapLeft(liftType<TE>()))
+
+export const liftTE = <TE>() => <T, TI, TE2 extends TE>(
+  e: (i: TI) => TaskEither<TE2, T>,
+) => (i: TI) => pipe(e(i), TE.mapLeft(liftType<TE>()))
+
 // Experiment
 
 // Very nasty, need to find a cleaner approach
