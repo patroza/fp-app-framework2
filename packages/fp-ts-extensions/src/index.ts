@@ -44,8 +44,11 @@ export const boolToEither = <T>(
   return ok(value)
 }
 
-export const errorishToEither = <T extends { error?: TE }, TE extends Error>(
-  errorish: T,
+
+export const errorishToEither = <T, TE extends Error>(
+  errorish: T & {
+    error?: TE
+  },
 ): E.Either<TE, T> => {
   if (errorish.error) {
     return err(errorish.error)

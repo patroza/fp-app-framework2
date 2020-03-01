@@ -7,7 +7,7 @@ import {
   errorishToEither,
   EDo,
 } from "@fp-app/fp-ts-extensions"
-import Joi, { ValidationResult, ValidationError as JoiValidationError } from "@hapi/joi"
+import Joi, { ValidationResult } from "@hapi/joi"
 import {
   CombinedValidationError,
   FieldValidationError,
@@ -30,8 +30,7 @@ const createValidator = <TIn>(
 
 const mapValidationResult = (result: ValidationResult) =>
   pipe(
-    // TODO: not sure why we have to manually specify here..
-    errorishToEither<ValidationResult, JoiValidationError>(result),
+    errorishToEither(result),
     EDo(x => x.warning && logger.warn("Warning during validation: " + x.warning)),
     E.map(x => x.value),
     E.mapLeft(joiValidationErrorToCombinedValidationError),
@@ -53,7 +52,7 @@ export type ValidatorType<TIn, TErr> = ((object: TIn) => Result<TIn, TErr>) & {
   jsonSchema: string
 }
 
-const joiValidationErrorToCombinedValidationError = (x: JoiValidationError) =>
+const joiValidationErrorToCombinedValidationError = (x: Joi.ValidationError) =>
   new CombinedValidationError(
     x.details.map(x => new FieldValidationError(x.path.join("."), x)),
   )
