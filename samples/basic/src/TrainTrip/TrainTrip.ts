@@ -21,6 +21,7 @@ import {
   E,
   pipe,
   liftE,
+  chainTee,
 } from "@fp-app/fp-ts-extensions"
 import isEqual from "lodash/fp/isEqual"
 import FutureDate from "./FutureDate"
@@ -92,9 +93,23 @@ export default class TrainTrip extends Entity {
     const liftErr = liftE<ValidationError | InvalidStateError | ForbiddenError>()
     return pipe(
       this.confirmUserChangeAllowed(),
-      E.chain(liftErr(() => this.applyDefinedChanges(state))),
+      E.map(() => state),
+      E.chain(liftErr(this.applyDefinedChanges)),
       E.map(this.createChangeEvents),
     )
+    // ALT1
+    // return pipe(
+    //   ok(state),
+    //   chainTee(this.confirmUserChangeAllowed),
+    //   E.chain(liftErr(this.applyDefinedChanges)),
+    //   E.map(this.createChangeEvents),
+    // )
+    // ALT2
+    // return pipe(
+    //   this.confirmUserChangeAllowed(),
+    //   E.chain(liftErr(() => this.applyDefinedChanges(state))),
+    //   E.map(this.createChangeEvents),
+    // )
   }
 
   lock() {
@@ -209,7 +224,7 @@ export default class TrainTrip extends Entity {
     return ok(true)
   }
 
-  private confirmUserChangeAllowed(): Result<void, ForbiddenError> {
+  private confirmUserChangeAllowed = (): Result<void, ForbiddenError> => {
     if (this.isLocked) {
       return err(new ForbiddenError(`No longer allowed to change TrainTrip ${this.id}`))
     }
