@@ -7,7 +7,7 @@ import {
   TEDo,
   ok,
   TE,
-  liftType,
+  liftTE,
 } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { EventHandlerWithDependencies } from "./mediator"
@@ -35,8 +35,7 @@ export default class DomainEventHandler {
   ) =>
     pipe(
       this.executeEvents(getAndClearEvents),
-      //TE.chain(() => pipe(commit(), liftTE<Error | TErr>())),
-      TE.chain(() => pipe(commit(), TE.mapLeft(liftType<Error | TErr>()))),
+      TE.chain(pipe(commit, liftTE<Error | TErr>())),
       TEDo(this.publishIntegrationEvents),
     )
 
