@@ -50,7 +50,7 @@ const createRoot = () => {
   container.registerSingletonC2(trainTripReadContextKey, TrainTripReadContext)
   container.registerSingletonF(
     sendCloudSyncKey,
-    factoryOf(sendCloudSyncFake, f => f({ cloudUrl: "" })),
+    factoryOf(sendCloudSyncFake, f => f()),
   )
   container.registerSingletonF(getTripKey, () => {
     const { getTrip: getTripF } = createInventoryClient({
@@ -104,7 +104,7 @@ const namespace = "train-trip-service"
 export default createRoot
 
 const createInventoryClient = ({ templateApiUrl }: { templateApiUrl: string }) => {
-  const getTemplate = getTemplateFake({ templateApiUrl })
+  const getTemplate = getTemplateFake()
   return {
     getPricing: getPricingFake({ getTemplate, pricingApiUrl: templateApiUrl }),
     getTemplate,
