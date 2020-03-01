@@ -7,15 +7,7 @@ import {
   ValidationError,
   DbError,
 } from "@fp-app/framework"
-import {
-  TE,
-  chainTupTask,
-  chainFlatTupTask,
-  compose,
-  liftE,
-  liftTE,
-  createLifters,
-} from "@fp-app/fp-ts-extensions"
+import { TE, chainTupTask, chainFlatTupTask, compose } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
 import { DbContextKey, defaultDependencies } from "./types"
@@ -29,19 +21,17 @@ export const changeStartDate = createCommand<
   ChangeStartDateInput,
   void,
   ChangeStartDateError
->("changeStartDate", ({ db }) =>
+>("changeStartDate", ({ db, tools }) =>
   compose(
     chainTupTask(
-      sdLift.TE(({ startDate }) => TE.fromEither(FutureDate.create(startDate))),
+      tools.liftTE(({ startDate }) => TE.fromEither(FutureDate.create(startDate))),
     ),
-    chainFlatTupTask(sdLift.TE(([, i]) => db.trainTrips.load(i.trainTripId))),
+    chainFlatTupTask(tools.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
     TE.chain(
-      sdLift.TE(([trainTrip, sd]) => TE.fromEither(trainTrip.changeStartDate(sd))),
+      tools.liftTE(([trainTrip, sd]) => TE.fromEither(trainTrip.changeStartDate(sd))),
     ),
   ),
 )
-
-const sdLift = createLifters<ChangeStartDateError>()
 
 export interface ChangeStartDateInput {
   trainTripId: string
@@ -53,20 +43,19 @@ export const changeTravelClass = createCommand<
   ChangeTravelClassInput,
   void,
   ChangeTravelClassError
->("changeTravelClass", ({ db }) =>
+>("changeTravelClass", ({ db, tools }) =>
   compose(
     chainTupTask(
-      tcLift.TE(({ travelClass }) =>
+      tools.liftTE(({ travelClass }) =>
         TE.fromEither(TravelClassDefinition.create(travelClass)),
       ),
     ),
-    chainFlatTupTask(tcLift.TE(([, i]) => db.trainTrips.load(i.trainTripId))),
+    chainFlatTupTask(tools.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
     TE.chain(
-      tcLift.TE(([trainTrip, sl]) => TE.fromEither(trainTrip.changeTravelClass(sl))),
+      tools.liftTE(([trainTrip, sl]) => TE.fromEither(trainTrip.changeTravelClass(sl))),
     ),
   ),
 )
-const tcLift = createLifters<ChangeTravelClassError>()
 
 export interface ChangeTravelClassInput {
   trainTripId: string

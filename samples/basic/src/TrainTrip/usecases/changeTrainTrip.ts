@@ -17,7 +17,6 @@ import {
   chainFlatTupTask,
   TE,
   compose,
-  createLifters,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
@@ -31,20 +30,17 @@ const createCommand = createCommandWithDeps({
 
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
-  ({ db }) =>
+  ({ db, tools }) =>
     compose(
-      chainTupTask(lift.TE(i => TE.fromEither(validateStateProposition(i)))),
-      chainFlatTupTask(lift.TE(([, i]) => db.trainTrips.load(i.trainTripId))),
+      chainTupTask(tools.liftTE(i => TE.fromEither(validateStateProposition(i)))),
+      chainFlatTupTask(tools.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
       TE.chain(
-        lift.TE(([trainTrip, proposal]) =>
+        tools.liftTE(([trainTrip, proposal]) =>
           TE.fromEither(trainTrip.proposeChanges(proposal)),
         ),
       ),
     ),
 )
-
-const lift = createLifters<ChangeTrainTripError>()
-
 export default changeTrainTrip
 
 export interface Input extends StateProposition {

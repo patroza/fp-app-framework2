@@ -6,6 +6,8 @@ import {
   resolveEventKey,
   UnitOfWork,
   UOWKey,
+  toolDepsKey,
+  toolDeps,
 } from "@fp-app/framework"
 import { exists, mkdir } from "@fp-app/io.diskdb"
 import chalk from "chalk"
@@ -56,6 +58,8 @@ const createRoot = () => {
     })
     return getTripF
   })
+
+  container.registerSingletonO(toolDepsKey, toolDeps)
 
   container.registerSingletonF(resolveEventKey, () => resolveEvent())
 

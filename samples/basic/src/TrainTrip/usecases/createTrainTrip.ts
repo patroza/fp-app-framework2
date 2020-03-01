@@ -19,7 +19,6 @@ import {
   compose,
   TEDo,
   reverseApply,
-  createLifters,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
@@ -34,17 +33,15 @@ const createCommand = createCommandWithDeps({
 
 const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
-  ({ db, getTrip }) =>
+  ({ db, getTrip, tools }) =>
     compose(
-      TE.chainEitherK(lift.E(validateCreateTrainTripInfo)),
-      chainTupTask(lift.TE(i => getTrip(i.templateId))),
+      TE.chainEitherK(tools.liftE(validateCreateTrainTripInfo)),
+      chainTupTask(tools.liftTE(i => getTrip(i.templateId))),
       TE.map(reverseApply(TrainTrip.create)),
       TEDo(db.trainTrips.add),
       TE.map(trainTrip => trainTrip.id),
     ),
 )
-
-const lift = createLifters<CreateError>()
 
 export default createTrainTrip
 export interface Input {
