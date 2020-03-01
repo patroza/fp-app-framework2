@@ -344,6 +344,10 @@ export type PipeFunction2N<TOutput, TErr> = () => Result<TOutput, TErr>
 // helper for addressing some issues with syntax highlighting in editor when using multiple generics
 export type AnyResult<T = any, TErr = any> = Result<T, TErr>
 
+export const mapper = <T, TOut>(mapper: (i: T) => TOut) => <FOut>(
+  f: (i: TOut) => FOut,
+) => (i: T) => f(mapper(i))
+
 // We create tuples in reverse, under the assumption that the further away we are
 // from previous statements, the less important their output becomes..
 // Alternatively we can always create two variations :)
