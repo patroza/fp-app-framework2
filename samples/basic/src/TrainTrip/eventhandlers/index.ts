@@ -19,7 +19,7 @@ import {
   ApiError,
   InvalidStateError,
 } from "@fp-app/framework"
-import { pipe, TE, E, liftType } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, liftType, tryExecute } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"
 
@@ -44,18 +44,18 @@ const createIntegrationEventHandler = createIntegrationEventHandlerWithDeps({
   ...defaultDependencies,
 })
 
-createIntegrationEventHandler<TrainTripCreated, void, never>(
+createIntegrationEventHandler<TrainTripCreated, void, Error>(
   /* on */ TrainTripCreated,
   "ScheduleCloudSync",
-  ({ trainTripPublisher }) => ({ trainTripId }) => async () =>
-    E.right(await trainTripPublisher.register(trainTripId)),
+  ({ trainTripPublisher }) => ({ trainTripId }) =>
+    tryExecute(() => trainTripPublisher.register(trainTripId)),
 )
 
 createIntegrationEventHandler<TrainTripStateChanged, void, never>(
   /* on */ TrainTripStateChanged,
   "EitherDebounceOrScheduleCloudSync",
-  ({ trainTripPublisher }) => ({ trainTripId }) => async () =>
-    E.right(await trainTripPublisher.register(trainTripId)),
+  ({ trainTripPublisher }) => ({ trainTripId }) =>
+    tryExecute(() => trainTripPublisher.register(trainTripId)),
 )
 
 const createDomainEventHandler = createDomainEventHandlerWithDeps({
@@ -83,8 +83,8 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
 createIntegrationEventHandler<UserInputReceived, void, never>(
   /* on */ UserInputReceived,
   "DebouncePendingCloudSync",
-  ({ trainTripPublisher }) => ({ trainTripId }) => async () =>
-    E.right(await trainTripPublisher.registerIfPending(trainTripId)),
+  ({ trainTripPublisher }) => ({ trainTripId }) =>
+    tryExecute(() => trainTripPublisher.registerIfPending(trainTripId)),
 )
 
 // const createIntegrationCommandEventHandler = createIntegrationEventHandlerWithDeps({ db: DbContextKey, ...defaultDependencies })

@@ -74,6 +74,12 @@ export function chainTee(f: any) {
   )
 }
 
+/**
+ * Execute promise, if success return right, if fail; Cause exception.
+ */
+export const tryExecute = <T>(func: () => Promise<T>) => async () =>
+  E.right(await func())
+
 export function chainTeeTask<T, TDontCare, E>(
   f: PipeFunction<T, TDontCare, E>,
 ): (inp: AsyncResult<T, E>) => AsyncResult<T, E>
