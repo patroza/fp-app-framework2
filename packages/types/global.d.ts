@@ -1,5 +1,5 @@
 type Diff<T, U> = T extends U ? never : T
-interface FunctionDefinitions { [key: string]: (...args: any[]) => any }
+type FunctionDefinitions = Record<string, (...args: any[]) => any>
 
 type ReturnTypes<T extends FunctionDefinitions> = {
   [P in keyof T]: ReturnType<T[P]>

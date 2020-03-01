@@ -9,11 +9,11 @@ import {
 } from "@fp-app/framework"
 import {
   TE,
-  pipe,
   chainTupTask,
   chainFlatTupTask,
-  liftType,
   compose,
+  pipe,
+  toTE,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
@@ -28,25 +28,38 @@ export const changeStartDate = createCommand<
   ChangeStartDateInput,
   void,
   ChangeStartDateError
->("changeStartDate", ({ db }) =>
+>("changeStartDate", ({ db, tools }) =>
   compose(
-    chainTupTask(({ startDate }) =>
-      pipe(
-        TE.fromEither(FutureDate.create(startDate)),
-        TE.mapLeft(liftType<ChangeStartDateError>()),
+    chainTupTask(
+      compose(
+        TE.map(i => i.startDate),
+        TE.chain(pipe(FutureDate.create, tools.liftE, toTE)),
       ),
+      // ALT
+      // pipe(
+      //   FutureDate.create,
+      //   tools.liftE,
+      //   toTE,
+      //   mapper(i => i.startDate),
+      // ),
     ),
-    chainFlatTupTask(([, i]) =>
-      pipe(
-        db.trainTrips.load(i.trainTripId),
-        TE.mapLeft(liftType<ChangeStartDateError>()),
+    chainFlatTupTask(
+      compose(
+        TE.map(([, i]) => i.trainTripId),
+        TE.chain(pipe(db.trainTrips.load, tools.liftTE)),
       ),
+      // ALT
+      // pipe(
+      //   db.trainTrips.load,
+      //   tools.liftTE,
+      //   mapper(([, i]) => i.trainTripId),
+      // ),
     ),
-    TE.chain(([trainTrip, sd]) =>
-      pipe(
-        TE.fromEither(trainTrip.changeStartDate(sd)),
-        TE.mapLeft(liftType<ChangeStartDateError>()),
-      ),
+    TE.chain(
+      ([trainTrip, startDate]) =>
+        pipe(trainTrip.changeStartDate, tools.liftE, toTE, f => f(startDate)),
+      // ALT
+      // pipe(trainTrip.changeStartDate, tools.liftE, toTE)(startDate),
     ),
   ),
 )
@@ -61,28 +74,41 @@ export const changeTravelClass = createCommand<
   ChangeTravelClassInput,
   void,
   ChangeTravelClassError
->("changeTravelClass", ({ db }) =>
+>("changeTravelClass", ({ db, tools }) =>
   compose(
-    chainTupTask(({ travelClass }) =>
-      pipe(
-        TE.fromEither(TravelClassDefinition.create(travelClass)),
-        TE.mapLeft(liftType<ChangeTravelClassError>()),
+    chainTupTask(
+      compose(
+        TE.map(({ travelClass }) => travelClass),
+        TE.chain(toTE(tools.liftE(TravelClassDefinition.create))),
       ),
     ),
-    chainFlatTupTask(([, i]) =>
-      pipe(
-        db.trainTrips.load(i.trainTripId),
-        TE.mapLeft(liftType<ChangeTravelClassError>()),
+    // chainTupTask(({ travelClass }) =>
+    //   toTE(tools.liftE(TravelClassDefinition.create))(travelClass),
+    // ),
+    chainFlatTupTask(
+      compose(
+        TE.map(([, i]) => i.trainTripId),
+        TE.chain(tools.liftTE(db.trainTrips.load)),
       ),
     ),
-    TE.chain(([trainTrip, sl]) =>
-      pipe(
-        TE.fromEither(trainTrip.changeTravelClass(sl)),
-        TE.mapLeft(liftType<ChangeTravelClassError>()),
-      ),
-    ),
+    // I want to write this as: map([, i] => i.trainTripid), chain(db.trainTrips.load§)
+    // chainFlatTupTask(tools.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
+    // This means:
+    // TE.chain(input => {
+    //   const load = tools.liftTE(db.trainTrips.load)
+    //   const f = ([, i]: typeof input) => load(i.trainTripId)
+    //   return pipe(
+    //     f(input),
+    //     TE.map(x => [x, input[0], input[1]] as const),
+    //   )
+    // }),
+    TE.chain(([trainTrip, sl]) => {
+      const changeTravelClass = pipe(trainTrip.changeTravelClass, tools.liftE, toTE)
+      return changeTravelClass(sl)
+    }),
   ),
 )
+
 export interface ChangeTravelClassInput {
   trainTripId: string
   travelClass: TravelClassName

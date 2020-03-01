@@ -3,7 +3,7 @@ import { Disposable, noop, typedKeysOf } from "./misc"
 
 type logLevels = Pick<typeof console, "log" | "error" | "warn" | "debug">
 interface AddLogging {
-  addToLoggingContext: (item: { [key: string]: any }) => Disposable
+  addToLoggingContext: (item: Record<string, any>) => Disposable
 }
 type logger = logLevels & AddLogging
 
@@ -20,6 +20,7 @@ const setLogger = (l: logLevels & Partial<AddLogging>) => Object.assign(logger, 
 const loggers = new Map<string, typeof logger>()
 const getLogger = (name: string) => {
   if (loggers.has(name)) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return loggers.get(name)!
   }
 

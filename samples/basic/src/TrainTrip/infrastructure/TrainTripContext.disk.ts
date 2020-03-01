@@ -102,6 +102,7 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
     new (PaxDefinition as any)(paxInput.value),
     new Date(startDate),
     travelClassConfigurations,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     travelClassConfigurations.find(
       x => x.travelClass.name === currentTravelClassConfiguration.travelClass.name,
     )!,

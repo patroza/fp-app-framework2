@@ -13,13 +13,14 @@ import {
   anyTrue,
   applyIfNotUndefined,
   err,
-  liftType,
   ok,
   Result,
   success,
   valueOrUndefined,
   E,
   pipe,
+  liftE,
+  mapStaticE,
 } from "@fp-app/fp-ts-extensions"
 import isEqual from "lodash/fp/isEqual"
 import FutureDate from "./FutureDate"
@@ -87,17 +88,27 @@ export default class TrainTrip extends Entity {
     Object.assign(this, rest)
   }
 
-  proposeChanges(state: StateProposition) {
+  proposeChanges = (state: StateProposition) => {
+    const liftErr = liftE<ValidationError | InvalidStateError | ForbiddenError>()
     return pipe(
       this.confirmUserChangeAllowed(),
-      E.chain(() =>
-        pipe(
-          this.applyDefinedChanges(state),
-          E.mapLeft(liftType<ValidationError | InvalidStateError | ForbiddenError>()),
-        ),
-      ),
+      mapStaticE(state),
+      E.chain(liftErr(this.applyDefinedChanges)),
       E.map(this.createChangeEvents),
     )
+    // ALT1
+    // return pipe(
+    //   ok(state),
+    //   chainTee(this.confirmUserChangeAllowed),
+    //   E.chain(liftErr(this.applyDefinedChanges)),
+    //   E.map(this.createChangeEvents),
+    // )
+    // ALT2
+    // return pipe(
+    //   this.confirmUserChangeAllowed(),
+    //   E.chain(liftErr(() => this.applyDefinedChanges(state))),
+    //   E.map(this.createChangeEvents),
+    // )
   }
 
   lock() {
@@ -130,10 +141,10 @@ export default class TrainTrip extends Entity {
 
   ////////////
   //// Separate sample; not used other than testing
-  changeStartDate(startDate: FutureDate) {
+  changeStartDate = (startDate: FutureDate) => {
     return pipe(
       this.confirmUserChangeAllowed(),
-      E.map(() => startDate),
+      mapStaticE(startDate),
       E.map(this.intChangeStartDate),
       E.map(this.createChangeEvents),
     )
@@ -142,21 +153,17 @@ export default class TrainTrip extends Entity {
   changePax(pax: PaxDefinition) {
     return pipe(
       this.confirmUserChangeAllowed(),
-      E.map(() => pax),
+      mapStaticE(pax),
       E.map(this.intChangePax),
       E.map(this.createChangeEvents),
     )
   }
 
-  changeTravelClass(travelClass: TravelClassDefinition) {
+  changeTravelClass = (travelClass: TravelClassDefinition) => {
+    const liftErr = liftE<ForbiddenError | InvalidStateError>()
     return pipe(
       this.confirmUserChangeAllowed(),
-      E.chain(() =>
-        pipe(
-          this.intChangeTravelClass(travelClass),
-          E.mapLeft(liftType<ForbiddenError | InvalidStateError>()),
-        ),
-      ),
+      liftErr(() => this.intChangeTravelClass(travelClass)),
       E.map(this.createChangeEvents),
     )
   }
@@ -212,7 +219,7 @@ export default class TrainTrip extends Entity {
     return ok(true)
   }
 
-  private confirmUserChangeAllowed(): Result<void, ForbiddenError> {
+  private confirmUserChangeAllowed = (): Result<void, ForbiddenError> => {
     if (this.isLocked) {
       return err(new ForbiddenError(`No longer allowed to change TrainTrip ${this.id}`))
     }

@@ -1,17 +1,13 @@
 import { ValidationError } from "@fp-app/framework"
-import { err, ok, Result } from "@fp-app/fp-ts-extensions"
+import { E, boolToEither, pipe } from "@fp-app/fp-ts-extensions"
 
 export default class TravelClassDefinition {
-  static create(
-    travelClassName: string,
-  ): Result<TravelClassDefinition, ValidationError> {
-    if (!validtravelClasses.some(x => x === travelClassName)) {
-      return err(
-        new ValidationError(`${travelClassName} is not a valid travel class name`),
-      )
-    }
-    return ok(new TravelClassDefinition(travelClassName))
-  }
+  static create = (name: string) =>
+    pipe(
+      boolToEither(name, name => validtravelClasses.some(x => x === name)),
+      E.map(x => new TravelClassDefinition(x)),
+      E.mapLeft(x => new ValidationError(`${x} is not a valid travel class name`)),
+    )
 
   private constructor(readonly value: string) {}
 }

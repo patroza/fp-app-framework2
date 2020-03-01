@@ -16,8 +16,8 @@ import {
   E,
   chainFlatTupTask,
   TE,
-  liftType,
   compose,
+  toTE,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
@@ -31,29 +31,34 @@ const createCommand = createCommandWithDeps({
 
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
-  ({ db }) =>
+  ({ db, tools }) =>
     compose(
-      chainTupTask(i =>
-        pipe(
-          TE.fromEither(validateStateProposition(i)),
-          TE.mapLeft(liftType<ChangeTrainTripError>()),
+      chainTupTask(pipe(validateStateProposition, tools.liftE, toTE)),
+      chainFlatTupTask(
+        compose(
+          TE.map(([, i]) => i.trainTripId),
+          TE.chain(pipe(db.trainTrips.load, tools.liftTE)),
         ),
       ),
-      chainFlatTupTask(([, i]) =>
-        pipe(
-          db.trainTrips.load(i.trainTripId),
-          TE.mapLeft(liftType<ChangeTrainTripError>()),
-        ),
-      ),
-      TE.chain(([trainTrip, proposal]) =>
-        pipe(
-          TE.fromEither(trainTrip.proposeChanges(proposal)),
-          TE.mapLeft(liftType<ChangeTrainTripError>()),
-        ),
+      TE.chain(
+        ([trainTrip, proposal]) =>
+          pipe(trainTrip.proposeChanges, tools.liftE, toTE, f => f(proposal)),
+        // ALT1
+        // compose(
+        //   TE.map(
+        //     ([trainTrip, proposal]) =>
+        //       [pipe(trainTrip.proposeChanges, tools.liftE, toTE), proposal] as const,
+        //   ),
+        //   TE.chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
+        // ),
+        // ALT2
+        //{
+        //  const proposeChanges = pipe(trainTrip.proposeChanges, tools.liftE, toTE)
+        //  return proposeChanges(proposal)
+        //}
       ),
     ),
 )
-
 export default changeTrainTrip
 
 export interface Input extends StateProposition {

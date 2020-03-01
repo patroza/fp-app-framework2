@@ -1,5 +1,13 @@
-import { err, ok, Result } from "@fp-app/fp-ts-extensions"
-import Joi from "@hapi/joi"
+import {
+  err,
+  ok,
+  Result,
+  pipe,
+  E,
+  errorishToEither,
+  EDo,
+} from "@fp-app/fp-ts-extensions"
+import Joi, { ValidationResult } from "@hapi/joi"
 import {
   CombinedValidationError,
   FieldValidationError,
@@ -7,28 +15,47 @@ import {
 } from "../errors"
 export { Joi }
 import { convert } from "@yeongjet/joi-to-json-schema"
+import { logger } from "./logger"
 
 const createValidator = <TIn>(
   schema: Joi.Schema,
 ): ValidatorType<TIn, ValidationError> => {
   const validator = (object: TIn): Result<TIn, ValidationError> => {
     const r = schema.validate(object, { abortEarly: false })
-    if (r.error) {
-      return err(
-        new CombinedValidationError(
-          r.error.details.map(x => new FieldValidationError(x.path.join("."), x)),
-        ),
-      )
-    }
-    return ok(r.value)
+    return mapValidationResult(r)
   }
   validator.jsonSchema = convert(schema)
   return validator
 }
 
+const mapValidationResult = (result: ValidationResult) =>
+  pipe(
+    errorishToEither(result),
+    EDo(x => x.warning && logger.warn("Warning during validation: " + x.warning)),
+    E.map(x => x.value),
+    E.mapLeft(joiValidationErrorToCombinedValidationError),
+  )
+// Alternative:
+// if (r.error) {
+//   return err(
+//     joiValidationErrorToCombinedValidationError(r.error),
+//   )
+// }
+// return ok(r.value)
+
+// Alt2:
+// return r.error
+//  ? err(joiValidationErrorToCombinedValidationError(r.error))
+//  : ok(r.value)
+
 export type ValidatorType<TIn, TErr> = ((object: TIn) => Result<TIn, TErr>) & {
   jsonSchema: string
 }
+
+const joiValidationErrorToCombinedValidationError = (x: Joi.ValidationError) =>
+  new CombinedValidationError(
+    x.details.map(x => new FieldValidationError(x.path.join("."), x)),
+  )
 
 const predicate = <T, E extends ValidationError>(
   pred: (inp: T) => boolean,

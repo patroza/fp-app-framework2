@@ -40,7 +40,7 @@ export interface ReadonlyTrainTripContext extends ReadonlyContext {
 export interface TrainTripContext extends ReadonlyTrainTripContext, UnitOfWork {}
 
 // tslint:disable-next-line:no-empty-interface
-export type RequestContext = RequestContextBase & { [key: string]: any }
+export type RequestContext = RequestContextBase & Record<string, any>
 
 export const RequestContextKey = generateKey<RequestContext>("request-context")
 export const DbContextKey = generateKey<ReadonlyTrainTripContext>("db-context")

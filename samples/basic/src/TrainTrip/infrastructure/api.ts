@@ -22,6 +22,8 @@ import {
   startWithVal,
   pipe,
   TE,
+  toTE,
+  liftE,
 } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
@@ -45,7 +47,7 @@ const getTrip = ({
 
 const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
   const currentTravelClass = tplToTravelClass(tpl)
-  const seq = sequenceAsync(
+  const resolveTravelClasses = sequenceAsync(
     [startWithVal(currentTravelClass)<ApiError>()].concat(
       typedKeysOf(tpl.travelClasses)
         .filter(x => x !== currentTravelClass.name)
@@ -53,24 +55,14 @@ const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
         .map(sl => pipe(getTemplate(sl.id), map(tplToTravelClass))),
     ),
   )
+  const liftErr = liftE<ApiError | InvalidStateError>()
+  const createTripWithSelectedTravelClass = (trip: Trip) =>
+    TripWithSelectedTravelClass.create(trip, currentTravelClass.name)
+
   return pipe(
-    seq,
-    TE.mapLeft(liftType<ApiError | InvalidStateError>()),
-    // TODO: should be chain Trip.create
-    TE.chain(i =>
-      pipe(
-        TE.fromEither(Trip.create(i)),
-        TE.mapLeft(liftType<ApiError | InvalidStateError>()),
-      ),
-    ),
-    TE.chain(trip =>
-      pipe(
-        TE.fromEither(
-          TripWithSelectedTravelClass.create(trip, currentTravelClass.name),
-        ),
-        TE.mapLeft(liftType<ApiError | InvalidStateError>()),
-      ),
-    ),
+    resolveTravelClasses,
+    TE.chain(pipe(Trip.create, liftErr, toTE)),
+    TE.chain(pipe(createTripWithSelectedTravelClass, liftErr, toTE)),
   )
 }
 
@@ -84,10 +76,8 @@ const getTplLevelName = (tpl: Template) =>
 
 // Typescript support for partial application is not really great, so we try currying instead for now
 // https://stackoverflow.com/questions/50400120/using-typescript-for-partial-application
-const getTemplateFake = (_: {
-  templateApiUrl: string
-  // eslint-disable-next-line @typescript-eslint/require-await
-}): getTemplateType => templateId => async () => {
+// eslint-disable-next-line @typescript-eslint/require-await
+const getTemplateFake = (): getTemplateType => templateId => async () => {
   const tpl = mockedTemplates()[templateId] as Template | undefined
   if (!tpl) {
     return err(new RecordNotFound("Template", templateId))
@@ -95,7 +85,7 @@ const getTemplateFake = (_: {
   return ok(tpl)
 }
 
-const mockedTemplates: () => { [key: string]: Template } = () => ({
+const mockedTemplates: () => Record<string, Template> = () => ({
   "template-id1": {
     id: "template-id1",
     travelClasses: { second: { id: "template-id1" }, first: { id: "template-id2" } },
@@ -116,19 +106,15 @@ const getPricingFake = ({
 
 const getFakePriceFromTemplate = () => ({ price: { amount: 100, currency: "EUR" } })
 
-const createTravelPlanFake = (_: {
-  travelPlanApiUrl: string
-  // eslint-disable-next-line @typescript-eslint/require-await
-}): createTravelPlanType => () => async () => ok<string, ConnectionError>(v4())
+// eslint-disable-next-line @typescript-eslint/require-await
+const createTravelPlanFake = (): createTravelPlanType => () => async () =>
+  ok<string, ConnectionError>(v4())
 
-const sendCloudSyncFake = (_: {
-  cloudUrl: string
-}): PipeFunction<TrainTrip, string, ConnectionError> => () =>
+const sendCloudSyncFake = (): PipeFunction<TrainTrip, string, ConnectionError> => () =>
   TE.right<ConnectionError, string>(v4())
 
-const getTravelPlanFake = (_: {
-  travelPlanApiUrl: string
-}): getTravelPlanType => travelPlanId => TE.right({ id: travelPlanId } as TravelPlan)
+const getTravelPlanFake = (): getTravelPlanType => travelPlanId =>
+  TE.right({ id: travelPlanId } as TravelPlan)
 
 export {
   createTravelPlanFake,

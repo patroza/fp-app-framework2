@@ -6,6 +6,8 @@ import {
   resolveEventKey,
   UnitOfWork,
   UOWKey,
+  toolDepsKey,
+  toolDeps,
 } from "@fp-app/framework"
 import { exists, mkdir } from "@fp-app/io.diskdb"
 import chalk from "chalk"
@@ -48,7 +50,7 @@ const createRoot = () => {
   container.registerSingletonC2(trainTripReadContextKey, TrainTripReadContext)
   container.registerSingletonF(
     sendCloudSyncKey,
-    factoryOf(sendCloudSyncFake, f => f({ cloudUrl: "" })),
+    factoryOf(sendCloudSyncFake, f => f()),
   )
   container.registerSingletonF(getTripKey, () => {
     const { getTrip: getTripF } = createInventoryClient({
@@ -56,6 +58,8 @@ const createRoot = () => {
     })
     return getTripF
   })
+
+  container.registerSingletonO(toolDepsKey, toolDeps)
 
   container.registerSingletonF(resolveEventKey, () => resolveEvent())
 
@@ -100,7 +104,7 @@ const namespace = "train-trip-service"
 export default createRoot
 
 const createInventoryClient = ({ templateApiUrl }: { templateApiUrl: string }) => {
-  const getTemplate = getTemplateFake({ templateApiUrl })
+  const getTemplate = getTemplateFake()
   return {
     getPricing: getPricingFake({ getTemplate, pricingApiUrl: templateApiUrl }),
     getTemplate,

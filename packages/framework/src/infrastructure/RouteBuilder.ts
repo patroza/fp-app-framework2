@@ -50,9 +50,7 @@ export default abstract class RouteBuilder<TContext> {
   }
 }
 
-export interface HALConfig {
-  [key: string]: string
-}
+export type HALConfig = Record<string, string>
 
 export type ResponseTransform<TContext, TOutput> = (
   output: TOutput,

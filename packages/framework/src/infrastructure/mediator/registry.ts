@@ -1,4 +1,4 @@
-import { PipeFunction, AsyncResult } from "@fp-app/fp-ts-extensions"
+import { PipeFunction, AsyncResult, liftE, liftTE } from "@fp-app/fp-ts-extensions"
 import chalk from "chalk"
 import Event from "../../event"
 import { Constructor, getLogger, setFunctionName, typedKeysOf } from "../../utils"
@@ -15,7 +15,10 @@ import {
   requestTypeSymbol,
   WithDependencies,
   WithDependenciesConfig,
+  generateKeyFromFn,
 } from "../SimpleContainer"
+import { Either } from "fp-ts/lib/Either"
+import { TaskEither } from "fp-ts/lib/TaskEither"
 
 const logger = getLogger("registry")
 
@@ -29,13 +32,23 @@ export type EventHandlerWithDependencies<
   TInput,
   TOutput,
   TError
-> = HandlerWithDependencies<TDependencies, TInput, TOutput, TError>
+> = HandlerWithDependencies<
+  TDependencies & { tools: ToolDeps<TError> },
+  TInput,
+  TOutput,
+  TError
+>
 export type UsecaseWithDependencies<
   TDependencies,
   TInput,
   TOutput,
   TError
-> = HandlerWithDependencies<TDependencies, TInput, TOutput, TError>
+> = HandlerWithDependencies<
+  TDependencies & { tools: ToolDeps<TError> },
+  TInput,
+  TOutput,
+  TError
+>
 
 export const configureDependencies = <TDependencies, T>(
   deps: TDependencies,
@@ -115,10 +128,18 @@ const createCommandWithDeps = <TDependencies>(deps: TDependencies) => <
   TErr
 >(
   name: string,
-  handler: UsecaseWithDependencies<TDependencies, TInput, TOutput, TErr>,
+  handler: UsecaseWithDependencies<
+    TDependencies & { tools: ToolDeps<TErr> },
+    TInput,
+    TOutput,
+    TErr
+  >,
 ) => {
   handler = wrapHandler(handler)
-  const setupWithDeps = registerUsecaseHandler(deps)
+  const setupWithDeps = registerUsecaseHandler({
+    ...deps,
+    tools: toolDepsKey as ToolDeps<TErr>,
+  })
   const newHandler = setupWithDeps(name + "Command", "COMMAND")(handler)
   logger.debug(chalk.magenta(`Created Command handler ${name}`))
   return newHandler
@@ -131,10 +152,18 @@ const createQueryWithDeps = <TDependencies>(deps: TDependencies) => <
   TErr
 >(
   name: string,
-  handler: UsecaseWithDependencies<TDependencies, TInput, TOutput, TErr>,
+  handler: UsecaseWithDependencies<
+    TDependencies & { tools: ToolDeps<TErr> },
+    TInput,
+    TOutput,
+    TErr
+  >,
 ) => {
   handler = wrapHandler(handler)
-  const setupWithDeps = registerUsecaseHandler(deps)
+  const setupWithDeps = registerUsecaseHandler({
+    ...deps,
+    tools: toolDepsKey as ToolDeps<TErr>,
+  })
   const newHandler = setupWithDeps(name + "Query", "QUERY")(handler)
   logger.debug(chalk.magenta(`Created Query handler ${name}`))
   return newHandler
@@ -148,14 +177,38 @@ const createDomainEventHandlerWithDeps = <TDependencies>(deps: TDependencies) =>
 >(
   event: Constructor<TInput>,
   name: string,
-  handler: UsecaseWithDependencies<TDependencies, TInput, TOutput, TErr>,
+  handler: UsecaseWithDependencies<
+    TDependencies & { tools: ToolDeps<TErr> },
+    TInput,
+    TOutput,
+    TErr
+  >,
 ) => {
   handler = wrapHandler(handler)
-  const setupWithDeps = registerUsecaseHandler(deps)
+  const setupWithDeps = registerUsecaseHandler({
+    ...deps,
+    tools: toolDepsKey as ToolDeps<TErr>,
+  })
   const newHandler = setupWithDeps(`on${event.name}${name}`, "DOMAINEVENT")(handler)
   registerDomainEventHandler(event, handler)
   return newHandler
 }
+
+type ToolDeps<TE> = {
+  liftE: <T, TI, TE2 extends TE>(
+    e: (i: TI) => Either<TE2, T>,
+  ) => (i: TI) => Either<TE, T>
+  liftTE: <T, TI, TE2 extends TE>(
+    e: (i: TI) => TaskEither<TE2, T>,
+  ) => (i: TI) => TaskEither<TE, T>
+}
+
+export const toolDeps = <TE>(): ToolDeps<TE> => ({
+  liftE: liftE<TE>(),
+  liftTE: liftTE<TE>(),
+})
+
+export const toolDepsKey = generateKeyFromFn(toolDeps)
 
 // tslint:disable-next-line:max-line-length
 const createIntegrationEventHandlerWithDeps = <TDependencies>(deps: TDependencies) => <
@@ -165,10 +218,18 @@ const createIntegrationEventHandlerWithDeps = <TDependencies>(deps: TDependencie
 >(
   event: Constructor<TInput>,
   name: string,
-  handler: UsecaseWithDependencies<TDependencies, TInput, TOutput, TErr>,
+  handler: UsecaseWithDependencies<
+    TDependencies & { tools: ToolDeps<TErr> },
+    TInput,
+    TOutput,
+    TErr
+  >,
 ) => {
   handler = wrapHandler(handler)
-  const setupWithDeps = registerUsecaseHandler(deps)
+  const setupWithDeps = registerUsecaseHandler({
+    ...deps,
+    tools: toolDepsKey as ToolDeps<TErr>,
+  })
   const newHandler = setupWithDeps(
     `on${event.name}${name}`,
     "INTEGRATIONEVENT",

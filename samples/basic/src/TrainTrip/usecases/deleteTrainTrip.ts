@@ -1,5 +1,5 @@
 import { createCommandWithDeps, DbError } from "@fp-app/framework"
-import { pipe, TE, liftType, compose } from "@fp-app/fp-ts-extensions"
+import { TE, compose } from "@fp-app/fp-ts-extensions"
 import { DbContextKey, defaultDependencies } from "./types"
 
 const createCommand = createCommandWithDeps({
@@ -9,12 +9,10 @@ const createCommand = createCommandWithDeps({
 
 const deleteTrainTrip = createCommand<Input, void, DeleteTrainTripError>(
   "deleteTrainTrip",
-  ({ db }) =>
+  ({ db, tools }) =>
     compose(
       TE.map(({ trainTripId }) => trainTripId),
-      TE.chain(i =>
-        pipe(db.trainTrips.load(i), TE.mapLeft(liftType<DeleteTrainTripError>())),
-      ),
+      TE.chain(tools.liftTE(db.trainTrips.load)),
       TE.map(x => {
         // TODO: this should normally be on a different object.
         x.delete()
