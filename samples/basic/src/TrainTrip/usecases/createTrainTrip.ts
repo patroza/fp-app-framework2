@@ -17,10 +17,9 @@ import {
   TE,
   chainTupTask,
   compose,
-  liftE,
-  liftTE,
   TEDo,
   reverseApply,
+  createLifters,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
@@ -45,10 +44,7 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
     ),
 )
 
-const lift = {
-  E: liftE<CreateError>(),
-  TE: liftTE<CreateError>(),
-}
+const lift = createLifters<CreateError>()
 
 export default createTrainTrip
 export interface Input {

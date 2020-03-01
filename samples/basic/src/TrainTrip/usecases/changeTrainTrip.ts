@@ -17,8 +17,7 @@ import {
   chainFlatTupTask,
   TE,
   compose,
-  liftE,
-  liftTE,
+  createLifters,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
@@ -44,10 +43,7 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
     ),
 )
 
-const lift = {
-  E: liftE<ChangeTrainTripError>(),
-  TE: liftTE<ChangeTrainTripError>(),
-}
+const lift = createLifters<ChangeTrainTripError>()
 
 export default changeTrainTrip
 

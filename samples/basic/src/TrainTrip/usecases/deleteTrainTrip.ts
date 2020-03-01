@@ -1,5 +1,5 @@
 import { createCommandWithDeps, DbError } from "@fp-app/framework"
-import { TE, compose, liftE, liftTE } from "@fp-app/fp-ts-extensions"
+import { TE, compose, createLifters } from "@fp-app/fp-ts-extensions"
 import { DbContextKey, defaultDependencies } from "./types"
 
 const createCommand = createCommandWithDeps({
@@ -21,10 +21,7 @@ const deleteTrainTrip = createCommand<Input, void, DeleteTrainTripError>(
     ),
 )
 
-const lift = {
-  E: liftE<DeleteTrainTripError>(),
-  TE: liftTE<DeleteTrainTripError>(),
-}
+const lift = createLifters<DeleteTrainTripError>()
 
 export default deleteTrainTrip
 export interface Input {

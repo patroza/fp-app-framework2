@@ -14,6 +14,7 @@ import {
   compose,
   liftE,
   liftTE,
+  createLifters,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
@@ -40,10 +41,7 @@ export const changeStartDate = createCommand<
   ),
 )
 
-const sdLift = {
-  E: liftE<ChangeStartDateError>(),
-  TE: liftTE<ChangeStartDateError>(),
-}
+const sdLift = createLifters<ChangeStartDateError>()
 
 export interface ChangeStartDateInput {
   trainTripId: string
@@ -68,10 +66,7 @@ export const changeTravelClass = createCommand<
     ),
   ),
 )
-const tcLift = {
-  E: liftE<ChangeTravelClassError>(),
-  TE: liftTE<ChangeTravelClassError>(),
-}
+const tcLift = createLifters<ChangeTravelClassError>()
 
 export interface ChangeTravelClassInput {
   trainTripId: string
