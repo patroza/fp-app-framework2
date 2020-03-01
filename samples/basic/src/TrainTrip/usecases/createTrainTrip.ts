@@ -35,8 +35,13 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
   ({ db, getTrip, tools }) =>
     compose(
-      TE.chainEitherK(tools.liftE(validateCreateTrainTripInfo)),
-      chainTupTask(tools.liftTE(i => getTrip(i.templateId))),
+      TE.chainEitherK(pipe(validateCreateTrainTripInfo, tools.liftE)),
+      chainTupTask(
+        compose(
+          TE.map(i => i.templateId),
+          TE.chain(pipe(getTrip, tools.liftTE)),
+        ),
+      ),
       TE.map(reverseApply(TrainTrip.create)),
       TEDo(db.trainTrips.add),
       TE.map(trainTrip => trainTrip.id),

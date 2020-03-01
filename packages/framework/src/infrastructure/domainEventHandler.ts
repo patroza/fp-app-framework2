@@ -8,11 +8,13 @@ import {
   ok,
   TE,
   liftType,
+  liftTE,
 } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { EventHandlerWithDependencies } from "./mediator"
 import { publishType } from "./mediator/publish"
 import { generateKey } from "./SimpleContainer"
+import { TaskEither } from "fp-ts/lib/TaskEither"
 
 // tslint:disable-next-line:max-classes-per-file
 export default class DomainEventHandler {
@@ -34,11 +36,14 @@ export default class DomainEventHandler {
   ) =>
     pipe(
       this.executeEvents(getAndClearEvents),
+      //TE.chain(() => pipe(commit(), liftTE<Error | TErr>())),
       TE.chain(() => pipe(commit(), TE.mapLeft(liftType<Error | TErr>()))),
       TEDo(this.publishIntegrationEvents),
     )
 
-  private readonly executeEvents = (getAndClearEvents: () => Event[]) => async () => {
+  private readonly executeEvents = (
+    getAndClearEvents: () => Event[],
+  ): TaskEither<Error, void> => async () => {
     // 1. pre-commit: post domain events
     // 2. commit!
     // 3. post-commit: post integration events
