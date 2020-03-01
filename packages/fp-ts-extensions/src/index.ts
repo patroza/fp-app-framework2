@@ -78,6 +78,12 @@ export function chainTee(f: any) {
 export const tryExecute = <T>(func: () => Promise<T>) => async () =>
   E.right(await func())
 
+export const tryExecuteFW = <T, TI>(func: (input: TI) => Promise<T>) => <
+  TI2 extends TI
+>(
+  i: TI2,
+): TE.TaskEither<never, T> => async () => E.right(await func(i))
+
 export function chainTeeTask<T, TDontCare, E>(
   f: PipeFunction<T, TDontCare, E>,
 ): (inp: AsyncResult<T, E>) => AsyncResult<T, E>
