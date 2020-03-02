@@ -4,10 +4,8 @@ import {
   pipe,
   AsyncResult,
   isErr,
-  TEDo,
   ok,
   TE,
-  liftTE,
 } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { EventHandlerWithDependencies } from "./mediator"
@@ -35,8 +33,8 @@ export default class DomainEventHandler {
   ) =>
     pipe(
       this.executeEvents(getAndClearEvents),
-      TE.chain(pipe(commit, liftTE<Error | TErr>())),
-      TEDo(this.publishIntegrationEvents),
+      TE.chain(pipe(commit, TE.lift<Error | TErr>())),
+      TE.do(this.publishIntegrationEvents),
     )
 
   private readonly executeEvents = (

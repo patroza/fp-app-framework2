@@ -14,7 +14,7 @@ import { TaskEither } from "fp-ts/lib/TaskEither"
 import { Task } from "fp-ts/lib/Task"
 import { flow } from "fp-ts/lib/function"
 
-export { E, T, TE }
+export { T }
 
 export const result = TE.taskEither
 export type AsyncResult<TSuccess, TError> = TaskEither<TError, TSuccess>
@@ -102,8 +102,8 @@ export function chainTeeTask(f: any) {
   return TE.chain((input: any) => pipe(f(input), mapStatic(input)))
 }
 
-export const EDo = <T>(func: (input: T) => void) => E.map(tee(func))
-export const TEDo = <T>(func: (input: T) => void) => TE.map(tee(func))
+const EDo = <T>(func: (input: T) => void) => E.map(tee(func))
+const TEDo = <T>(func: (input: T) => void) => TE.map(tee(func))
 
 // TODO: Should come with map already wrapped aroun it
 export function tee<T, TDontCare>(
@@ -124,7 +124,7 @@ export function tee(f: any) {
 export const regainType = <T, TOut>(f: (i: T) => TOut) => <T2 extends T>(i: T2) => f(i)
 
 // Easily pass input -> (input -> output) -> [output, input]
-export function chainTupTask<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
+function chainTupTask<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
   return TE.chain((input: TInput) =>
     pipe(
       f(input),
@@ -133,10 +133,10 @@ export function chainTupTask<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
   )
 }
 
-export function chainTup<TInput, T, E>(
+function chainTup<TInput, T, E>(
   f: (x: TInput) => Result<T, E>,
 ): (inp: Result<TInput, E>) => Result<readonly [T, TInput], E>
-export function chainTup(f: any) {
+function chainTup(f: any) {
   return E.chain((input: any) =>
     pipe(
       f(input),
@@ -307,13 +307,13 @@ export const createLifters = <T>() => ({
   TE: liftTE<T>(),
 })
 
-export const liftE = <TE>() => <T, TI, TE2 extends TE>(
-  e: (i: TI) => Either<TE2, T>,
-) => (i: TI) => pipe(e(i), E.mapLeft(liftType<TE>()))
+const liftE = <TE>() => <T, TI, TE2 extends TE>(e: (i: TI) => Either<TE2, T>) => (
+  i: TI,
+) => pipe(e(i), E.mapLeft(liftType<TE>()))
 
-export const liftTE = <TE>() => <T, TI, TE2 extends TE>(
-  e: (i: TI) => TaskEither<TE2, T>,
-) => (i: TI) => pipe(e(i), TE.mapLeft(liftType<TE>()))
+const liftTE = <TE>() => <T, TI, TE2 extends TE>(e: (i: TI) => TaskEither<TE2, T>) => (
+  i: TI,
+) => pipe(e(i), TE.mapLeft(liftType<TE>()))
 
 // Experiment
 
@@ -370,12 +370,12 @@ export const mapper = <T, TOut>(mapper: (i: T) => TOut) => <FOut>(
 // We create tuples in reverse, under the assumption that the further away we are
 // from previous statements, the less important their output becomes..
 // Alternatively we can always create two variations :)
-export function chainFlatTupTask<TInput, TInputB, T, E>(
+function chainFlatTupTask<TInput, TInputB, T, E>(
   f: (x: readonly [TInput, TInputB]) => AsyncResult<T, E>,
 ): (
   input: AsyncResult<readonly [TInput, TInputB], E>,
 ) => AsyncResult<readonly [T, TInput, TInputB], E>
-export function chainFlatTupTask(f: any) {
+function chainFlatTupTask(f: any) {
   return TE.chain((input: any) =>
     pipe(
       f(input),
@@ -384,7 +384,7 @@ export function chainFlatTupTask(f: any) {
   )
 }
 
-export function chainFlatTup<
+function chainFlatTup<
   TInput,
   TInputB,
   TInput2 extends readonly [TInput, TInputB],
@@ -395,7 +395,7 @@ export function chainFlatTup<
 ): (
   input: Result<readonly [TInput, TInputB], E>,
 ) => Result<readonly [T, TInput, TInputB], E>
-export function chainFlatTup(f: any) {
+function chainFlatTup(f: any) {
   return E.chain((input: any) =>
     pipe(
       f(input),
@@ -632,3 +632,21 @@ export function composeE<TInput, TError, TOutput>(...a: any[]) {
       ...a,
     )
 }
+
+const EnhancedTE = {
+  ...TE,
+  do: TEDo,
+  lift: liftTE,
+  chainTup: chainTupTask,
+  chainFlatTup: chainFlatTupTask,
+}
+
+const EnhancedE = {
+  ...E,
+  do: EDo,
+  lift: liftE,
+  chainTup,
+  chainFlatTup,
+}
+
+export { EnhancedTE as TE, EnhancedE as E }

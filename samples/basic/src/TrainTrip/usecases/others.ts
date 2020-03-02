@@ -7,14 +7,7 @@ import {
   ValidationError,
   DbError,
 } from "@fp-app/framework"
-import {
-  TE,
-  chainTupTask,
-  chainFlatTupTask,
-  compose,
-  pipe,
-  toTE,
-} from "@fp-app/fp-ts-extensions"
+import { TE, compose, pipe, toTE } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
 import { DbContextKey, defaultDependencies } from "./types"
@@ -30,7 +23,7 @@ export const changeStartDate = createCommand<
   ChangeStartDateError
 >("changeStartDate", ({ _, db }) =>
   compose(
-    chainTupTask(
+    TE.chainTup(
       compose(
         TE.map(i => i.startDate),
         TE.chain(pipe(FutureDate.create, _.liftE, toTE)),
@@ -43,7 +36,7 @@ export const changeStartDate = createCommand<
       //   mapper(i => i.startDate),
       // ),
     ),
-    chainFlatTupTask(
+    TE.chainFlatTup(
       compose(
         TE.map(([, i]) => i.trainTripId),
         TE.chain(pipe(db.trainTrips.load, _.liftTE)),
@@ -76,23 +69,23 @@ export const changeTravelClass = createCommand<
   ChangeTravelClassError
 >("changeTravelClass", ({ _, db }) =>
   compose(
-    chainTupTask(
+    TE.chainTup(
       compose(
         TE.map(({ travelClass }) => travelClass),
         TE.chain(toTE(_.liftE(TravelClassDefinition.create))),
       ),
     ),
-    // chainTupTask(({ travelClass }) =>
+    // TE.chainTup(({ travelClass }) =>
     //   toTE(_.liftE(TravelClassDefinition.create))(travelClass),
     // ),
-    chainFlatTupTask(
+    TE.chainFlatTup(
       compose(
         TE.map(([, i]) => i.trainTripId),
         TE.chain(_.liftTE(db.trainTrips.load)),
       ),
     ),
     // I want to write this as: map([, i] => i.trainTripid), chain(db.trainTrips.load§)
-    // chainFlatTupTask(_.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
+    // TE.chainFlatTup(_.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
     // This means:
     // TE.chain(input => {
     //   const load = _.liftTE(db.trainTrips.load)

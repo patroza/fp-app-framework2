@@ -1,4 +1,4 @@
-import { PipeFunction, AsyncResult, liftE, liftTE } from "@fp-app/fp-ts-extensions"
+import { PipeFunction, AsyncResult, TE, E } from "@fp-app/fp-ts-extensions"
 import chalk from "chalk"
 import Event from "../../event"
 import { Constructor, getLogger, setFunctionName, typedKeysOf } from "../../utils"
@@ -203,9 +203,9 @@ export type ToolDeps<TE> = {
   ) => (i: TI) => TaskEither<TE, T>
 }
 
-export const toolDeps = <TE>(): ToolDeps<TE> => ({
-  liftE: liftE<TE>(),
-  liftTE: liftTE<TE>(),
+export const toolDeps = <TErr>(): ToolDeps<TErr> => ({
+  liftE: E.lift<TErr>(),
+  liftTE: TE.lift<TErr>(),
 })
 
 export const toolDepsKey = generateKeyFromFn(toolDeps)

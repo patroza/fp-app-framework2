@@ -19,7 +19,7 @@ import {
   ApiError,
   InvalidStateError,
 } from "@fp-app/framework"
-import { pipe, TE, chainTupTask, compose, tryExecuteFW } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, compose, tryExecuteFW } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"
 
@@ -98,7 +98,7 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
     compose(
       TE.map(x => x.trainTripId),
       TE.chain(pipe(db.trainTrips.load, _.liftTE)),
-      chainTupTask(
+      TE.chainTup(
         compose(
           TE.map(
             trainTrip =>

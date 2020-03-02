@@ -8,13 +8,10 @@ import {
   ValidationError,
 } from "@fp-app/framework"
 import {
-  ok,
   resultTuple,
   valueOrUndefined,
   pipe,
-  chainTupTask,
   E,
-  chainFlatTupTask,
   TE,
   compose,
   toTE,
@@ -33,8 +30,8 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
   ({ _, db }) =>
     compose(
-      chainTupTask(pipe(validateStateProposition, _.liftE, toTE)),
-      chainFlatTupTask(
+      TE.chainTup(pipe(validateStateProposition, _.liftE, toTE)),
+      TE.chainFlatTup(
         compose(
           TE.map(([, i]) => i.trainTripId),
           TE.chain(pipe(db.trainTrips.load, _.liftTE)),
