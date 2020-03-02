@@ -44,6 +44,14 @@ export const boolToEither = <T>(
   return ok(value)
 }
 
+export const boolToEither2 = <T>(predicate: (value: T) => boolean) => (
+  value: T,
+): E.Either<T, T> => {
+  if (!predicate(value)) {
+    return err(value)
+  }
+  return ok(value)
+}
 
 export const errorishToEither = <T, TE extends Error>(
   errorish: T & {
@@ -602,11 +610,12 @@ export function composeE<TInput, TError, B, TOutput>(
   ab: (a: E.Either<TError, TInput>) => E.Either<TError, B>,
   bc: (c: E.Either<TError, B>) => E.Either<TError, TOutput>,
 ): (input: TInput) => E.Either<TError, TOutput>
-export function composeE<TInput, TError, B, C, TOutput>(
-  ab: (a: E.Either<TError, TInput>) => E.Either<TError, B>,
-  bc: (b: E.Either<TError, B>) => E.Either<TError, C>,
-  cd: (c: E.Either<TError, C>) => E.Either<TError, TOutput>,
-): (input: TInput) => E.Either<TError, TOutput>
+// TODO: Copy BError/CError etc behavior
+export function composeE<TInput, TError, B, BError, C, CError, TErr, TOutput>(
+  ab: (a: E.Either<TError, TInput>) => E.Either<BError, B>,
+  bc: (b: E.Either<BError, B>) => E.Either<CError, C>,
+  cd: (c: E.Either<CError, C>) => E.Either<TErr, TOutput>,
+): (input: TInput) => E.Either<TErr, TOutput>
 export function composeE<TInput, TError, B, C, D, TOutput>(
   ab: (a: E.Either<TError, TInput>) => E.Either<TError, B>,
   bc: (b: E.Either<TError, B>) => E.Either<TError, C>,

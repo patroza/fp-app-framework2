@@ -194,7 +194,7 @@ const createDomainEventHandlerWithDeps = <TDependencies>(deps: TDependencies) =>
   return newHandler
 }
 
-type ToolDeps<TE> = {
+export type ToolDeps<TE> = {
   liftE: <T, TI, TE2 extends TE>(
     e: (i: TI) => Either<TE2, T>,
   ) => (i: TI) => Either<TE, T>

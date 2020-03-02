@@ -7,6 +7,8 @@ import {
   InvalidStateError,
   ValidationError,
   valueEquals,
+  ToolDeps,
+  toolDeps,
 } from "@fp-app/framework"
 import Event from "@fp-app/framework/src/event"
 import {
@@ -19,7 +21,6 @@ import {
   valueOrUndefined,
   E,
   pipe,
-  liftE,
   mapStaticE,
 } from "@fp-app/fp-ts-extensions"
 import isEqual from "lodash/fp/isEqual"
@@ -88,28 +89,30 @@ export default class TrainTrip extends Entity {
     Object.assign(this, rest)
   }
 
-  proposeChanges = (state: StateProposition) => {
-    const liftErr = liftE<ValidationError | InvalidStateError | ForbiddenError>()
-    return pipe(
-      this.confirmUserChangeAllowed(),
-      mapStaticE(state),
-      E.chain(liftErr(this.applyDefinedChanges)),
-      E.map(this.createChangeEvents),
-    )
+  proposeChanges = trampoline(
+    ({ liftE }: ToolDeps<ValidationError | InvalidStateError | ForbiddenError>) => (
+      state: StateProposition,
+    ) =>
+      pipe(
+        this.confirmUserChangeAllowed(),
+        mapStaticE(state),
+        E.chain(liftE(this.applyDefinedChanges)),
+        E.map(this.createChangeEvents),
+      ),
     // ALT1
-    // return pipe(
+    // pipe(
     //   ok(state),
     //   chainTee(this.confirmUserChangeAllowed),
-    //   E.chain(liftErr(this.applyDefinedChanges)),
+    //   E.chain(liftE(this.applyDefinedChanges)),
     //   E.map(this.createChangeEvents),
     // )
     // ALT2
-    // return pipe(
+    // pipe(
     //   this.confirmUserChangeAllowed(),
     //   E.chain(liftErr(() => this.applyDefinedChanges(state))),
     //   E.map(this.createChangeEvents),
     // )
-  }
+  )
 
   lock() {
     this.w.lockedAt = new Date()
@@ -141,32 +144,33 @@ export default class TrainTrip extends Entity {
 
   ////////////
   //// Separate sample; not used other than testing
-  changeStartDate = (startDate: FutureDate) => {
-    return pipe(
+  changeStartDate = (startDate: FutureDate) =>
+    pipe(
       this.confirmUserChangeAllowed(),
       mapStaticE(startDate),
       E.map(this.intChangeStartDate),
       E.map(this.createChangeEvents),
     )
-  }
 
-  changePax(pax: PaxDefinition) {
-    return pipe(
+  changePax = (pax: PaxDefinition) =>
+    pipe(
       this.confirmUserChangeAllowed(),
       mapStaticE(pax),
       E.map(this.intChangePax),
       E.map(this.createChangeEvents),
     )
-  }
 
-  changeTravelClass = (travelClass: TravelClassDefinition) => {
-    const liftErr = liftE<ForbiddenError | InvalidStateError>()
-    return pipe(
-      this.confirmUserChangeAllowed(),
-      liftErr(() => this.intChangeTravelClass(travelClass)),
-      E.map(this.createChangeEvents),
-    )
-  }
+  changeTravelClass = trampoline(
+    ({ liftE }: ToolDeps<ForbiddenError | InvalidStateError>) => (
+      travelClass: TravelClassDefinition,
+    ) =>
+      pipe(
+        this.confirmUserChangeAllowed(),
+        mapStaticE(travelClass),
+        E.chain(liftE(this.intChangeTravelClass)),
+        E.map(this.createChangeEvents),
+      ),
+  )
   //// End Separate sample; not used other than testing
   ////////////
 
@@ -232,6 +236,14 @@ export default class TrainTrip extends Entity {
       this.registerDomainEvent(new TrainTripStateChanged(this.id))
     }
   }
+}
+
+const trampoline = <TErr, TOut, TArgs extends readonly any[]>(
+  func: (lifters: ToolDeps<TErr>) => (...args: TArgs) => TOut,
+) => {
+  const lifters = toolDeps<TErr>()
+  const withLifters = func(lifters)
+  return withLifters
 }
 
 export class TravelClassConfiguration {
