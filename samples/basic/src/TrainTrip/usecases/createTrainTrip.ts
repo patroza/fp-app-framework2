@@ -33,13 +33,13 @@ const createCommand = createCommandWithDeps({
 
 const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
-  ({ db, getTrip, tools }) =>
+  ({ _, db, getTrip }) =>
     compose(
-      TE.chainEitherK(pipe(validateCreateTrainTripInfo, tools.liftE)),
+      TE.chainEitherK(pipe(validateCreateTrainTripInfo, _.liftE)),
       chainTupTask(
         compose(
           TE.map(i => i.templateId),
-          TE.chain(pipe(getTrip, tools.liftTE)),
+          TE.chain(pipe(getTrip, _.liftTE)),
         ),
       ),
       TE.map(reverseApply(TrainTrip.create)),

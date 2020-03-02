@@ -33,7 +33,7 @@ export type EventHandlerWithDependencies<
   TOutput,
   TError
 > = HandlerWithDependencies<
-  TDependencies & { tools: ToolDeps<TError> },
+  TDependencies & { _: ToolDeps<TError> },
   TInput,
   TOutput,
   TError
@@ -44,7 +44,7 @@ export type UsecaseWithDependencies<
   TOutput,
   TError
 > = HandlerWithDependencies<
-  TDependencies & { tools: ToolDeps<TError> },
+  TDependencies & { _: ToolDeps<TError> },
   TInput,
   TOutput,
   TError
@@ -129,7 +129,7 @@ const createCommandWithDeps = <TDependencies>(deps: TDependencies) => <
 >(
   name: string,
   handler: UsecaseWithDependencies<
-    TDependencies & { tools: ToolDeps<TErr> },
+    TDependencies & { _: ToolDeps<TErr> },
     TInput,
     TOutput,
     TErr
@@ -138,7 +138,7 @@ const createCommandWithDeps = <TDependencies>(deps: TDependencies) => <
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler({
     ...deps,
-    tools: toolDepsKey as ToolDeps<TErr>,
+    _: toolDepsKey as ToolDeps<TErr>,
   })
   const newHandler = setupWithDeps(name + "Command", "COMMAND")(handler)
   logger.debug(chalk.magenta(`Created Command handler ${name}`))
@@ -153,7 +153,7 @@ const createQueryWithDeps = <TDependencies>(deps: TDependencies) => <
 >(
   name: string,
   handler: UsecaseWithDependencies<
-    TDependencies & { tools: ToolDeps<TErr> },
+    TDependencies & { _: ToolDeps<TErr> },
     TInput,
     TOutput,
     TErr
@@ -162,7 +162,7 @@ const createQueryWithDeps = <TDependencies>(deps: TDependencies) => <
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler({
     ...deps,
-    tools: toolDepsKey as ToolDeps<TErr>,
+    _: toolDepsKey as ToolDeps<TErr>,
   })
   const newHandler = setupWithDeps(name + "Query", "QUERY")(handler)
   logger.debug(chalk.magenta(`Created Query handler ${name}`))
@@ -178,7 +178,7 @@ const createDomainEventHandlerWithDeps = <TDependencies>(deps: TDependencies) =>
   event: Constructor<TInput>,
   name: string,
   handler: UsecaseWithDependencies<
-    TDependencies & { tools: ToolDeps<TErr> },
+    TDependencies & { _: ToolDeps<TErr> },
     TInput,
     TOutput,
     TErr
@@ -187,7 +187,7 @@ const createDomainEventHandlerWithDeps = <TDependencies>(deps: TDependencies) =>
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler({
     ...deps,
-    tools: toolDepsKey as ToolDeps<TErr>,
+    _: toolDepsKey as ToolDeps<TErr>,
   })
   const newHandler = setupWithDeps(`on${event.name}${name}`, "DOMAINEVENT")(handler)
   registerDomainEventHandler(event, handler)
@@ -219,7 +219,7 @@ const createIntegrationEventHandlerWithDeps = <TDependencies>(deps: TDependencie
   event: Constructor<TInput>,
   name: string,
   handler: UsecaseWithDependencies<
-    TDependencies & { tools: ToolDeps<TErr> },
+    TDependencies & { _: ToolDeps<TErr> },
     TInput,
     TOutput,
     TErr
@@ -228,7 +228,7 @@ const createIntegrationEventHandlerWithDeps = <TDependencies>(deps: TDependencie
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler({
     ...deps,
-    tools: toolDepsKey as ToolDeps<TErr>,
+    _: toolDepsKey as ToolDeps<TErr>,
   })
   const newHandler = setupWithDeps(
     `on${event.name}${name}`,

@@ -28,17 +28,17 @@ export const changeStartDate = createCommand<
   ChangeStartDateInput,
   void,
   ChangeStartDateError
->("changeStartDate", ({ db, tools }) =>
+>("changeStartDate", ({ _, db }) =>
   compose(
     chainTupTask(
       compose(
         TE.map(i => i.startDate),
-        TE.chain(pipe(FutureDate.create, tools.liftE, toTE)),
+        TE.chain(pipe(FutureDate.create, _.liftE, toTE)),
       ),
       // ALT
       // pipe(
       //   FutureDate.create,
-      //   tools.liftE,
+      //   _.liftE,
       //   toTE,
       //   mapper(i => i.startDate),
       // ),
@@ -46,20 +46,20 @@ export const changeStartDate = createCommand<
     chainFlatTupTask(
       compose(
         TE.map(([, i]) => i.trainTripId),
-        TE.chain(pipe(db.trainTrips.load, tools.liftTE)),
+        TE.chain(pipe(db.trainTrips.load, _.liftTE)),
       ),
       // ALT
       // pipe(
       //   db.trainTrips.load,
-      //   tools.liftTE,
+      //   _.liftTE,
       //   mapper(([, i]) => i.trainTripId),
       // ),
     ),
     TE.chain(
       ([trainTrip, startDate]) =>
-        pipe(trainTrip.changeStartDate, tools.liftE, toTE, f => f(startDate)),
+        pipe(trainTrip.changeStartDate, _.liftE, toTE, f => f(startDate)),
       // ALT
-      // pipe(trainTrip.changeStartDate, tools.liftE, toTE)(startDate),
+      // pipe(trainTrip.changeStartDate, _.liftE, toTE)(startDate),
     ),
   ),
 )
@@ -74,28 +74,28 @@ export const changeTravelClass = createCommand<
   ChangeTravelClassInput,
   void,
   ChangeTravelClassError
->("changeTravelClass", ({ db, tools }) =>
+>("changeTravelClass", ({ _, db }) =>
   compose(
     chainTupTask(
       compose(
         TE.map(({ travelClass }) => travelClass),
-        TE.chain(toTE(tools.liftE(TravelClassDefinition.create))),
+        TE.chain(toTE(_.liftE(TravelClassDefinition.create))),
       ),
     ),
     // chainTupTask(({ travelClass }) =>
-    //   toTE(tools.liftE(TravelClassDefinition.create))(travelClass),
+    //   toTE(_.liftE(TravelClassDefinition.create))(travelClass),
     // ),
     chainFlatTupTask(
       compose(
         TE.map(([, i]) => i.trainTripId),
-        TE.chain(tools.liftTE(db.trainTrips.load)),
+        TE.chain(_.liftTE(db.trainTrips.load)),
       ),
     ),
     // I want to write this as: map([, i] => i.trainTripid), chain(db.trainTrips.load§)
-    // chainFlatTupTask(tools.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
+    // chainFlatTupTask(_.liftTE(([, i]) => db.trainTrips.load(i.trainTripId))),
     // This means:
     // TE.chain(input => {
-    //   const load = tools.liftTE(db.trainTrips.load)
+    //   const load = _.liftTE(db.trainTrips.load)
     //   const f = ([, i]: typeof input) => load(i.trainTripId)
     //   return pipe(
     //     f(input),
@@ -103,7 +103,7 @@ export const changeTravelClass = createCommand<
     //   )
     // }),
     TE.chain(([trainTrip, sl]) => {
-      const changeTravelClass = pipe(trainTrip.changeTravelClass, tools.liftE, toTE)
+      const changeTravelClass = pipe(trainTrip.changeTravelClass, _.liftE, toTE)
       return changeTravelClass(sl)
     }),
   ),

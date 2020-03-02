@@ -90,13 +90,13 @@ export default class TrainTrip extends Entity {
   }
 
   proposeChanges = trampoline(
-    ({ liftE }: ToolDeps<ValidationError | InvalidStateError | ForbiddenError>) => (
+    (_: ToolDeps<ValidationError | InvalidStateError | ForbiddenError>) => (
       state: StateProposition,
     ) =>
       pipe(
         this.confirmUserChangeAllowed(),
         mapStaticE(state),
-        E.chain(liftE(this.applyDefinedChanges)),
+        E.chain(_.liftE(this.applyDefinedChanges)),
         E.map(this.createChangeEvents),
       ),
     // ALT1
@@ -161,16 +161,29 @@ export default class TrainTrip extends Entity {
     )
 
   changeTravelClass = trampoline(
-    ({ liftE }: ToolDeps<ForbiddenError | InvalidStateError>) => (
+    (_: ToolDeps<ForbiddenError | InvalidStateError>) => (
       travelClass: TravelClassDefinition,
     ) =>
       pipe(
         this.confirmUserChangeAllowed(),
         mapStaticE(travelClass),
-        E.chain(liftE(this.intChangeTravelClass)),
+        E.chain(_.liftE(this.intChangeTravelClass)),
         E.map(this.createChangeEvents),
       ),
   )
+  // ALT
+  // changeTravelClass: Tramp<
+  //   TravelClassDefinition,
+  //   void,
+  //   ForbiddenError | InvalidStateError
+  // > = trampolineE(_ => travelClass =>
+  //   pipe(
+  //     this.confirmUserChangeAllowed(),
+  //     mapStaticE(travelClass),
+  //     E.chain(_.liftE(this.intChangeTravelClass)),
+  //     E.map(this.createChangeEvents),
+  //   ),
+  // )
   //// End Separate sample; not used other than testing
   ////////////
 
@@ -245,6 +258,16 @@ const trampoline = <TErr, TOut, TArgs extends readonly any[]>(
   const withLifters = func(lifters)
   return withLifters
 }
+
+const trampolineE = <TErr, TOut, TArgs extends readonly any[]>(
+  func: (lifters: ToolDeps<TErr>) => (...args: TArgs) => E.Either<TErr, TOut>,
+) => {
+  const lifters = toolDeps<TErr>()
+  const withLifters = func(lifters)
+  return withLifters
+}
+
+type Tramp<TInput, TOutput, TErr> = (input: TInput) => E.Either<TErr, TOutput>
 
 export class TravelClassConfiguration {
   readonly priceLastUpdated?: Date

@@ -94,17 +94,17 @@ const createDomainEventHandler = createDomainEventHandlerWithDeps({
 createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
   /* on */ TrainTripStateChanged,
   "RefreshTripInfo",
-  ({ db, getTrip, tools }) =>
+  ({ _, db, getTrip }) =>
     compose(
       TE.map(x => x.trainTripId),
-      TE.chain(pipe(db.trainTrips.load, tools.liftTE)),
+      TE.chain(pipe(db.trainTrips.load, _.liftTE)),
       chainTupTask(
         compose(
           TE.map(
             trainTrip =>
               trainTrip.currentTravelClassConfiguration.travelClass.templateId,
           ),
-          TE.chain(pipe(getTrip, tools.liftTE)),
+          TE.chain(pipe(getTrip, _.liftTE)),
         ),
       ),
       TE.map(([trip, trainTrip]) => trainTrip.updateTrip(trip)),

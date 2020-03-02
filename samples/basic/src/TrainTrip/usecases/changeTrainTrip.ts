@@ -31,29 +31,29 @@ const createCommand = createCommandWithDeps({
 
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
-  ({ db, tools }) =>
+  ({ _, db }) =>
     compose(
-      chainTupTask(pipe(validateStateProposition, tools.liftE, toTE)),
+      chainTupTask(pipe(validateStateProposition, _.liftE, toTE)),
       chainFlatTupTask(
         compose(
           TE.map(([, i]) => i.trainTripId),
-          TE.chain(pipe(db.trainTrips.load, tools.liftTE)),
+          TE.chain(pipe(db.trainTrips.load, _.liftTE)),
         ),
       ),
       TE.chain(
         ([trainTrip, proposal]) =>
-          pipe(trainTrip.proposeChanges, tools.liftE, toTE, f => f(proposal)),
+          pipe(trainTrip.proposeChanges, _.liftE, toTE, f => f(proposal)),
         // ALT1
         // compose(
         //   TE.map(
         //     ([trainTrip, proposal]) =>
-        //       [pipe(trainTrip.proposeChanges, tools.liftE, toTE), proposal] as const,
+        //       [pipe(trainTrip.proposeChanges, _.liftE, toTE), proposal] as const,
         //   ),
         //   TE.chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
         // ),
         // ALT2
         //{
-        //  const proposeChanges = pipe(trainTrip.proposeChanges, tools.liftE, toTE)
+        //  const proposeChanges = pipe(trainTrip.proposeChanges, _.liftE, toTE)
         //  return proposeChanges(proposal)
         //}
       ),
@@ -71,12 +71,9 @@ export interface StateProposition {
   travelClass?: string
 }
 
-const validateStateProposition = ({
-  pax,
-  startDate,
-  travelClass,
-  ...rest
-}: StateProposition) =>
+const validateStateProposition = (
+  { pax, startDate, travelClass }: StateProposition, // ...rest
+) =>
   pipe(
     resultTuple(
       pipe(
@@ -88,11 +85,11 @@ const validateStateProposition = ({
         E.mapLeft(toFieldError("startDate")),
       ),
       pipe(valueOrUndefined(pax, PaxDefinition.create), E.mapLeft(toFieldError("pax"))),
-      ok(rest),
+      // ok(rest),
     ),
     E.mapLeft(combineValidationErrors),
-    E.map(([travelClass, startDate, pax, rest]) => ({
-      ...rest,
+    E.map(([travelClass, startDate, pax]) => ({
+      //      ...rest,
       pax,
       startDate,
       travelClass,

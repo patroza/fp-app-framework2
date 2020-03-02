@@ -9,10 +9,10 @@ const createCommand = createCommandWithDeps({
 
 const deleteTrainTrip = createCommand<Input, void, DeleteTrainTripError>(
   "deleteTrainTrip",
-  ({ db, tools }) =>
+  ({ _, db }) =>
     compose(
       TE.map(({ trainTripId }) => trainTripId),
-      TE.chain(tools.liftTE(db.trainTrips.load)),
+      TE.chain(_.liftTE(db.trainTrips.load)),
       TE.map(x => {
         // TODO: this should normally be on a different object.
         x.delete()

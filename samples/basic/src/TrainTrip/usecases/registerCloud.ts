@@ -10,11 +10,11 @@ const createCommand = createCommandWithDeps({
 
 const registerCloud = createCommand<Input, void, DbError>(
   "registerCloud",
-  ({ db, sendCloudSync, tools }) =>
+  ({ _, db, sendCloudSync }) =>
     compose(
       TE.map(({ trainTripId }) => trainTripId),
       TE.chain(db.trainTrips.load),
-      chainTupTask(pipe(sendCloudSync, tools.liftTE)),
+      chainTupTask(pipe(sendCloudSync, _.liftTE)),
       TE.map(([opportunityId, trainTrip]) =>
         trainTrip.assignOpportunity(opportunityId),
       ),
