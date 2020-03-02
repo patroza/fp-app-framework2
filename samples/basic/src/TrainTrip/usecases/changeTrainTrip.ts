@@ -7,14 +7,7 @@ import {
   toFieldError,
   ValidationError,
 } from "@fp-app/framework"
-import {
-  resultTuple,
-  valueOrUndefined,
-  pipe,
-  E,
-  TE,
-  compose,
-} from "@fp-app/fp-ts-extensions"
+import { resultTuple, valueOrUndefined, pipe, E, TE } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
@@ -28,10 +21,10 @@ const createCommand = createCommandWithDeps({
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
   ({ _, db }) =>
-    compose(
+    TE.compose(
       TE.chainTup(pipe(validateStateProposition, _.liftE, E.toTaskEither)),
       TE.chainFlatTup(
-        compose(
+        TE.compose(
           TE.map(([, i]) => i.trainTripId),
           TE.chain(pipe(db.trainTrips.load, _.liftTE)),
         ),
@@ -40,7 +33,7 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
         ([trainTrip, proposal]) =>
           pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither, f => f(proposal)),
         // ALT1
-        // compose(
+        // TE.compose(
         //   TE.map(
         //     ([trainTrip, proposal]) =>
         //       [pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither), proposal] as const,

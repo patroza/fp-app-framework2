@@ -1,4 +1,4 @@
-import { liftType, AsyncResult, TE, pipe, chainTeeTask } from "@fp-app/fp-ts-extensions"
+import { liftType, AsyncResult, TE, pipe } from "@fp-app/fp-ts-extensions"
 import { benchLog, logger, using } from "../../utils"
 import { DbError } from "../errors"
 import { configureDependencies, NamedRequestHandler, UOWKey } from "../mediator"
@@ -35,7 +35,7 @@ const uowDecorator = configureDependencies(
     return pipe(
       request(key, input),
       TE.mapLeft(liftErr),
-      chainTeeTask(() => pipe(unitOfWork.save(), TE.mapLeft(liftErr))),
+      TE.chainTee(() => pipe(unitOfWork.save(), TE.mapLeft(liftErr))),
     )
   },
 )

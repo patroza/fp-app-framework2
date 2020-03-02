@@ -15,7 +15,6 @@ import {
   pipe,
   E,
   TE,
-  compose,
   reverseApply,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
@@ -32,10 +31,10 @@ const createCommand = createCommandWithDeps({
 const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
   ({ _, db, getTrip }) =>
-    compose(
+    TE.compose(
       TE.chainEitherK(pipe(validateCreateTrainTripInfo, _.liftE)),
       TE.chainTup(
-        compose(
+        TE.compose(
           TE.map(i => i.templateId),
           TE.chain(pipe(getTrip, _.liftTE)),
         ),

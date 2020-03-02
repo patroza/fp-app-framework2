@@ -95,10 +95,10 @@ export const tryExecuteFW = <T, TI>(func: (input: TI) => Promise<T>) => <
   i: TI2,
 ): TE.TaskEither<never, T> => async () => E.right(await func(i))
 
-export function chainTeeTask<T, TDontCare, E>(
+function chainTeeTask<T, TDontCare, E>(
   f: PipeFunction<T, TDontCare, E>,
 ): (inp: AsyncResult<T, E>) => AsyncResult<T, E>
-export function chainTeeTask(f: any) {
+function chainTeeTask(f: any) {
   return TE.chain((input: any) => pipe(f(input), mapStatic(input)))
 }
 
@@ -546,32 +546,32 @@ const flip: Flip = fn => (...args) => fn(...(reverse(args) as any))
 //     ...args,
 //   )
 
-export function compose<TInput, TError, TOutput>(
+function compose<TInput, TError, TOutput>(
   ab: (c: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, TOutput>(
+function compose<TInput, TError, B, TOutput>(
   ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
   bc: (c: TE.TaskEither<TError, B>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, TOutput>(
+function compose<TInput, TError, B, C, TOutput>(
   ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
   bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
   cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, D, TOutput>(
+function compose<TInput, TError, B, C, D, TOutput>(
   ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
   bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
   cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
   de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, D, E, TOutput>(
+function compose<TInput, TError, B, C, D, E, TOutput>(
   ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
   bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
   cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
   de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
   ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, D, E, F, TOutput>(
+function compose<TInput, TError, B, C, D, E, F, TOutput>(
   ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
   bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
   cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
@@ -579,7 +579,7 @@ export function compose<TInput, TError, B, C, D, E, F, TOutput>(
   ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, F>,
   fg: (f: TE.TaskEither<TError, F>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, D, E, F, G, TOutput>(
+function compose<TInput, TError, B, C, D, E, F, G, TOutput>(
   ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
   bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
   cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
@@ -589,7 +589,7 @@ export function compose<TInput, TError, B, C, D, E, F, G, TOutput>(
   gh: (g: TE.TaskEither<TError, G>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function compose<TInput, TError, TOutput>(...a: any[]) {
+function compose<TInput, TError, TOutput>(...a: any[]) {
   return (input: TInput) =>
     pipe<TE.TaskEither<TError, TInput>, TE.TaskEither<TError, TOutput>>(
       TE.right<TError, TInput>(input),
@@ -634,27 +634,27 @@ export type Tramp<TInput, TOutput, TErr> = (input: TInput) => E.Either<TErr, TOu
 const toTE = <T, T2, TE>(func: (i: T) => Either<TE, T2>) => <TI extends T>(i: TI) =>
   TE.fromEither(func(i))
 
-export function composeE<TInput, TError, TOutput>(
+function composeE<TInput, TError, TOutput>(
   ab: (c: E.Either<TError, TInput>) => E.Either<TError, TOutput>,
 ): (input: TInput) => E.Either<TError, TOutput>
-export function composeE<TInput, TError, B, TOutput>(
+function composeE<TInput, TError, B, TOutput>(
   ab: (a: E.Either<TError, TInput>) => E.Either<TError, B>,
   bc: (c: E.Either<TError, B>) => E.Either<TError, TOutput>,
 ): (input: TInput) => E.Either<TError, TOutput>
 // TODO: Copy BError/CError etc behavior
-export function composeE<TInput, TError, B, BError, C, CError, TErr, TOutput>(
+function composeE<TInput, TError, B, BError, C, CError, TErr, TOutput>(
   ab: (a: E.Either<TError, TInput>) => E.Either<BError, B>,
   bc: (b: E.Either<BError, B>) => E.Either<CError, C>,
   cd: (c: E.Either<CError, C>) => E.Either<TErr, TOutput>,
 ): (input: TInput) => E.Either<TErr, TOutput>
-export function composeE<TInput, TError, B, C, D, TOutput>(
+function composeE<TInput, TError, B, C, D, TOutput>(
   ab: (a: E.Either<TError, TInput>) => E.Either<TError, B>,
   bc: (b: E.Either<TError, B>) => E.Either<TError, C>,
   cd: (b: E.Either<TError, C>) => E.Either<TError, D>,
   de: (c: E.Either<TError, D>) => E.Either<TError, TOutput>,
 ): (input: TInput) => E.Either<TError, TOutput>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function composeE<TInput, TError, TOutput>(...a: any[]) {
+function composeE<TInput, TError, TOutput>(...a: any[]) {
   return (input: TInput) =>
     pipe<E.Either<TError, TInput>, E.Either<TError, TOutput>>(
       E.right<TError, TInput>(input),
@@ -668,8 +668,10 @@ const EnhancedTE = {
   ...TE,
   do: TEDo,
   lift: liftTE,
+  chainTee: chainTeeTask,
   chainTup: chainTupTask,
   chainFlatTup: chainFlatTupTask,
+  compose,
 }
 
 const EnhancedE = {
@@ -679,6 +681,7 @@ const EnhancedE = {
   chainTup,
   chainFlatTup,
   toTaskEither: toTE,
+  compose: composeE,
 }
 
 export { EnhancedTE as TE, EnhancedE as E }

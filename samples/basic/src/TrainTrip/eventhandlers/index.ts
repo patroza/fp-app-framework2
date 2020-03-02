@@ -19,7 +19,7 @@ import {
   ApiError,
   InvalidStateError,
 } from "@fp-app/framework"
-import { pipe, TE, compose, tryExecuteFW } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, tryExecuteFW } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"
 
@@ -48,7 +48,7 @@ createIntegrationEventHandler<TrainTripCreated, void, never>(
   /* on */ TrainTripCreated,
   "ScheduleCloudSync",
   ({ trainTripPublisher }) =>
-    compose(
+    TE.compose(
       TE.map(x => x.trainTripId),
       TE.chain(tryExecuteFW(trainTripPublisher.register)),
     ),
@@ -58,7 +58,7 @@ createIntegrationEventHandler<TrainTripStateChanged, void, never>(
   /* on */ TrainTripStateChanged,
   "EitherDebounceOrScheduleCloudSync",
   ({ trainTripPublisher }) =>
-    compose(
+    TE.compose(
       TE.map(x => x.trainTripId),
       TE.chain(tryExecuteFW(trainTripPublisher.register)),
     ),
@@ -68,7 +68,7 @@ createIntegrationEventHandler<UserInputReceived, void, never>(
   /* on */ UserInputReceived,
   "DebouncePendingCloudSync",
   ({ trainTripPublisher }) =>
-    compose(
+    TE.compose(
       TE.map(x => x.trainTripId),
       TE.chain(tryExecuteFW(trainTripPublisher.registerIfPending)),
     ),
@@ -95,11 +95,11 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
   /* on */ TrainTripStateChanged,
   "RefreshTripInfo",
   ({ _, db, getTrip }) =>
-    compose(
+    TE.compose(
       TE.map(x => x.trainTripId),
       TE.chain(pipe(db.trainTrips.load, _.liftTE)),
       TE.chainTup(
-        compose(
+        TE.compose(
           TE.map(
             trainTrip =>
               trainTrip.currentTravelClassConfiguration.travelClass.templateId,

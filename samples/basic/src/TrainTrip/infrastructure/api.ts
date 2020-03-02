@@ -14,7 +14,6 @@ import {
 } from "@fp-app/framework"
 import {
   err,
-  liftType,
   map,
   ok,
   PipeFunction,
@@ -23,7 +22,6 @@ import {
   pipe,
   TE,
   E,
-  compose,
 } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
@@ -35,7 +33,7 @@ const getTrip = ({
 }: {
   getTemplate: getTemplateType
 }): PipeFunction<string, TripWithSelectedTravelClass, ApiError | InvalidStateError> =>
-  compose(
+  TE.compose(
     TE.chain(pipe(getTemplate, TE.lift<InvalidStateError | ApiError>())),
     TE.chain(toTrip(getTemplate)),
   )
