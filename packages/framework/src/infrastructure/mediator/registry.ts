@@ -1,4 +1,4 @@
-import { PipeFunction, AsyncResult, TE, E } from "@fp-app/fp-ts-extensions"
+import { PipeFunction, AsyncResult, ToolDeps, toolDeps } from "@fp-app/fp-ts-extensions"
 import chalk from "chalk"
 import Event from "../../event"
 import { Constructor, getLogger, setFunctionName, typedKeysOf } from "../../utils"
@@ -17,8 +17,6 @@ import {
   WithDependenciesConfig,
   generateKeyFromFn,
 } from "../SimpleContainer"
-import { Either } from "fp-ts/lib/Either"
-import { TaskEither } from "fp-ts/lib/TaskEither"
 
 const logger = getLogger("registry")
 
@@ -193,20 +191,6 @@ const createDomainEventHandlerWithDeps = <TDependencies>(deps: TDependencies) =>
   registerDomainEventHandler(event, handler)
   return newHandler
 }
-
-export type ToolDeps<TE> = {
-  liftE: <T, TI, TE2 extends TE>(
-    e: (i: TI) => Either<TE2, T>,
-  ) => (i: TI) => Either<TE, T>
-  liftTE: <T, TI, TE2 extends TE>(
-    e: (i: TI) => TaskEither<TE2, T>,
-  ) => (i: TI) => TaskEither<TE, T>
-}
-
-export const toolDeps = <TErr>(): ToolDeps<TErr> => ({
-  liftE: E.lift<TErr>(),
-  liftTE: TE.lift<TErr>(),
-})
 
 export const toolDepsKey = generateKeyFromFn(toolDeps)
 

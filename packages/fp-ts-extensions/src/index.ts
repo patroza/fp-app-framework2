@@ -599,9 +599,40 @@ export function compose<TInput, TError, TOutput>(...a: any[]) {
     )
 }
 
-export const toTE = <T, T2, TE>(func: (i: T) => Either<TE, T2>) => <TI extends T>(
-  i: TI,
-) => TE.fromEither(func(i))
+export const trampoline = <TErr, TOut, TArgs extends readonly any[]>(
+  func: (lifters: ToolDeps<TErr>) => (...args: TArgs) => TOut,
+) => {
+  const lifters = toolDeps<TErr>()
+  const withLifters = func(lifters)
+  return withLifters
+}
+
+export const trampolineE = <TErr, TOut, TArgs extends readonly any[]>(
+  func: (lifters: ToolDeps<TErr>) => (...args: TArgs) => E.Either<TErr, TOut>,
+) => {
+  const lifters = toolDeps<TErr>()
+  const withLifters = func(lifters)
+  return withLifters
+}
+
+export type ToolDeps<TE> = {
+  liftE: <T, TI, TE2 extends TE>(
+    e: (i: TI) => Either<TE2, T>,
+  ) => (i: TI) => Either<TE, T>
+  liftTE: <T, TI, TE2 extends TE>(
+    e: (i: TI) => TaskEither<TE2, T>,
+  ) => (i: TI) => TaskEither<TE, T>
+}
+
+export const toolDeps = <TErr>(): ToolDeps<TErr> => ({
+  liftE: liftE<TErr>(),
+  liftTE: liftTE<TErr>(),
+})
+
+export type Tramp<TInput, TOutput, TErr> = (input: TInput) => E.Either<TErr, TOutput>
+
+const toTE = <T, T2, TE>(func: (i: T) => Either<TE, T2>) => <TI extends T>(i: TI) =>
+  TE.fromEither(func(i))
 
 export function composeE<TInput, TError, TOutput>(
   ab: (c: E.Either<TError, TInput>) => E.Either<TError, TOutput>,
@@ -647,6 +678,7 @@ const EnhancedE = {
   lift: liftE,
   chainTup,
   chainFlatTup,
+  toTaskEither: toTE,
 }
 
 export { EnhancedTE as TE, EnhancedE as E }

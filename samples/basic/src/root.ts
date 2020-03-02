@@ -7,7 +7,6 @@ import {
   UnitOfWork,
   UOWKey,
   toolDepsKey,
-  toolDeps,
 } from "@fp-app/framework"
 import { exists, mkdir } from "@fp-app/io.diskdb"
 import chalk from "chalk"
@@ -31,6 +30,7 @@ import {
   sendCloudSyncKey,
   TrainTripPublisherKey,
 } from "./TrainTrip/usecases/types"
+import { toolDeps } from "@fp-app/fp-ts-extensions"
 
 const createRoot = () => {
   const {

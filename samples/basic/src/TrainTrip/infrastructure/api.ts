@@ -22,8 +22,7 @@ import {
   startWithVal,
   pipe,
   TE,
-  toTE,
-  liftE,
+  E,
 } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
@@ -55,14 +54,14 @@ const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
         .map(sl => pipe(getTemplate(sl.id), map(tplToTravelClass))),
     ),
   )
-  const liftErr = liftE<ApiError | InvalidStateError>()
+  const liftErr = E.lift<ApiError | InvalidStateError>()
   const createTripWithSelectedTravelClass = (trip: Trip) =>
     TripWithSelectedTravelClass.create(trip, currentTravelClass.name)
 
   return pipe(
     resolveTravelClasses,
-    TE.chain(pipe(Trip.create, liftErr, toTE)),
-    TE.chain(pipe(createTripWithSelectedTravelClass, liftErr, toTE)),
+    TE.chain(pipe(Trip.create, liftErr, E.toTaskEither)),
+    TE.chain(pipe(createTripWithSelectedTravelClass, liftErr, E.toTaskEither)),
   )
 }
 

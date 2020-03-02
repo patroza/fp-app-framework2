@@ -7,8 +7,6 @@ import {
   InvalidStateError,
   ValidationError,
   valueEquals,
-  ToolDeps,
-  toolDeps,
 } from "@fp-app/framework"
 import Event from "@fp-app/framework/src/event"
 import {
@@ -22,6 +20,8 @@ import {
   E,
   pipe,
   mapStaticE,
+  trampoline,
+  ToolDeps,
 } from "@fp-app/fp-ts-extensions"
 import isEqual from "lodash/fp/isEqual"
 import FutureDate from "./FutureDate"
@@ -31,10 +31,10 @@ import Trip, { TravelClass, TripWithSelectedTravelClass } from "./Trip"
 
 export default class TrainTrip extends Entity {
   /** the primary way to create a new TrainTrip */
-  static create(
+  static create = (
     { pax, startDate }: { startDate: FutureDate; pax: PaxDefinition },
     trip: TripWithSelectedTravelClass,
-  ) {
+  ) => {
     const travelClassConfiguration = trip.travelClasses.map(
       x => new TravelClassConfiguration(x),
     )
@@ -250,24 +250,6 @@ export default class TrainTrip extends Entity {
     }
   }
 }
-
-const trampoline = <TErr, TOut, TArgs extends readonly any[]>(
-  func: (lifters: ToolDeps<TErr>) => (...args: TArgs) => TOut,
-) => {
-  const lifters = toolDeps<TErr>()
-  const withLifters = func(lifters)
-  return withLifters
-}
-
-const trampolineE = <TErr, TOut, TArgs extends readonly any[]>(
-  func: (lifters: ToolDeps<TErr>) => (...args: TArgs) => E.Either<TErr, TOut>,
-) => {
-  const lifters = toolDeps<TErr>()
-  const withLifters = func(lifters)
-  return withLifters
-}
-
-type Tramp<TInput, TOutput, TErr> = (input: TInput) => E.Either<TErr, TOutput>
 
 export class TravelClassConfiguration {
   readonly priceLastUpdated?: Date

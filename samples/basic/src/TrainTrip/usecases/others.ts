@@ -7,7 +7,7 @@ import {
   ValidationError,
   DbError,
 } from "@fp-app/framework"
-import { TE, compose, pipe, toTE } from "@fp-app/fp-ts-extensions"
+import { TE, compose, pipe, E } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
 import { DbContextKey, defaultDependencies } from "./types"
@@ -26,7 +26,7 @@ export const changeStartDate = createCommand<
     TE.chainTup(
       compose(
         TE.map(i => i.startDate),
-        TE.chain(pipe(FutureDate.create, _.liftE, toTE)),
+        TE.chain(pipe(FutureDate.create, _.liftE, E.toTaskEither)),
       ),
       // ALT
       // pipe(
@@ -50,7 +50,7 @@ export const changeStartDate = createCommand<
     ),
     TE.chain(
       ([trainTrip, startDate]) =>
-        pipe(trainTrip.changeStartDate, _.liftE, toTE, f => f(startDate)),
+        pipe(trainTrip.changeStartDate, _.liftE, E.toTaskEither, f => f(startDate)),
       // ALT
       // pipe(trainTrip.changeStartDate, _.liftE, toTE)(startDate),
     ),
@@ -72,11 +72,11 @@ export const changeTravelClass = createCommand<
     TE.chainTup(
       compose(
         TE.map(({ travelClass }) => travelClass),
-        TE.chain(toTE(_.liftE(TravelClassDefinition.create))),
+        TE.chain(pipe(TravelClassDefinition.create, _.liftE, E.toTaskEither)),
       ),
     ),
     // TE.chainTup(({ travelClass }) =>
-    //   toTE(_.liftE(TravelClassDefinition.create))(travelClass),
+    //   pipe(TravelClassDefinition.create, _.liftE, E.toTaskEither)(travelClass),
     // ),
     TE.chainFlatTup(
       compose(
@@ -96,7 +96,11 @@ export const changeTravelClass = createCommand<
     //   )
     // }),
     TE.chain(([trainTrip, sl]) => {
-      const changeTravelClass = pipe(trainTrip.changeTravelClass, _.liftE, toTE)
+      const changeTravelClass = pipe(
+        trainTrip.changeTravelClass,
+        _.liftE,
+        E.toTaskEither,
+      )
       return changeTravelClass(sl)
     }),
   ),
