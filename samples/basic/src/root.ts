@@ -48,10 +48,7 @@ const createRoot = () => {
 
   container.registerSingletonC2(TrainTripPublisherKey, TrainTripPublisherInMemory)
   container.registerSingletonC2(trainTripReadContextKey, TrainTripReadContext)
-  container.registerSingletonF(
-    sendCloudSyncKey,
-    factoryOf(sendCloudSyncFake, f => f()),
-  )
+  container.registerSingletonF(sendCloudSyncKey, factoryOf(sendCloudSyncFake))
   container.registerSingletonF(getTripKey, () => {
     const { getTrip: getTripF } = createInventoryClient({
       templateApiUrl: "http://localhost:8110",
