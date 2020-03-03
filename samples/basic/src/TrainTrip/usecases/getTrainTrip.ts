@@ -5,7 +5,7 @@
 // to make sure accidental `any` casts are catched.
 
 import { createQueryWithDeps, DbError } from "@fp-app/framework"
-import { TE, compose } from "@fp-app/fp-ts-extensions"
+import { TE } from "@fp-app/fp-ts-extensions"
 import { trainTripReadContextKey } from "../infrastructure/TrainTripReadContext.disk"
 import { Pax } from "../PaxDefinition"
 import { TravelClassName } from "../TravelClassDefinition"
@@ -19,7 +19,7 @@ const createQuery = createQueryWithDeps({
 const getTrainTrip = createQuery<Input, TrainTripView, DbError>(
   "getTrainTrip",
   ({ readCtx }) =>
-    compose(
+    TE.compose(
       TE.map(({ trainTripId }) => trainTripId),
       TE.chain(readCtx.read),
     ),

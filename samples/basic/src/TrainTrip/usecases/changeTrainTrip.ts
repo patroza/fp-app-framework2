@@ -7,18 +7,7 @@ import {
   toFieldError,
   ValidationError,
 } from "@fp-app/framework"
-import {
-  ok,
-  resultTuple,
-  valueOrUndefined,
-  pipe,
-  chainTupTask,
-  E,
-  chainFlatTupTask,
-  TE,
-  compose,
-  toTE,
-} from "@fp-app/fp-ts-extensions"
+import { resultTuple, valueOrUndefined, pipe, E, TE } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
@@ -31,29 +20,29 @@ const createCommand = createCommandWithDeps({
 
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
-  ({ db, tools }) =>
-    compose(
-      chainTupTask(pipe(validateStateProposition, tools.liftE, toTE)),
-      chainFlatTupTask(
-        compose(
+  ({ _, db }) =>
+    TE.compose(
+      TE.chainTup(pipe(validateStateProposition, _.liftE, E.toTaskEither)),
+      TE.chainFlatTup(
+        TE.compose(
           TE.map(([, i]) => i.trainTripId),
-          TE.chain(pipe(db.trainTrips.load, tools.liftTE)),
+          TE.chain(pipe(db.trainTrips.load, _.liftTE)),
         ),
       ),
       TE.chain(
         ([trainTrip, proposal]) =>
-          pipe(trainTrip.proposeChanges, tools.liftE, toTE, f => f(proposal)),
+          pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither, f => f(proposal)),
         // ALT1
-        // compose(
+        // TE.compose(
         //   TE.map(
         //     ([trainTrip, proposal]) =>
-        //       [pipe(trainTrip.proposeChanges, tools.liftE, toTE), proposal] as const,
+        //       [pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither), proposal] as const,
         //   ),
         //   TE.chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
         // ),
         // ALT2
         //{
-        //  const proposeChanges = pipe(trainTrip.proposeChanges, tools.liftE, toTE)
+        //  const proposeChanges = pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither)
         //  return proposeChanges(proposal)
         //}
       ),
@@ -71,12 +60,9 @@ export interface StateProposition {
   travelClass?: string
 }
 
-const validateStateProposition = ({
-  pax,
-  startDate,
-  travelClass,
-  ...rest
-}: StateProposition) =>
+const validateStateProposition = (
+  { pax, startDate, travelClass }: StateProposition, // ...rest
+) =>
   pipe(
     resultTuple(
       pipe(
@@ -88,11 +74,11 @@ const validateStateProposition = ({
         E.mapLeft(toFieldError("startDate")),
       ),
       pipe(valueOrUndefined(pax, PaxDefinition.create), E.mapLeft(toFieldError("pax"))),
-      ok(rest),
+      // ok(rest),
     ),
     E.mapLeft(combineValidationErrors),
-    E.map(([travelClass, startDate, pax, rest]) => ({
-      ...rest,
+    E.map(([travelClass, startDate, pax]) => ({
+      //      ...rest,
       pax,
       startDate,
       travelClass,

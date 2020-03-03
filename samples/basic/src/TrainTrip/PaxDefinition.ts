@@ -1,15 +1,9 @@
-import {
-  createValidator,
-  Joi,
-  predicate,
-  typedKeysOf,
-  ValidationError,
-} from "@fp-app/framework"
-import { Result, pipe, E } from "@fp-app/fp-ts-extensions"
+import { createValidator, Joi, predicate, typedKeysOf } from "@fp-app/framework"
+import { pipe, E } from "@fp-app/fp-ts-extensions"
 
 export default class PaxDefinition {
-  static create(pax: Pax): Result<PaxDefinition, ValidationError> {
-    return pipe(
+  static create = (pax: Pax) =>
+    pipe(
       validate(pax),
       E.chain(
         predicate(
@@ -25,7 +19,6 @@ export default class PaxDefinition {
       ),
       E.map(validatedPax => new PaxDefinition(validatedPax)),
     )
-  }
 
   private constructor(readonly value: Pax) {}
 }

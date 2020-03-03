@@ -1,4 +1,4 @@
-import { PipeFunction, AsyncResult, liftE, liftTE } from "@fp-app/fp-ts-extensions"
+import { PipeFunction, AsyncResult, ToolDeps, toolDeps } from "@fp-app/fp-ts-extensions"
 import chalk from "chalk"
 import Event from "../../event"
 import { Constructor, getLogger, setFunctionName, typedKeysOf } from "../../utils"
@@ -17,8 +17,6 @@ import {
   WithDependenciesConfig,
   generateKeyFromFn,
 } from "../SimpleContainer"
-import { Either } from "fp-ts/lib/Either"
-import { TaskEither } from "fp-ts/lib/TaskEither"
 
 const logger = getLogger("registry")
 
@@ -33,7 +31,7 @@ export type EventHandlerWithDependencies<
   TOutput,
   TError
 > = HandlerWithDependencies<
-  TDependencies & { tools: ToolDeps<TError> },
+  TDependencies & { _: ToolDeps<TError> },
   TInput,
   TOutput,
   TError
@@ -44,7 +42,7 @@ export type UsecaseWithDependencies<
   TOutput,
   TError
 > = HandlerWithDependencies<
-  TDependencies & { tools: ToolDeps<TError> },
+  TDependencies & { _: ToolDeps<TError> },
   TInput,
   TOutput,
   TError
@@ -129,7 +127,7 @@ const createCommandWithDeps = <TDependencies>(deps: TDependencies) => <
 >(
   name: string,
   handler: UsecaseWithDependencies<
-    TDependencies & { tools: ToolDeps<TErr> },
+    TDependencies & { _: ToolDeps<TErr> },
     TInput,
     TOutput,
     TErr
@@ -138,7 +136,7 @@ const createCommandWithDeps = <TDependencies>(deps: TDependencies) => <
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler({
     ...deps,
-    tools: toolDepsKey as ToolDeps<TErr>,
+    _: toolDepsKey as ToolDeps<TErr>,
   })
   const newHandler = setupWithDeps(name + "Command", "COMMAND")(handler)
   logger.debug(chalk.magenta(`Created Command handler ${name}`))
@@ -153,7 +151,7 @@ const createQueryWithDeps = <TDependencies>(deps: TDependencies) => <
 >(
   name: string,
   handler: UsecaseWithDependencies<
-    TDependencies & { tools: ToolDeps<TErr> },
+    TDependencies & { _: ToolDeps<TErr> },
     TInput,
     TOutput,
     TErr
@@ -162,7 +160,7 @@ const createQueryWithDeps = <TDependencies>(deps: TDependencies) => <
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler({
     ...deps,
-    tools: toolDepsKey as ToolDeps<TErr>,
+    _: toolDepsKey as ToolDeps<TErr>,
   })
   const newHandler = setupWithDeps(name + "Query", "QUERY")(handler)
   logger.debug(chalk.magenta(`Created Query handler ${name}`))
@@ -178,7 +176,7 @@ const createDomainEventHandlerWithDeps = <TDependencies>(deps: TDependencies) =>
   event: Constructor<TInput>,
   name: string,
   handler: UsecaseWithDependencies<
-    TDependencies & { tools: ToolDeps<TErr> },
+    TDependencies & { _: ToolDeps<TErr> },
     TInput,
     TOutput,
     TErr
@@ -187,26 +185,12 @@ const createDomainEventHandlerWithDeps = <TDependencies>(deps: TDependencies) =>
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler({
     ...deps,
-    tools: toolDepsKey as ToolDeps<TErr>,
+    _: toolDepsKey as ToolDeps<TErr>,
   })
   const newHandler = setupWithDeps(`on${event.name}${name}`, "DOMAINEVENT")(handler)
   registerDomainEventHandler(event, handler)
   return newHandler
 }
-
-type ToolDeps<TE> = {
-  liftE: <T, TI, TE2 extends TE>(
-    e: (i: TI) => Either<TE2, T>,
-  ) => (i: TI) => Either<TE, T>
-  liftTE: <T, TI, TE2 extends TE>(
-    e: (i: TI) => TaskEither<TE2, T>,
-  ) => (i: TI) => TaskEither<TE, T>
-}
-
-export const toolDeps = <TE>(): ToolDeps<TE> => ({
-  liftE: liftE<TE>(),
-  liftTE: liftTE<TE>(),
-})
 
 export const toolDepsKey = generateKeyFromFn(toolDeps)
 
@@ -219,7 +203,7 @@ const createIntegrationEventHandlerWithDeps = <TDependencies>(deps: TDependencie
   event: Constructor<TInput>,
   name: string,
   handler: UsecaseWithDependencies<
-    TDependencies & { tools: ToolDeps<TErr> },
+    TDependencies & { _: ToolDeps<TErr> },
     TInput,
     TOutput,
     TErr
@@ -228,7 +212,7 @@ const createIntegrationEventHandlerWithDeps = <TDependencies>(deps: TDependencie
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler({
     ...deps,
-    tools: toolDepsKey as ToolDeps<TErr>,
+    _: toolDepsKey as ToolDeps<TErr>,
   })
   const newHandler = setupWithDeps(
     `on${event.name}${name}`,

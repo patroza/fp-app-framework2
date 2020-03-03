@@ -1,5 +1,5 @@
 import { createCommandWithDeps, DbError } from "@fp-app/framework"
-import { pipe, TE, compose, chainTupTask } from "@fp-app/fp-ts-extensions"
+import { pipe, TE } from "@fp-app/fp-ts-extensions"
 import { DbContextKey, defaultDependencies, sendCloudSyncKey } from "./types"
 
 const createCommand = createCommandWithDeps({
@@ -10,11 +10,11 @@ const createCommand = createCommandWithDeps({
 
 const registerCloud = createCommand<Input, void, DbError>(
   "registerCloud",
-  ({ db, sendCloudSync, tools }) =>
-    compose(
+  ({ _, db, sendCloudSync }) =>
+    TE.compose(
       TE.map(({ trainTripId }) => trainTripId),
       TE.chain(db.trainTrips.load),
-      chainTupTask(pipe(sendCloudSync, tools.liftTE)),
+      TE.chainTup(pipe(sendCloudSync, _.liftTE)),
       TE.map(([opportunityId, trainTrip]) =>
         trainTrip.assignOpportunity(opportunityId),
       ),

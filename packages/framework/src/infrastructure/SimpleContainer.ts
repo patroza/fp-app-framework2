@@ -488,7 +488,7 @@ const generateKeyFromC = <T>(C: Constructor<T>) => generateKey<T>(C.name)
 // tslint:disable-next-line:ban-types
 export const factoryOf = <T extends (...args: any[]) => any>(
   func: T,
-  factory: (i: T) => ReturnType<T>,
+  factory: (i: T) => ReturnType<T> = i => i(),
 ) => {
   const newFactory = () => factory(func)
   setFunctionName(newFactory, func.name)
