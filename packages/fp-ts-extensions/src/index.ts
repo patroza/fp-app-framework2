@@ -124,8 +124,10 @@ export function tee(f: any) {
 export const regainType = <T, TOut>(f: (i: T) => TOut) => <T2 extends T>(i: T2) => f(i)
 
 // Easily pass input -> (input -> output) -> [output, input]
-function chainTupTask<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
-  return TE.chain((input: TInput) =>
+function chainTupTask<TInput, TInput2 extends TInput, T, E>(
+  f: (x: TInput) => TaskEither<E, T>,
+) {
+  return TE.chain((input: TInput2) =>
     pipe(
       f(input),
       TE.map(x => [x, input] as const),
@@ -133,11 +135,10 @@ function chainTupTask<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
   )
 }
 
-function chainTup<TInput, T, E>(
-  f: (x: TInput) => Result<T, E>,
-): (inp: Result<TInput, E>) => Result<readonly [T, TInput], E>
-function chainTup(f: any) {
-  return E.chain((input: any) =>
+function chainTup<TInput, TInput2 extends TInput, T, E>(
+  f: (x: TInput) => Either<E, T>,
+) {
+  return E.chain((input: TInput2) =>
     pipe(
       f(input),
       E.map(x => [x, input] as const),
@@ -365,7 +366,7 @@ export type AnyResult<T = any, TErr = any> = Result<T, TErr>
 
 export const mapper = <T, TOut>(mapper: (i: T) => TOut) => <FOut>(
   f: (i: TOut) => FOut,
-) => (i: T) => f(mapper(i))
+) => <T2 extends T>(i: T2) => f(mapper(i))
 
 // We create tuples in reverse, under the assumption that the further away we are
 // from previous statements, the less important their output becomes..
