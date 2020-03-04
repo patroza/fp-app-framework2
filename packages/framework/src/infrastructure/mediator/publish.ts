@@ -1,4 +1,4 @@
-import { AsyncResult, isErr, E, TE } from "@fp-app/fp-ts-extensions"
+import { AsyncResult, E, TE } from "@fp-app/fp-ts-extensions"
 
 import Event from "../../event"
 import { getLogger } from "../../utils"
@@ -25,7 +25,7 @@ const publish = (
   for (const evtHandler of hndl) {
     logger.log(`Handling ${evtHandler.name}`)
     const r = await evtHandler(evt)()
-    if (isErr(r)) {
+    if (E.isErr(r)) {
       return E.err(r.left)
     }
   }

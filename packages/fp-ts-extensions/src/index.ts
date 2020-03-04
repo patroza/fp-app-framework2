@@ -1,32 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// export * from "fp-ts/lib/Either"
 
-import { Right, Left } from "fp-ts/lib/Either"
 import { pipe } from "fp-ts/lib/pipeable"
-
-import * as E from "fp-ts/lib/Either"
-import * as T from "fp-ts/lib/Task"
-import * as TE from "fp-ts/lib/TaskEither"
 
 import { AsyncResult } from "./TaskEither"
 import { Result } from "./Either"
 
 export * from "./general"
 
-export const isErr = <T, TErr>(x: Result<T, TErr>): x is Left<TErr> => x._tag === "Left"
-export const isOk = <T, TErr>(x: Result<T, TErr>): x is Right<T> => x._tag === "Right"
-
-import * as EnhancedTE from "./TaskEither"
-import * as EnhancedE from "./Either"
+import * as TE from "./TaskEither"
+import * as E from "./Either"
 
 export const createLifters = <T>() => ({
-  E: EnhancedE.lift<T>(),
-  TE: EnhancedTE.lift<T>(),
+  E: E.lift<T>(),
+  TE: TE.lift<T>(),
 })
 
 export const toolDeps = <TErr>(): ToolDeps<TErr> => ({
-  liftE: EnhancedE.lift<TErr>(),
-  liftTE: EnhancedTE.lift<TErr>(),
+  liftE: E.lift<TErr>(),
+  liftTE: TE.lift<TErr>(),
 })
 
 export const trampoline = <TErr, TOut, TArgs extends readonly any[]>(
@@ -56,6 +47,6 @@ export type ToolDeps<TE> = {
 
 export type Tramp<TInput, TOutput, TErr> = (input: TInput) => E.Either<TErr, TOutput>
 
-export { AsyncResult, Result, T }
-export { EnhancedTE as TE, EnhancedE as E }
+export { AsyncResult, Result }
+export { TE, E }
 export { pipe }
