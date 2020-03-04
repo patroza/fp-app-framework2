@@ -7,14 +7,7 @@ import {
   toFieldError,
   ValidationError,
 } from "@fp-app/framework"
-import {
-  Result,
-  resultTuple,
-  pipe,
-  E,
-  TE,
-  reverseApply,
-} from "@fp-app/fp-ts-extensions"
+import { Result, pipe, E, TE, reverseApply } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
@@ -72,7 +65,7 @@ export interface Input {
 
 const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
   pipe(
-    resultTuple(
+    E.resultTuple(
       pipe(PaxDefinition.create(pax), E.mapLeft(toFieldError("pax"))),
       pipe(FutureDate.create(startDate), E.mapLeft(toFieldError("startDate"))),
       pipe(validateString(templateId), E.mapLeft(toFieldError("templateId"))),
@@ -87,7 +80,7 @@ const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
 
     // Alt 1
     // flatMap(input =>
-    //   resultTuple3(
+    //   E.resultTuple3(
     //     input,
     //     ({ pax }) => PaxDefinition.create(pax).compose(mapErr(toFieldError('pax'))),
     //     ({ startDate }) => FutureDate.create(startDate).compose(mapErr(toFieldError('startDate'))),
@@ -97,7 +90,7 @@ const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
 
     // Alt 2
     // Why doesn't this work?
-    // flatMap(resultTuple2(
+    // flatMap(E.resultTuple2(
     //   ({pax}) => PaxDefinition.create(pax).compose(mapErr(toFieldError('pax'))),
     //   ({startDate}) => FutureDate.create(startDate).compose(mapErr(toFieldError('startDate'))),
     //   ({templateId}) => validateString(templateId).compose(mapErr(toFieldError('templateId'))),

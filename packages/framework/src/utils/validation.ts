@@ -1,4 +1,4 @@
-import { Result, pipe, E, errorishToEither } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, E } from "@fp-app/fp-ts-extensions"
 import Joi, { ValidationResult } from "@hapi/joi"
 import {
   CombinedValidationError,
@@ -22,7 +22,7 @@ const createValidator = <TIn>(
 
 const mapValidationResult = (result: ValidationResult) =>
   pipe(
-    errorishToEither(result),
+    E.fromErrorish(result),
     E.do(x => x.warning && logger.warn("Warning during validation: " + x.warning)),
     E.map(x => x.value),
     E.mapLeft(joiValidationErrorToCombinedValidationError),

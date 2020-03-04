@@ -10,13 +10,10 @@ import {
 } from "@fp-app/framework"
 import Event from "@fp-app/framework/src/event"
 import {
-  anyTrue,
   applyIfNotUndefined,
   Result,
-  valueOrUndefined,
   E,
   pipe,
-  mapStaticE,
   trampoline,
   ToolDeps,
 } from "@fp-app/fp-ts-extensions"
@@ -92,7 +89,7 @@ export default class TrainTrip extends Entity {
     ) =>
       pipe(
         this.confirmUserChangeAllowed(),
-        mapStaticE(state),
+        E.mapStatic(state),
         E.chain(pipe(this.applyDefinedChanges, _.liftE)),
         E.map(this.createChangeEvents),
       ),
@@ -144,7 +141,7 @@ export default class TrainTrip extends Entity {
   changeStartDate = (startDate: FutureDate) =>
     pipe(
       this.confirmUserChangeAllowed(),
-      mapStaticE(startDate),
+      E.mapStatic(startDate),
       E.map(this.intChangeStartDate),
       E.map(this.createChangeEvents),
     )
@@ -152,7 +149,7 @@ export default class TrainTrip extends Entity {
   changePax = (pax: PaxDefinition) =>
     pipe(
       this.confirmUserChangeAllowed(),
-      mapStaticE(pax),
+      E.mapStatic(pax),
       E.map(this.intChangePax),
       E.map(this.createChangeEvents),
     )
@@ -163,7 +160,7 @@ export default class TrainTrip extends Entity {
     ) =>
       pipe(
         this.confirmUserChangeAllowed(),
-        mapStaticE(travelClass),
+        E.mapStatic(travelClass),
         E.chain(pipe(this.intChangeTravelClass, _.liftE)),
         E.map(this.createChangeEvents),
       ),
@@ -176,7 +173,7 @@ export default class TrainTrip extends Entity {
   // > = trampolineE(_ => travelClass =>
   //   pipe(
   //     this.confirmUserChangeAllowed(),
-  //     mapStaticE(travelClass),
+  //     E.mapStatic(travelClass),
   //     E.chain(_.liftE(this.intChangeTravelClass)),
   //     E.map(this.createChangeEvents),
   //   ),
@@ -189,10 +186,10 @@ export default class TrainTrip extends Entity {
     startDate,
     travelClass,
   }: StateProposition) =>
-    anyTrue<ValidationError | InvalidStateError>(
+    E.anyTrue<ValidationError | InvalidStateError>(
       E.map(() => applyIfNotUndefined(startDate, this.intChangeStartDate)),
       E.map(() => applyIfNotUndefined(pax, this.intChangePax)),
-      E.chain(() => valueOrUndefined(travelClass, this.intChangeTravelClass)),
+      E.chain(() => E.valueOrUndefined(travelClass, this.intChangeTravelClass)),
     )
 
   private readonly intChangeStartDate = (startDate: FutureDate) => {

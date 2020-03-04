@@ -12,14 +12,7 @@ import {
   RecordNotFound,
   typedKeysOf,
 } from "@fp-app/framework"
-import {
-  PipeFunction,
-  sequenceAsync,
-  startWithVal,
-  pipe,
-  TE,
-  E,
-} from "@fp-app/fp-ts-extensions"
+import { pipe, TE, E } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
 import { TravelClassName } from "../TravelClassDefinition"
@@ -29,7 +22,11 @@ const getTrip = ({
   getTemplate,
 }: {
   getTemplate: getTemplateType
-}): PipeFunction<string, TripWithSelectedTravelClass, ApiError | InvalidStateError> =>
+}): TE.PipeFunction<
+  string,
+  TripWithSelectedTravelClass,
+  ApiError | InvalidStateError
+> =>
   TE.compose(
     TE.chain(pipe(getTemplate, TE.lift<InvalidStateError | ApiError>())),
     TE.chain(toTrip(getTemplate)),
@@ -37,8 +34,8 @@ const getTrip = ({
 
 const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
   const currentTravelClass = tplToTravelClass(tpl)
-  const resolveTravelClasses = sequenceAsync(
-    [startWithVal(currentTravelClass)<ApiError>()].concat(
+  const resolveTravelClasses = TE.sequence(
+    [TE.startWithVal(currentTravelClass)<ApiError>()].concat(
       typedKeysOf(tpl.travelClasses)
         .filter(x => x !== currentTravelClass.name)
         .map(slKey => tpl.travelClasses[slKey]!)
@@ -100,8 +97,11 @@ const getFakePriceFromTemplate = () => ({ price: { amount: 100, currency: "EUR" 
 const createTravelPlanFake = (): createTravelPlanType => () => async () =>
   E.ok<ConnectionError, string>(v4())
 
-const sendCloudSyncFake = (): PipeFunction<TrainTrip, string, ConnectionError> => () =>
-  TE.right<ConnectionError, string>(v4())
+const sendCloudSyncFake = (): TE.PipeFunction<
+  TrainTrip,
+  string,
+  ConnectionError
+> => () => TE.right<ConnectionError, string>(v4())
 
 const getTravelPlanFake = (): getTravelPlanType => travelPlanId =>
   TE.right({ id: travelPlanId } as TravelPlan)

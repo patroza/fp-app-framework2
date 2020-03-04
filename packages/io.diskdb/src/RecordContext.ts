@@ -7,15 +7,7 @@ import {
   RecordContext,
   RecordNotFound,
 } from "@fp-app/framework"
-import {
-  liftType,
-  PipeFunctionN,
-  startWithVal,
-  pipe,
-  AsyncResult,
-  E,
-  TE,
-} from "@fp-app/fp-ts-extensions"
+import { liftType, pipe, AsyncResult, E, TE } from "@fp-app/fp-ts-extensions"
 import { lock } from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
 
@@ -137,7 +129,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
   private readonly deleteRecord = (record: T): AsyncResult<void, DbError> =>
     lockRecordOnDisk(this.type, record.id, () =>
       pipe(
-        startWithVal(void 0)<DbError>(),
+        TE.startWithVal(void 0)<DbError>(),
         TE.chain(() => async () =>
           E.right(await deleteFile(getFilename(this.type, record.id))),
         ),
@@ -168,7 +160,11 @@ interface CachedRecord<T> {
   data: T
 }
 
-const lockRecordOnDisk = <T>(type: string, id: string, cb: PipeFunctionN<T, DbError>) =>
+const lockRecordOnDisk = <T>(
+  type: string,
+  id: string,
+  cb: TE.PipeFunctionN<T, DbError>,
+) =>
   pipe(
     tryLock(type, id),
     TE.mapLeft(liftType<DbError>()),

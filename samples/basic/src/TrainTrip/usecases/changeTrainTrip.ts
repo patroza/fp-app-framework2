@@ -7,7 +7,7 @@ import {
   toFieldError,
   ValidationError,
 } from "@fp-app/framework"
-import { resultTuple, valueOrUndefined, pipe, E, TE } from "@fp-app/fp-ts-extensions"
+import { pipe, E, TE } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
@@ -64,16 +64,19 @@ const validateStateProposition = (
   { pax, startDate, travelClass }: StateProposition, // ...rest
 ) =>
   pipe(
-    resultTuple(
+    E.resultTuple(
       pipe(
-        valueOrUndefined(travelClass, TravelClassDefinition.create),
+        E.valueOrUndefined(travelClass, TravelClassDefinition.create),
         E.mapLeft(toFieldError("travelClass")),
       ),
       pipe(
-        valueOrUndefined(startDate, FutureDate.create),
+        E.valueOrUndefined(startDate, FutureDate.create),
         E.mapLeft(toFieldError("startDate")),
       ),
-      pipe(valueOrUndefined(pax, PaxDefinition.create), E.mapLeft(toFieldError("pax"))),
+      pipe(
+        E.valueOrUndefined(pax, PaxDefinition.create),
+        E.mapLeft(toFieldError("pax")),
+      ),
       // E.ok(rest),
     ),
     E.mapLeft(combineValidationErrors),

@@ -1,12 +1,12 @@
 import { assert, InvalidStateError } from "@fp-app/framework"
-import { Result, pipe, boolToEither, E } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, E } from "@fp-app/fp-ts-extensions"
 import { TemplateId } from "./TrainTrip"
 import { TravelClassName } from "./TravelClassDefinition"
 
 export default class Trip {
   static create = (serviceLevels: TravelClass[]) =>
     pipe(
-      boolToEither(serviceLevels, serviceLevels => !!serviceLevels.length),
+      E.fromBool(serviceLevels, serviceLevels => !!serviceLevels.length),
       E.map(x => new Trip(x)),
       E.mapLeft(
         () => new InvalidStateError("A trip requires at least 1 service level"),

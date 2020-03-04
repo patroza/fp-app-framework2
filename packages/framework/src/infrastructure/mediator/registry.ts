@@ -1,4 +1,4 @@
-import { PipeFunction, AsyncResult, ToolDeps, toolDeps } from "@fp-app/fp-ts-extensions"
+import { AsyncResult, ToolDeps, toolDeps, TE } from "@fp-app/fp-ts-extensions"
 import chalk from "chalk"
 import Event from "../../event"
 import { Constructor, getLogger, setFunctionName, typedKeysOf } from "../../utils"
@@ -70,7 +70,7 @@ export const resolveEventKey = generateKey<resolveEventType>("resolveEvent")
 
 type HandlerWithDependencies<TDependencies, TInput, TOutput, TError> = WithDependencies<
   TDependencies,
-  PipeFunction<TInput, TOutput, TError>
+  TE.PipeFunction<TInput, TOutput, TError>
 >
 
 // tslint:disable-next-line:max-line-length
@@ -248,7 +248,7 @@ export type requestType = <TInput, TOutput, TError>(
 
 export type requestInNewScopeType = requestType
 
-export type NamedRequestHandler<TInput, TOutput, TErr> = PipeFunction<
+export type NamedRequestHandler<TInput, TOutput, TErr> = TE.PipeFunction<
   TInput,
   TOutput,
   TErr
