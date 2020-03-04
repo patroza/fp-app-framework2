@@ -13,9 +13,6 @@ import {
   typedKeysOf,
 } from "@fp-app/framework"
 import {
-  err,
-  map,
-  ok,
   PipeFunction,
   sequenceAsync,
   startWithVal,
@@ -45,7 +42,7 @@ const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
       typedKeysOf(tpl.travelClasses)
         .filter(x => x !== currentTravelClass.name)
         .map(slKey => tpl.travelClasses[slKey]!)
-        .map(sl => pipe(getTemplate(sl.id), map(tplToTravelClass))),
+        .map(sl => pipe(getTemplate(sl.id), TE.map(tplToTravelClass))),
     ),
   )
   const liftErr = E.lift<ApiError | InvalidStateError>()
@@ -73,9 +70,9 @@ const getTplLevelName = (tpl: Template) =>
 const getTemplateFake = (): getTemplateType => templateId => async () => {
   const tpl = mockedTemplates()[templateId] as Template | undefined
   if (!tpl) {
-    return err(new RecordNotFound("Template", templateId))
+    return E.err(new RecordNotFound("Template", templateId))
   }
-  return ok(tpl)
+  return E.ok(tpl)
 }
 
 const mockedTemplates: () => Record<string, Template> = () => ({
@@ -95,13 +92,13 @@ const getPricingFake = ({
   pricingApiUrl: string
   getTemplate: getTemplateType
 }) => (templateId: string) =>
-  pipe(getTemplate(templateId), map(getFakePriceFromTemplate))
+  pipe(getTemplate(templateId), TE.map(getFakePriceFromTemplate))
 
 const getFakePriceFromTemplate = () => ({ price: { amount: 100, currency: "EUR" } })
 
 // eslint-disable-next-line @typescript-eslint/require-await
 const createTravelPlanFake = (): createTravelPlanType => () => async () =>
-  ok<string, ConnectionError>(v4())
+  E.ok<ConnectionError, string>(v4())
 
 const sendCloudSyncFake = (): PipeFunction<TrainTrip, string, ConnectionError> => () =>
   TE.right<ConnectionError, string>(v4())

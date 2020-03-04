@@ -12,10 +12,7 @@ import Event from "@fp-app/framework/src/event"
 import {
   anyTrue,
   applyIfNotUndefined,
-  err,
-  ok,
   Result,
-  success,
   valueOrUndefined,
   E,
   pipe,
@@ -101,8 +98,8 @@ export default class TrainTrip extends Entity {
       ),
     // ALT1
     // pipe(
-    //   ok(state),
-    //   chainTee(this.confirmUserChangeAllowed),
+    //   E.ok(state),
+    //   E.chainTee(this.confirmUserChangeAllowed),
     //   E.chain(liftE(this.applyDefinedChanges)),
     //   E.map(this.createChangeEvents),
     // )
@@ -227,21 +224,21 @@ export default class TrainTrip extends Entity {
       x => x.travelClass.name === travelClass.value,
     )
     if (!slc) {
-      return err(new InvalidStateError(`${travelClass.value} not available currently`))
+      return E.err(
+        new InvalidStateError(`${travelClass.value} not available currently`),
+      )
     }
     if (this.currentTravelClassConfiguration === slc) {
-      return ok(false)
+      return E.ok(false)
     }
     this.w.currentTravelClassConfiguration = slc
-    return ok(true)
+    return E.ok(true)
   }
 
-  private confirmUserChangeAllowed = (): Result<void, ForbiddenError> => {
-    if (this.isLocked) {
-      return err(new ForbiddenError(`No longer allowed to change TrainTrip ${this.id}`))
-    }
-    return success()
-  }
+  private confirmUserChangeAllowed = (): Result<void, ForbiddenError> =>
+    this.isLocked
+      ? E.err(new ForbiddenError(`No longer allowed to change TrainTrip ${this.id}`))
+      : E.success()
 
   private readonly createChangeEvents = (changed: boolean) => {
     this.registerDomainEvent(new UserInputReceived(this.id))

@@ -1,10 +1,9 @@
 import {
-  err,
   PipeFunction,
   PipeFunctionN,
-  success,
   AsyncResult,
   isErr,
+  E,
 } from "@fp-app/fp-ts-extensions"
 
 import Event from "../../event"
@@ -26,19 +25,19 @@ const publish = (
   )
 
   if (!hndl) {
-    return success()
+    return E.success()
   }
 
   for (const evtHandler of hndl) {
     logger.log(`Handling ${evtHandler.name}`)
     const r = await evtHandler(evt)()
     if (isErr(r)) {
-      return err(r.left)
+      return E.err(r.left)
     }
   }
 
   logger.log(`Published event: ${evt.constructor.name}`)
-  return success()
+  return E.success()
 }
 
 export default publish

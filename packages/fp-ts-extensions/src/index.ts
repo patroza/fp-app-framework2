@@ -11,27 +11,16 @@ import * as TE from "fp-ts/lib/TaskEither"
 
 import { flatten, zip } from "lodash"
 import { TaskEither } from "fp-ts/lib/TaskEither"
-import { Task } from "fp-ts/lib/Task"
 import { flow } from "fp-ts/lib/function"
 
-export { T }
-
-export const result = TE.taskEither
 export type AsyncResult<TSuccess, TError> = TaskEither<TError, TSuccess>
 export type Result<TSuccess, TError> = Either<TError, TSuccess>
-export const err = <TSuccess = never, TError = never>(
-  e: TError,
-): Result<TSuccess, TError> => left<TError, TSuccess>(e)
-export const ok = <TSuccess = never, TError = never>(
+const err = <TSuccess = never, TError = never>(e: TError): Result<TSuccess, TError> =>
+  left<TError, TSuccess>(e)
+const ok = <TSuccess = never, TError = never>(
   a: TSuccess,
-): Result<TSuccess, TError> => right<TError, TSuccess>(a)
-export type Ok<TSuccess> = Task<Right<TSuccess>>
-export type Err<TErr> = Task<Left<TErr>>
-
-export const okTask = <TSuccess = never, TError = never>(a: TSuccess) =>
-  TE.fromEither(ok<TSuccess, TError>(a))
-export const errTask = <TSuccess = never, TError = never>(e: TError) =>
-  TE.fromEither(err<TSuccess, TError>(e))
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+) => (right<TError, TSuccess>(a) as any) as Result<TSuccess, TError>
 
 export const TFold = flow(E.fold, T.map)
 export const boolToEither = <T>(
@@ -63,8 +52,6 @@ export const errorishToEither = <T, TE extends Error>(
   }
   return ok(errorish)
 }
-
-export { map, pipe }
 
 // useful tools for .compose( continuations
 export const mapStatic = <TCurrent, TNew>(value: TNew) =>
@@ -124,10 +111,8 @@ export function tee(f: any) {
 export const regainType = <T, TOut>(f: (i: T) => TOut) => <T2 extends T>(i: T2) => f(i)
 
 // Easily pass input -> (input -> output) -> [output, input]
-function chainTupTask<TInput, TInput2 extends TInput, T, E>(
-  f: (x: TInput) => TaskEither<E, T>,
-) {
-  return TE.chain((input: TInput2) =>
+function chainTupTask<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
+  return TE.chain((input: TInput) =>
     pipe(
       f(input),
       TE.map(x => [x, input] as const),
@@ -135,10 +120,8 @@ function chainTupTask<TInput, TInput2 extends TInput, T, E>(
   )
 }
 
-function chainTup<TInput, TInput2 extends TInput, T, E>(
-  f: (x: TInput) => Either<E, T>,
-) {
-  return E.chain((input: TInput2) =>
+function chainTup<TInput, T, E>(f: (x: TInput) => Either<E, T>) {
+  return E.chain((input: TInput) =>
     pipe(
       f(input),
       E.map(x => [x, input] as const),
@@ -323,7 +306,7 @@ const liftTE = <TE>() => <T, TI, TE2 extends TE>(e: (i: TI) => TaskEither<TE2, T
 export const anyTrue = <TErr = any>(...mappers: any[]): Result<boolean, TErr> => {
   let hasChanged = false
 
-  const mapHasChanged = map(a => (a ? (hasChanged = true) : null)) as any
+  const mapHasChanged = E.map(a => (a ? (hasChanged = true) : null)) as any
   const items = mappers.map(() => mapHasChanged)
   const execution = flatten(zip(mappers, items))
 
@@ -333,7 +316,7 @@ export const anyTrue = <TErr = any>(...mappers: any[]): Result<boolean, TErr> =>
   return pipe(
     an,
     ...execution,
-    map(() => hasChanged),
+    E.map(() => hasChanged),
   )
 }
 
@@ -494,7 +477,7 @@ export function resultTuple3(
   return ok(successes)
 }
 
-export const success = <TErr>() => ok<void, TErr>(void 0)
+const success = <TErr>() => ok<void, TErr>(void 0)
 
 export function apply2<T1, T2, TOut>(
   func: (...args: readonly [T1, T2]) => TOut,
@@ -665,6 +648,18 @@ function composeE<TInput, TError, TOutput>(...a: any[]) {
     )
 }
 
+export type LeftArg<T> = T extends E.Left<infer U> ? U : never
+export type RightArg<T> = T extends E.Right<infer U> ? U : never
+
+export type TELeftArg<T> = LeftArg<ThenArg<T>>
+export type TERightArg<T> = RightArg<ThenArg<T>>
+
+export type ThenArg<T> = T extends Promise<infer U>
+  ? U
+  : T extends (...args: any[]) => Promise<infer V>
+  ? V
+  : T
+
 const EnhancedTE = {
   ...TE,
   do: TEDo,
@@ -673,6 +668,11 @@ const EnhancedTE = {
   chainTup: chainTupTask,
   chainFlatTup: chainFlatTupTask,
   compose,
+
+  ok: TE.right,
+  err: TE.left,
+  isOk: E.isRight,
+  isErr: E.isLeft,
 }
 
 const EnhancedE = {
@@ -683,6 +683,13 @@ const EnhancedE = {
   chainFlatTup,
   toTaskEither: toTE,
   compose: composeE,
+  ok: E.right,
+  err: E.left,
+  isOk: E.isRight,
+  isErr: E.isLeft,
+  success,
 }
 
 export { EnhancedTE as TE, EnhancedE as E }
+export { pipe }
+export { T }

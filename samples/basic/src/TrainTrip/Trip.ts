@@ -1,5 +1,5 @@
 import { assert, InvalidStateError } from "@fp-app/framework"
-import { err, ok, Result, pipe, boolToEither, E } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, boolToEither, E } from "@fp-app/fp-ts-extensions"
 import { TemplateId } from "./TrainTrip"
 import { TravelClassName } from "./TravelClassDefinition"
 
@@ -26,9 +26,11 @@ export class TripWithSelectedTravelClass {
   ): Result<TripWithSelectedTravelClass, InvalidStateError> {
     const selectedTravelClass = trip.travelClasses.find(x => x.name === travelClassName)
     if (!selectedTravelClass) {
-      return err(new InvalidStateError("The service level is not available"))
+      return E.err(new InvalidStateError("The service level is not available"))
     }
-    return ok(new TripWithSelectedTravelClass(trip.travelClasses, selectedTravelClass))
+    return E.ok(
+      new TripWithSelectedTravelClass(trip.travelClasses, selectedTravelClass),
+    )
   }
   private constructor(
     readonly travelClasses: TravelClass[],

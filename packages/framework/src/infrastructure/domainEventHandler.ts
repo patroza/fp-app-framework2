@@ -1,12 +1,4 @@
-import {
-  err,
-  success,
-  pipe,
-  AsyncResult,
-  isErr,
-  ok,
-  TE,
-} from "@fp-app/fp-ts-extensions"
+import { pipe, AsyncResult, isErr, TE, E } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { EventHandlerWithDependencies } from "./mediator"
 import { publishType } from "./mediator/publish"
@@ -57,12 +49,12 @@ export default class DomainEventHandler {
       const r = await this.publishEvents(events)()
       if (isErr(r)) {
         this.events = processedEvents
-        return err(r.left)
+        return E.err(r.left)
       }
       updateEvents()
     }
     this.processedEvents = processedEvents
-    return ok(void 0)
+    return E.success()
   }
 
   private readonly publishEvents = (events: Event[]): AsyncResult<void, Error> => {
@@ -70,10 +62,10 @@ export default class DomainEventHandler {
       for (const evt of events) {
         const r = await this.publish(evt)()
         if (isErr(r)) {
-          return err(r.left)
+          return E.err(r.left)
         }
       }
-      return success()
+      return E.success()
     }
   }
 

@@ -74,7 +74,7 @@ const validateStateProposition = (
         E.mapLeft(toFieldError("startDate")),
       ),
       pipe(valueOrUndefined(pax, PaxDefinition.create), E.mapLeft(toFieldError("pax"))),
-      // ok(rest),
+      // E.ok(rest),
     ),
     E.mapLeft(combineValidationErrors),
     E.map(([travelClass, startDate, pax]) => ({

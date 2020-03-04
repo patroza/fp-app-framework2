@@ -8,18 +8,13 @@ import {
   RecordNotFound,
 } from "@fp-app/framework"
 import {
-  err,
   liftType,
-  ok,
   PipeFunctionN,
   startWithVal,
-  success,
   pipe,
   AsyncResult,
   E,
   TE,
-  isErr,
-  okTask,
 } from "@fp-app/fp-ts-extensions"
 import { lock } from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
@@ -46,7 +41,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
   readonly load = (id: string): AsyncResult<T, DbError> => {
     const cachedRecord = this.cache.get(id)
     if (cachedRecord) {
-      return okTask(cachedRecord.data)
+      return TE.ok(cachedRecord.data)
     }
     return pipe(
       tryReadFromDb(this.type, id),
@@ -82,18 +77,18 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
   ): AsyncResult<void, DbError> => async () => {
     for (const e of this.removals) {
       const r = await this.deleteRecord(e)()
-      if (isErr(r)) {
+      if (E.isErr(r)) {
         return r
       }
       if (forEachDelete) {
         const rEs = await forEachDelete(e)()
-        if (isErr(rEs)) {
+        if (E.isErr(rEs)) {
           return rEs
         }
       }
       this.cache.delete(e.id)
     }
-    return success()
+    return E.success()
   }
 
   private readonly handleInsertionsAndUpdates = (
@@ -101,17 +96,17 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
   ): AsyncResult<void, DbError> => async () => {
     for (const e of this.cache.entries()) {
       const r = await this.saveRecord(e[1].data)()
-      if (isErr(r)) {
+      if (E.isErr(r)) {
         return r
       }
       if (forEachSave) {
         const rEs = await forEachSave(e[1].data)()
-        if (isErr(rEs)) {
+        if (E.isErr(rEs)) {
           return rEs
         }
       }
     }
-    return success()
+    return E.success()
   }
 
   private readonly saveRecord = (record: T): AsyncResult<void, DbError> => async () => {
@@ -119,7 +114,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
 
     if (!cachedRecord.version) {
       await this.actualSave(record, cachedRecord.version)
-      return success()
+      return E.success()
     }
 
     return await lockRecordOnDisk(this.type, record.id, () =>
@@ -129,10 +124,10 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
           (storedSerialized): AsyncResult<void, DbError> => async () => {
             const { version } = JSON.parse(storedSerialized) as SerializedDBRecord
             if (version !== cachedRecord.version) {
-              return err(new OptimisticLockError(this.type, record.id))
+              return E.err(new OptimisticLockError(this.type, record.id))
             }
             await this.actualSave(record, version)
-            return success()
+            return E.success()
           },
         ),
       ),
@@ -191,9 +186,9 @@ const tryLock = (
   id: string,
 ): AsyncResult<() => Promise<void>, CouldNotAquireDbLockError> => async () => {
   try {
-    return ok(await lock(getFilename(type, id)))
+    return E.ok(await lock(getFilename(type, id)))
   } catch (er) {
-    return err(new CouldNotAquireDbLockError(type, id, er))
+    return E.err(new CouldNotAquireDbLockError(type, id, er))
   }
 }
 
@@ -204,11 +199,11 @@ const tryReadFromDb = (
   try {
     const filePath = getFilename(type, id)
     if (!(await exists(filePath))) {
-      return err(new RecordNotFound(type, id))
+      return E.err(new RecordNotFound(type, id))
     }
-    return ok(await readFile(filePath, { encoding: "utf-8" }))
+    return E.ok(await readFile(filePath, { encoding: "utf-8" }))
   } catch (err) {
-    return err(new ConnectionError(err))
+    return E.err(new ConnectionError(err))
   }
 }
 

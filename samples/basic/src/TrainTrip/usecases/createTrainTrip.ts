@@ -8,14 +8,13 @@ import {
   ValidationError,
 } from "@fp-app/framework"
 import {
-  err,
-  ok,
   Result,
   resultTuple,
   pipe,
   E,
   TE,
   reverseApply,
+  RightArg,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
@@ -60,9 +59,8 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
     ),
 )
 
-const getTripFromTrainTripInfo = (getTrip: typeof getTripKey) => (i: {
-  templateId: string
-}) => getTrip(i.templateId)
+const getTripFromTrainTripInfo = (getTrip: typeof getTripKey) => (i: ValidatedInput) =>
+  getTrip(i.templateId)
 
 export default createTrainTrip
 export interface Input {
@@ -108,9 +106,11 @@ const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
     // mapErr(combineValidationErrors),
   )
 
+type ValidatedInput = RightArg<ReturnType<typeof validateCreateTrainTripInfo>>
+
 // TODO
 const validateString = <T extends string>(str: string): Result<T, ValidationError> =>
-  str ? ok(str as T) : err(new ValidationError("not a valid str"))
+  str ? E.ok(str as T) : E.err(new ValidationError("not a valid str"))
 
 type CreateError =
   | CombinedValidationError
