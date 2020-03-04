@@ -7,16 +7,7 @@ import {
   toFieldError,
   ValidationError,
 } from "@fp-app/framework"
-import {
-  err,
-  ok,
-  Result,
-  resultTuple,
-  pipe,
-  E,
-  TE,
-  reverseApply,
-} from "@fp-app/fp-ts-extensions"
+import { Result, pipe, E, TE, reverseApply } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
@@ -33,17 +24,33 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
   ({ _, db, getTrip }) =>
     TE.compose(
       TE.chainEitherK(pipe(validateCreateTrainTripInfo, _.liftE)),
-      TE.chainTup(
-        TE.compose(
-          TE.map(i => i.templateId),
-          TE.chain(pipe(getTrip, _.liftTE)),
-        ),
-      ),
+      TE.chainTup(pipe(getTripFromTrainTripInfo(getTrip), _.liftTE)),
+      // pipe(
+      //   getTrip,
+      //   mapper((i: { templateId: string }) => i.templateId),
+      //   _.liftTE,
+      // ),
+      // ALT
+      //i => pipe(getTrip, _.liftTE)(i.templateId),
+      // ALT1
+      //pipe(mapper((i: { templateId: string }) => i.templateId)(getTrip), _.liftTE),
+      // ALT2
+      // const getTripFromTrainTripInfo = (getTrip: typeof getTripKey) => (i: {
+      //   templateId: string
+      // }) => getTrip(i.templateId)
+      // ALT3
+      // TE.compose(
+      //   TE.map(i => i.templateId),
+      //   TE.chain(pipe(getTrip, _.liftTE)),
+      // ),
       TE.map(reverseApply(TrainTrip.create)),
       TE.do(db.trainTrips.add),
       TE.map(trainTrip => trainTrip.id),
     ),
 )
+
+const getTripFromTrainTripInfo = (getTrip: typeof getTripKey) => (i: ValidatedInput) =>
+  getTrip(i.templateId)
 
 export default createTrainTrip
 export interface Input {
@@ -56,7 +63,7 @@ export interface Input {
 
 const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
   pipe(
-    resultTuple(
+    E.resultTuple(
       pipe(PaxDefinition.create(pax), E.mapLeft(toFieldError("pax"))),
       pipe(FutureDate.create(startDate), E.mapLeft(toFieldError("startDate"))),
       pipe(validateString(templateId), E.mapLeft(toFieldError("templateId"))),
@@ -71,7 +78,7 @@ const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
 
     // Alt 1
     // flatMap(input =>
-    //   resultTuple3(
+    //   E.resultTuple3(
     //     input,
     //     ({ pax }) => PaxDefinition.create(pax).compose(mapErr(toFieldError('pax'))),
     //     ({ startDate }) => FutureDate.create(startDate).compose(mapErr(toFieldError('startDate'))),
@@ -81,7 +88,7 @@ const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
 
     // Alt 2
     // Why doesn't this work?
-    // flatMap(resultTuple2(
+    // flatMap(E.resultTuple2(
     //   ({pax}) => PaxDefinition.create(pax).compose(mapErr(toFieldError('pax'))),
     //   ({startDate}) => FutureDate.create(startDate).compose(mapErr(toFieldError('startDate'))),
     //   ({templateId}) => validateString(templateId).compose(mapErr(toFieldError('templateId'))),
@@ -89,9 +96,11 @@ const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
     // mapErr(combineValidationErrors),
   )
 
+type ValidatedInput = E.RightArg<ReturnType<typeof validateCreateTrainTripInfo>>
+
 // TODO
 const validateString = <T extends string>(str: string): Result<T, ValidationError> =>
-  str ? ok(str as T) : err(new ValidationError("not a valid str"))
+  str ? E.ok(str as T) : E.err(new ValidationError("not a valid str"))
 
 type CreateError =
   | CombinedValidationError

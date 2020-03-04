@@ -10,16 +10,10 @@ import {
 } from "@fp-app/framework"
 import Event from "@fp-app/framework/src/event"
 import {
-  anyTrue,
   applyIfNotUndefined,
-  err,
-  ok,
   Result,
-  success,
-  valueOrUndefined,
   E,
   pipe,
-  mapStaticE,
   trampoline,
   ToolDeps,
 } from "@fp-app/fp-ts-extensions"
@@ -95,14 +89,14 @@ export default class TrainTrip extends Entity {
     ) =>
       pipe(
         this.confirmUserChangeAllowed(),
-        mapStaticE(state),
-        E.chain(_.liftE(this.applyDefinedChanges)),
+        E.mapStatic(state),
+        E.chain(pipe(this.applyDefinedChanges, _.liftE)),
         E.map(this.createChangeEvents),
       ),
     // ALT1
     // pipe(
-    //   ok(state),
-    //   chainTee(this.confirmUserChangeAllowed),
+    //   E.ok(state),
+    //   E.chainTee(this.confirmUserChangeAllowed),
     //   E.chain(liftE(this.applyDefinedChanges)),
     //   E.map(this.createChangeEvents),
     // )
@@ -147,7 +141,7 @@ export default class TrainTrip extends Entity {
   changeStartDate = (startDate: FutureDate) =>
     pipe(
       this.confirmUserChangeAllowed(),
-      mapStaticE(startDate),
+      E.mapStatic(startDate),
       E.map(this.intChangeStartDate),
       E.map(this.createChangeEvents),
     )
@@ -155,7 +149,7 @@ export default class TrainTrip extends Entity {
   changePax = (pax: PaxDefinition) =>
     pipe(
       this.confirmUserChangeAllowed(),
-      mapStaticE(pax),
+      E.mapStatic(pax),
       E.map(this.intChangePax),
       E.map(this.createChangeEvents),
     )
@@ -166,8 +160,8 @@ export default class TrainTrip extends Entity {
     ) =>
       pipe(
         this.confirmUserChangeAllowed(),
-        mapStaticE(travelClass),
-        E.chain(_.liftE(this.intChangeTravelClass)),
+        E.mapStatic(travelClass),
+        E.chain(pipe(this.intChangeTravelClass, _.liftE)),
         E.map(this.createChangeEvents),
       ),
   )
@@ -179,7 +173,7 @@ export default class TrainTrip extends Entity {
   // > = trampolineE(_ => travelClass =>
   //   pipe(
   //     this.confirmUserChangeAllowed(),
-  //     mapStaticE(travelClass),
+  //     E.mapStatic(travelClass),
   //     E.chain(_.liftE(this.intChangeTravelClass)),
   //     E.map(this.createChangeEvents),
   //   ),
@@ -192,10 +186,10 @@ export default class TrainTrip extends Entity {
     startDate,
     travelClass,
   }: StateProposition) =>
-    anyTrue<ValidationError | InvalidStateError>(
+    E.anyTrue<ValidationError | InvalidStateError>(
       E.map(() => applyIfNotUndefined(startDate, this.intChangeStartDate)),
       E.map(() => applyIfNotUndefined(pax, this.intChangePax)),
-      E.chain(() => valueOrUndefined(travelClass, this.intChangeTravelClass)),
+      E.chain(() => E.valueOrUndefined(travelClass, this.intChangeTravelClass)),
     )
 
   private readonly intChangeStartDate = (startDate: FutureDate) => {
@@ -227,21 +221,21 @@ export default class TrainTrip extends Entity {
       x => x.travelClass.name === travelClass.value,
     )
     if (!slc) {
-      return err(new InvalidStateError(`${travelClass.value} not available currently`))
+      return E.err(
+        new InvalidStateError(`${travelClass.value} not available currently`),
+      )
     }
     if (this.currentTravelClassConfiguration === slc) {
-      return ok(false)
+      return E.ok(false)
     }
     this.w.currentTravelClassConfiguration = slc
-    return ok(true)
+    return E.ok(true)
   }
 
-  private confirmUserChangeAllowed = (): Result<void, ForbiddenError> => {
-    if (this.isLocked) {
-      return err(new ForbiddenError(`No longer allowed to change TrainTrip ${this.id}`))
-    }
-    return success()
-  }
+  private confirmUserChangeAllowed = (): Result<void, ForbiddenError> =>
+    this.isLocked
+      ? E.err(new ForbiddenError(`No longer allowed to change TrainTrip ${this.id}`))
+      : E.success()
 
   private readonly createChangeEvents = (changed: boolean) => {
     this.registerDomainEvent(new UserInputReceived(this.id))

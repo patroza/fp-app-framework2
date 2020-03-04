@@ -12,17 +12,7 @@ import {
   RecordNotFound,
   typedKeysOf,
 } from "@fp-app/framework"
-import {
-  err,
-  map,
-  ok,
-  PipeFunction,
-  sequenceAsync,
-  startWithVal,
-  pipe,
-  TE,
-  E,
-} from "@fp-app/fp-ts-extensions"
+import { pipe, TE, E } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
 import { TravelClassName } from "../TravelClassDefinition"
@@ -32,7 +22,11 @@ const getTrip = ({
   getTemplate,
 }: {
   getTemplate: getTemplateType
-}): PipeFunction<string, TripWithSelectedTravelClass, ApiError | InvalidStateError> =>
+}): TE.PipeFunction<
+  string,
+  TripWithSelectedTravelClass,
+  ApiError | InvalidStateError
+> =>
   TE.compose(
     TE.chain(pipe(getTemplate, TE.lift<InvalidStateError | ApiError>())),
     TE.chain(toTrip(getTemplate)),
@@ -40,12 +34,12 @@ const getTrip = ({
 
 const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
   const currentTravelClass = tplToTravelClass(tpl)
-  const resolveTravelClasses = sequenceAsync(
-    [startWithVal(currentTravelClass)<ApiError>()].concat(
+  const resolveTravelClasses = TE.sequence(
+    [TE.startWithVal(currentTravelClass)<ApiError>()].concat(
       typedKeysOf(tpl.travelClasses)
         .filter(x => x !== currentTravelClass.name)
         .map(slKey => tpl.travelClasses[slKey]!)
-        .map(sl => pipe(getTemplate(sl.id), map(tplToTravelClass))),
+        .map(sl => pipe(getTemplate(sl.id), TE.map(tplToTravelClass))),
     ),
   )
   const liftErr = E.lift<ApiError | InvalidStateError>()
@@ -73,9 +67,9 @@ const getTplLevelName = (tpl: Template) =>
 const getTemplateFake = (): getTemplateType => templateId => async () => {
   const tpl = mockedTemplates()[templateId] as Template | undefined
   if (!tpl) {
-    return err(new RecordNotFound("Template", templateId))
+    return E.err(new RecordNotFound("Template", templateId))
   }
-  return ok(tpl)
+  return E.ok(tpl)
 }
 
 const mockedTemplates: () => Record<string, Template> = () => ({
@@ -95,16 +89,19 @@ const getPricingFake = ({
   pricingApiUrl: string
   getTemplate: getTemplateType
 }) => (templateId: string) =>
-  pipe(getTemplate(templateId), map(getFakePriceFromTemplate))
+  pipe(getTemplate(templateId), TE.map(getFakePriceFromTemplate))
 
 const getFakePriceFromTemplate = () => ({ price: { amount: 100, currency: "EUR" } })
 
 // eslint-disable-next-line @typescript-eslint/require-await
 const createTravelPlanFake = (): createTravelPlanType => () => async () =>
-  ok<string, ConnectionError>(v4())
+  E.ok<ConnectionError, string>(v4())
 
-const sendCloudSyncFake = (): PipeFunction<TrainTrip, string, ConnectionError> => () =>
-  TE.right<ConnectionError, string>(v4())
+const sendCloudSyncFake = (): TE.PipeFunction<
+  TrainTrip,
+  string,
+  ConnectionError
+> => () => TE.right<ConnectionError, string>(v4())
 
 const getTravelPlanFake = (): getTravelPlanType => travelPlanId =>
   TE.right({ id: travelPlanId } as TravelPlan)

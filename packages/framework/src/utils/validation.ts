@@ -1,4 +1,4 @@
-import { err, ok, Result, pipe, E, errorishToEither } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, E } from "@fp-app/fp-ts-extensions"
 import Joi, { ValidationResult } from "@hapi/joi"
 import {
   CombinedValidationError,
@@ -22,23 +22,23 @@ const createValidator = <TIn>(
 
 const mapValidationResult = (result: ValidationResult) =>
   pipe(
-    errorishToEither(result),
+    E.fromErrorish(result),
     E.do(x => x.warning && logger.warn("Warning during validation: " + x.warning)),
     E.map(x => x.value),
     E.mapLeft(joiValidationErrorToCombinedValidationError),
   )
 // Alternative:
 // if (r.error) {
-//   return err(
+//   return E.err(
 //     joiValidationErrorToCombinedValidationError(r.error),
 //   )
 // }
-// return ok(r.value)
+// return E.ok(r.value)
 
 // Alt2:
 // return r.error
-//  ? err(joiValidationErrorToCombinedValidationError(r.error))
-//  : ok(r.value)
+//  ? E.err(joiValidationErrorToCombinedValidationError(r.error))
+//  : E.ok(r.value)
 
 export type ValidatorType<TIn, TErr> = ((object: TIn) => Result<TIn, TErr>) & {
   jsonSchema: string
@@ -54,9 +54,9 @@ const predicate = <T, E extends ValidationError>(
   errMsg: string,
 ) => (inp: T): Result<T, E | ValidationError> => {
   if (pred(inp)) {
-    return ok(inp)
+    return E.ok(inp)
   }
-  return err(new ValidationError(errMsg))
+  return E.err(new ValidationError(errMsg))
 }
 
 const valueEquals = <T, TExtracted>(

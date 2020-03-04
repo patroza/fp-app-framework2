@@ -7,7 +7,7 @@ import {
   toFieldError,
   ValidationError,
 } from "@fp-app/framework"
-import { resultTuple, valueOrUndefined, pipe, E, TE } from "@fp-app/fp-ts-extensions"
+import { pipe, E, TE } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
@@ -29,23 +29,22 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
           TE.chain(pipe(db.trainTrips.load, _.liftTE)),
         ),
       ),
-      TE.chain(
-        ([trainTrip, proposal]) =>
-          pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither, f => f(proposal)),
-        // ALT1
-        // TE.compose(
-        //   TE.map(
-        //     ([trainTrip, proposal]) =>
-        //       [pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither), proposal] as const,
-        //   ),
-        //   TE.chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
-        // ),
-        // ALT2
-        //{
-        //  const proposeChanges = pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither)
-        //  return proposeChanges(proposal)
-        //}
+      TE.chain(([trainTrip, proposal]) =>
+        pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither, f => f(proposal)),
       ),
+      // ALT1
+      // TE.compose(
+      //   TE.map(
+      //     ([trainTrip, proposal]) =>
+      //       [pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither), proposal] as const,
+      //   ),
+      //   TE.chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
+      // ),
+      // ALT2
+      //{
+      //  const proposeChanges = pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither)
+      //  return proposeChanges(proposal)
+      //}
     ),
 )
 export default changeTrainTrip
@@ -64,17 +63,20 @@ const validateStateProposition = (
   { pax, startDate, travelClass }: StateProposition, // ...rest
 ) =>
   pipe(
-    resultTuple(
+    E.resultTuple(
       pipe(
-        valueOrUndefined(travelClass, TravelClassDefinition.create),
+        E.valueOrUndefined(travelClass, TravelClassDefinition.create),
         E.mapLeft(toFieldError("travelClass")),
       ),
       pipe(
-        valueOrUndefined(startDate, FutureDate.create),
+        E.valueOrUndefined(startDate, FutureDate.create),
         E.mapLeft(toFieldError("startDate")),
       ),
-      pipe(valueOrUndefined(pax, PaxDefinition.create), E.mapLeft(toFieldError("pax"))),
-      // ok(rest),
+      pipe(
+        E.valueOrUndefined(pax, PaxDefinition.create),
+        E.mapLeft(toFieldError("pax")),
+      ),
+      // E.ok(rest),
     ),
     E.mapLeft(combineValidationErrors),
     E.map(([travelClass, startDate, pax]) => ({

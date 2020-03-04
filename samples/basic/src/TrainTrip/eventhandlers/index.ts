@@ -19,7 +19,7 @@ import {
   ApiError,
   InvalidStateError,
 } from "@fp-app/framework"
-import { pipe, TE, tryExecuteFW } from "@fp-app/fp-ts-extensions"
+import { pipe, TE } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"
 
@@ -50,7 +50,7 @@ createIntegrationEventHandler<TrainTripCreated, void, never>(
   ({ trainTripPublisher }) =>
     TE.compose(
       TE.map(x => x.trainTripId),
-      TE.chain(tryExecuteFW(trainTripPublisher.register)),
+      TE.chain(TE.tryExecuteFW(trainTripPublisher.register)),
     ),
 )
 
@@ -60,7 +60,7 @@ createIntegrationEventHandler<TrainTripStateChanged, void, never>(
   ({ trainTripPublisher }) =>
     TE.compose(
       TE.map(x => x.trainTripId),
-      TE.chain(tryExecuteFW(trainTripPublisher.register)),
+      TE.chain(TE.tryExecuteFW(trainTripPublisher.register)),
     ),
 )
 
@@ -70,7 +70,7 @@ createIntegrationEventHandler<UserInputReceived, void, never>(
   ({ trainTripPublisher }) =>
     TE.compose(
       TE.map(x => x.trainTripId),
-      TE.chain(tryExecuteFW(trainTripPublisher.registerIfPending)),
+      TE.chain(TE.tryExecuteFW(trainTripPublisher.registerIfPending)),
     ),
 )
 
@@ -98,23 +98,21 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
     TE.compose(
       TE.map(x => x.trainTripId),
       TE.chain(pipe(db.trainTrips.load, _.liftTE)),
-      TE.chainTup(
-        pipe(getTripFromTrainTrip(getTrip), _.liftTE),
-        // ALT1
-        // pipe(
-        //   (trainTrip: TrainTrip) =>
-        //     getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId),
-        //   _.liftTE,
-        // ),
-        // ALT2
-        // TE.compose(
-        //   TE.map(
-        //     trainTrip =>
-        //       trainTrip.currentTravelClassConfiguration.travelClass.templateId,
-        //   ),
-        //   TE.chain(pipe(getTrip, _.liftTE)),
-        // ),
-      ),
+      TE.chainTup(pipe(getTripFromTrainTrip(getTrip), _.liftTE)),
+      // ALT1
+      // pipe(
+      //   (trainTrip: TrainTrip) =>
+      //     getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId),
+      //   _.liftTE,
+      // ),
+      // ALT2
+      // TE.compose(
+      //   TE.map(
+      //     trainTrip =>
+      //       trainTrip.currentTravelClassConfiguration.travelClass.templateId,
+      //   ),
+      //   TE.chain(pipe(getTrip, _.liftTE)),
+      // ),
       TE.map(([trip, trainTrip]) => trainTrip.updateTrip(trip)),
     ),
 )

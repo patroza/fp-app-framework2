@@ -9,7 +9,7 @@ import {
   RecordContext,
 } from "@fp-app/framework"
 import { DiskRecordContext } from "@fp-app/io.diskdb"
-import { ok, AsyncResult } from "@fp-app/fp-ts-extensions"
+import { AsyncResult, TE } from "@fp-app/fp-ts-extensions"
 import { parse, stringify } from "flatted"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import { TravelClassName } from "../TravelClassDefinition"
@@ -46,8 +46,8 @@ export default class DiskDBContext extends ContextBase implements TrainTripConte
   }
   protected saveImpl(): AsyncResult<void, DbError> {
     return this.trainTripsi.intSave(
-      i => async () => ok(await this.readContext.create(i.id, TrainTripToView(i))),
-      i => async () => ok(await this.readContext.delete(i.id)),
+      i => TE.tryExecute(() => this.readContext.create(i.id, TrainTripToView(i))),
+      i => TE.tryExecute(() => this.readContext.delete(i.id)),
     )
   }
 }

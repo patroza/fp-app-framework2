@@ -1,11 +1,4 @@
-import {
-  err,
-  PipeFunction,
-  PipeFunctionN,
-  success,
-  AsyncResult,
-  isErr,
-} from "@fp-app/fp-ts-extensions"
+import { AsyncResult, E, TE } from "@fp-app/fp-ts-extensions"
 
 import Event from "../../event"
 import { getLogger } from "../../utils"
@@ -15,7 +8,7 @@ const logger = getLogger("publish")
 const publish = (
   getMany: <TInput extends Event>(
     evt: TInput,
-  ) => PipeFunction<TInput, DomainEventReturnType, Error>[],
+  ) => TE.PipeFunction<TInput, DomainEventReturnType, Error>[],
 ): publishType => <TInput extends Event>(evt: TInput) => async () => {
   const hndl = getMany(evt)
   logger.log(
@@ -26,19 +19,19 @@ const publish = (
   )
 
   if (!hndl) {
-    return success()
+    return E.success()
   }
 
   for (const evtHandler of hndl) {
     logger.log(`Handling ${evtHandler.name}`)
     const r = await evtHandler(evt)()
-    if (isErr(r)) {
-      return err(r.left)
+    if (E.isErr(r)) {
+      return E.err(r.left)
     }
   }
 
   logger.log(`Published event: ${evt.constructor.name}`)
-  return success()
+  return E.success()
 }
 
 export default publish
@@ -51,5 +44,5 @@ export type publishType = <TInput extends Event>(
 export type DomainEventReturnType = void | IntegrationEventReturnType
 export interface IntegrationEventReturnType {
   consistency?: "eventual" | "strict"
-  handler: PipeFunctionN<void, Error>
+  handler: TE.PipeFunctionN<void, Error>
 }

@@ -18,7 +18,7 @@ import {
   requestType,
   ValidationError,
 } from "@fp-app/framework"
-import { Result, pipe, TE, ok, E } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, TE, E } from "@fp-app/fp-ts-extensions"
 
 export default function generateKoaHandler<
   TDeps,
@@ -47,7 +47,7 @@ export default function generateKoaHandler<
     const handleError = handleDefaultError(ctx)
 
     return pipe(
-      TE.fromEither(ok(input)),
+      TE.ok(input),
       TE.chain(pipe(validate, E.toTaskEither)),
       TE.chain(pipe(handleRequest, liftErr)),
       TE.bimap(
