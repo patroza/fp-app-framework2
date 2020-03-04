@@ -14,7 +14,6 @@ import {
   E,
   TE,
   reverseApply,
-  RightArg,
 } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
@@ -106,7 +105,7 @@ const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
     // mapErr(combineValidationErrors),
   )
 
-type ValidatedInput = RightArg<ReturnType<typeof validateCreateTrainTripInfo>>
+type ValidatedInput = E.RightArg<ReturnType<typeof validateCreateTrainTripInfo>>
 
 // TODO
 const validateString = <T extends string>(str: string): Result<T, ValidationError> =>

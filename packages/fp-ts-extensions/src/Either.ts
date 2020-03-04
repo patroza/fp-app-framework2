@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // export * from "fp-ts/lib/Either"
 
-import { Either, Right, Left, left, right } from "fp-ts/lib/Either"
+import { Either, Right, left, right } from "fp-ts/lib/Either"
 import { map } from "fp-ts/lib/TaskEither"
 import { pipe } from "fp-ts/lib/pipeable"
 
@@ -13,15 +13,11 @@ import { flatten, zip } from "lodash"
 import { TaskEither } from "fp-ts/lib/TaskEither"
 import { flow } from "fp-ts/lib/function"
 
-import { AsyncResult } from "./TaskEither"
-import { Result } from "./Either"
+export * from "fp-ts/lib/Either"
 
-const err = <TSuccess = never, TError = never>(e: TError): Result<TSuccess, TError> =>
-  left<TError, TSuccess>(e)
-const ok = <TSuccess = never, TError = never>(
-  a: TSuccess,
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-) => (right<TError, TSuccess>(a) as any) as Result<TSuccess, TError>
+export type Result<TSuccess, TError> = Either<TError, TSuccess>
+const err = left
+const ok = right
 
 export const TFold = flow(E.fold, T.map)
 export const boolToEither = <T>(
@@ -83,6 +79,8 @@ export const tryExecuteFW = <T, TI>(func: (input: TI) => Promise<T>) => <
   i: TI2,
 ): TE.TaskEither<never, T> => async () => E.right(await func(i))
 
+const EDo = <T>(func: (input: T) => void) => E.map(tee(func))
+
 // TODO: Should come with map already wrapped aroun it
 export function tee<T, TDontCare>(
   f: (x: T) => Promise<TDontCare>,
@@ -100,6 +98,15 @@ export function tee(f: any) {
 }
 
 export const regainType = <T, TOut>(f: (i: T) => TOut) => <T2 extends T>(i: T2) => f(i)
+
+function chainTup<TInput, T, E>(f: (x: TInput) => Either<E, T>) {
+  return E.chain((input: TInput) =>
+    pipe(
+      f(input),
+      E.map(x => [x, input] as const),
+    ),
+  )
+}
 
 // export function ifErrorflatMap<T, TNew, E>(defaultVal: (e: E) => AsyncResult<TNew, E>): (result: Result<T, E>) => AsyncResult<TNew, E>;
 export function ifErrorflatMap<T, TNew, E>(
@@ -178,20 +185,8 @@ export const resultAll = <T, E>(results: Result<T, E>[]): Result<T[], E[]> => {
   return ok(successes)
 }
 
-export const isErr = <T, TErr>(x: Result<T, TErr>): x is Left<TErr> => x._tag === "Left"
-export const isOk = <T, TErr>(x: Result<T, TErr>): x is Right<T> => x._tag === "Right"
-
-export const sequenceAsync = <T, E>(
-  results: AsyncResult<T, E>[],
-): AsyncResult<T[], E> => {
-  return async () => sequence(await Promise.all(results.map(x => x())))
-}
-
-export const resultAllAsync = <T, E>(
-  results: AsyncResult<T, E>[],
-): AsyncResult<T[], E[]> => {
-  return async () => resultAll(await Promise.all(results.map(x => x())))
-}
+// export const isErr = <T, TErr>(x: Result<T, TErr>): x is Left<TErr> => x._tag === "Left"
+// export const isOk = <T, TErr>(x: Result<T, TErr>): x is Right<T> => x._tag === "Right"
 
 export const flattenErrors = <E>(errors: E[]) => errors[0]
 
@@ -203,17 +198,6 @@ export const valueOrUndefined = <TInput, TOutput, TErrorOutput>(
     return ok(undefined)
   }
   return resultCreator(input)
-}
-
-// Unused
-export const asyncValueOrUndefined = <TInput, TOutput, TErrorOutput>(
-  input: TInput | undefined,
-  resultCreator: PipeFunction<TInput, TOutput, TErrorOutput>,
-): AsyncResult<TOutput | undefined, TErrorOutput> => async () => {
-  if (input === undefined) {
-    return ok(undefined)
-  }
-  return await resultCreator(input)()
 }
 
 export const createResult = <TErrorOutput = string, TInput = any, TOutput = any>(
@@ -235,17 +219,6 @@ export const applyIfNotUndefined = <T, TOutput>(
   }
   return f(input)
 }
-
-export const asyncCreateResult = <TErrorOutput = string, TInput = any, TOutput = any>(
-  input: TInput | undefined,
-  resultCreator: (input: TInput) => Promise<TOutput>,
-): AsyncResult<TOutput | undefined, TErrorOutput> => async () => {
-  if (input === undefined) {
-    return ok(undefined)
-  }
-  return ok(await resultCreator(input))
-}
-
 export const conditional = <TInput, TOutput, TErrorOutput>(
   input: TInput | undefined,
   resultCreator: PipeFunction2<TInput, TOutput, TErrorOutput>,
@@ -282,7 +255,7 @@ export const anyTrue = <TErr = any>(...mappers: any[]): Result<boolean, TErr> =>
   const items = mappers.map(() => mapHasChanged)
   const execution = flatten(zip(mappers, items))
 
-  const an = ok<boolean, TErr>(false) as any
+  const an = ok<TErr, boolean>(false) as any
   // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
   // @ts-ignore
   return pipe(
@@ -299,7 +272,7 @@ export const anyTrue = <TErr = any>(...mappers: any[]): Result<boolean, TErr> =>
 
 // it would have to generate (event) => kickAsync(event).compose(
 // but also it would mean to add: map(event => event.id) to get just the id.
-// const startWithValInt = <TErr>() => <T>(value: T) => ok<T, TErr>(value) as Result<T, TErr>
+// const startWithValInt = <TErr>() => <T>(value: T) => ok<TErr, T>(value) as Result<T, TErr>
 
 // export const startWithVal = <TErr>() => <T>(value: T) => Promise.resolve(startWithValInt<TErr>()(value))
 // reversed curry:
@@ -307,10 +280,6 @@ export const startWithVal = <T>(value: T) => <TErr>() => TE.right<TErr, T>(value
 // export const startWithVal2 = startWithVal()
 export const startWithVal2 = <T>(value: T) => startWithVal(value)()
 
-export type PipeFunction<TInput, TOutput, TErr> = (
-  input: TInput,
-) => AsyncResult<TOutput, TErr>
-export type PipeFunctionN<TOutput, TErr> = () => AsyncResult<TOutput, TErr>
 export type PipeFunction2<TInput, TOutput, TErr> = (
   input: TInput,
 ) => Result<TOutput, TErr>
@@ -322,6 +291,26 @@ export type AnyResult<T = any, TErr = any> = Result<T, TErr>
 export const mapper = <T, TOut>(mapper: (i: T) => TOut) => <FOut>(
   f: (i: TOut) => FOut,
 ) => <T2 extends T>(i: T2) => f(mapper(i))
+
+function chainFlatTup<
+  TInput,
+  TInputB,
+  TInput2 extends readonly [TInput, TInputB],
+  T,
+  E
+>(
+  f: (x: TInput2) => Result<T, E>,
+): (
+  input: Result<readonly [TInput, TInputB], E>,
+) => Result<readonly [T, TInput, TInputB], E>
+function chainFlatTup(f: any) {
+  return E.chain((input: any) =>
+    pipe(
+      f(input),
+      E.map(x => [x, ...input] as const),
+    ),
+  )
+}
 
 export function toMagicTup<T1, T2, T3>(
   input: readonly [[T1, T2], T3],
@@ -412,6 +401,8 @@ export function resultTuple3(
   return ok(successes)
 }
 
+const success = <TErr>() => ok<TErr, void>(void 0)
+
 export function apply2<T1, T2, TOut>(
   func: (...args: readonly [T1, T2]) => TOut,
 ): (args: readonly [T1, T2]) => TOut
@@ -495,15 +486,60 @@ export const toolDeps = <TErr>(): ToolDeps<TErr> => ({
 
 export type Tramp<TInput, TOutput, TErr> = (input: TInput) => E.Either<TErr, TOutput>
 
+const toTE = <T, T2, TE>(func: (i: T) => Either<TE, T2>) => <TI extends T>(i: TI) =>
+  TE.fromEither(func(i))
+
+function composeE<TInput, TError, TOutput>(
+  ab: (c: E.Either<TError, TInput>) => E.Either<TError, TOutput>,
+): (input: TInput) => E.Either<TError, TOutput>
+function composeE<TInput, TError, B, TOutput>(
+  ab: (a: E.Either<TError, TInput>) => E.Either<TError, B>,
+  bc: (c: E.Either<TError, B>) => E.Either<TError, TOutput>,
+): (input: TInput) => E.Either<TError, TOutput>
+// TODO: Copy BError/CError etc behavior
+function composeE<TInput, TError, B, BError, C, CError, TErr, TOutput>(
+  ab: (a: E.Either<TError, TInput>) => E.Either<BError, B>,
+  bc: (b: E.Either<BError, B>) => E.Either<CError, C>,
+  cd: (c: E.Either<CError, C>) => E.Either<TErr, TOutput>,
+): (input: TInput) => E.Either<TErr, TOutput>
+function composeE<TInput, TError, B, C, D, TOutput>(
+  ab: (a: E.Either<TError, TInput>) => E.Either<TError, B>,
+  bc: (b: E.Either<TError, B>) => E.Either<TError, C>,
+  cd: (b: E.Either<TError, C>) => E.Either<TError, D>,
+  de: (c: E.Either<TError, D>) => E.Either<TError, TOutput>,
+): (input: TInput) => E.Either<TError, TOutput>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function composeE<TInput, TError, TOutput>(...a: any[]) {
+  return (input: TInput) =>
+    pipe<E.Either<TError, TInput>, E.Either<TError, TOutput>>(
+      E.right<TError, TInput>(input),
+      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+      // @ts-ignore
+      ...a,
+    )
+}
+
+export type LeftArg<T> = T extends E.Left<infer U> ? U : never
+export type RightArg<T> = T extends E.Right<infer U> ? U : never
 export type ThenArg<T> = T extends Promise<infer U>
   ? U
   : T extends (...args: any[]) => Promise<infer V>
   ? V
   : T
 
-import * as EnhancedTE from "./TaskEither"
-import * as EnhancedE from "./Either"
+const isOk = E.isRight
+const isErr = E.isLeft
 
-export { AsyncResult, Result, T }
-export { EnhancedTE as TE, EnhancedE as E }
-export { pipe }
+export {
+  EDo as do,
+  liftE as lift,
+  chainTup,
+  chainFlatTup,
+  toTE as toTaskEither,
+  composeE as compose,
+  ok,
+  err,
+  isOk,
+  isErr,
+  success,
+}
