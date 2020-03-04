@@ -98,23 +98,21 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
     TE.compose(
       TE.map(x => x.trainTripId),
       TE.chain(pipe(db.trainTrips.load, _.liftTE)),
-      TE.chainTup(
-        pipe(getTripFromTrainTrip(getTrip), _.liftTE),
-        // ALT1
-        // pipe(
-        //   (trainTrip: TrainTrip) =>
-        //     getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId),
-        //   _.liftTE,
-        // ),
-        // ALT2
-        // TE.compose(
-        //   TE.map(
-        //     trainTrip =>
-        //       trainTrip.currentTravelClassConfiguration.travelClass.templateId,
-        //   ),
-        //   TE.chain(pipe(getTrip, _.liftTE)),
-        // ),
-      ),
+      TE.chainTup(pipe(getTripFromTrainTrip(getTrip), _.liftTE)),
+      // ALT1
+      // pipe(
+      //   (trainTrip: TrainTrip) =>
+      //     getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId),
+      //   _.liftTE,
+      // ),
+      // ALT2
+      // TE.compose(
+      //   TE.map(
+      //     trainTrip =>
+      //       trainTrip.currentTravelClassConfiguration.travelClass.templateId,
+      //   ),
+      //   TE.chain(pipe(getTrip, _.liftTE)),
+      // ),
       TE.map(([trip, trainTrip]) => trainTrip.updateTrip(trip)),
     ),
 )

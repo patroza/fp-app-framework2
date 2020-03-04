@@ -18,7 +18,6 @@ export default class Trip {
   }
 }
 
-// tslint:disable-next-line:max-classes-per-file
 export class TripWithSelectedTravelClass {
   static create(
     trip: Trip,
@@ -37,7 +36,7 @@ export class TripWithSelectedTravelClass {
     readonly currentTravelClass: TravelClass,
   ) {}
 }
-// tslint:disable-next-line:max-classes-per-file
+
 export class TravelClass {
   readonly createdAt = new Date()
 

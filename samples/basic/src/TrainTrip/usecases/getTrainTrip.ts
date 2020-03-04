@@ -1,11 +1,4 @@
-// TODO: we have to find out a way on how we can prevent serializing domain objects to the outside world by accident
-// One way could that it's somehow whitelisted (ie no behavior allowed)
-// or that a serializer must be presented at all times, if no serializer, then automatically void..
-// the alternative is making sure there are return types defined in Typescript, and e.g validated with Tests.
-// to make sure accidental `any` casts are catched.
-
 import { createQueryWithDeps, DbError } from "@fp-app/framework"
-import { TE } from "@fp-app/fp-ts-extensions"
 import { trainTripReadContextKey } from "../infrastructure/TrainTripReadContext.disk"
 import { Pax } from "../PaxDefinition"
 import { TravelClassName } from "../TravelClassDefinition"
@@ -18,11 +11,7 @@ const createQuery = createQueryWithDeps({
 
 const getTrainTrip = createQuery<Input, TrainTripView, DbError>(
   "getTrainTrip",
-  ({ readCtx }) =>
-    TE.compose(
-      TE.map(({ trainTripId }) => trainTripId),
-      TE.chain(readCtx.read),
-    ),
+  ({ readCtx }) => input => readCtx.read(input.trainTripId),
 )
 
 export default getTrainTrip

@@ -29,23 +29,22 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
           TE.chain(pipe(db.trainTrips.load, _.liftTE)),
         ),
       ),
-      TE.chain(
-        ([trainTrip, proposal]) =>
-          pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither, f => f(proposal)),
-        // ALT1
-        // TE.compose(
-        //   TE.map(
-        //     ([trainTrip, proposal]) =>
-        //       [pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither), proposal] as const,
-        //   ),
-        //   TE.chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
-        // ),
-        // ALT2
-        //{
-        //  const proposeChanges = pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither)
-        //  return proposeChanges(proposal)
-        //}
+      TE.chain(([trainTrip, proposal]) =>
+        pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither, f => f(proposal)),
       ),
+      // ALT1
+      // TE.compose(
+      //   TE.map(
+      //     ([trainTrip, proposal]) =>
+      //       [pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither), proposal] as const,
+      //   ),
+      //   TE.chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
+      // ),
+      // ALT2
+      //{
+      //  const proposeChanges = pipe(trainTrip.proposeChanges, _.liftE, E.toTaskEither)
+      //  return proposeChanges(proposal)
+      //}
     ),
 )
 export default changeTrainTrip

@@ -56,7 +56,7 @@ export function chainTee(f: any) {
   return E.chain((input: any) => pipe(f(input), mapStatic(input)))
 }
 
-const EDo = <T>(func: (input: T) => void) => E.map(tee(func))
+const _do = <T>(func: (input: T) => void) => E.map(tee(func))
 
 function chainTup<TInput, T, E>(f: (x: TInput) => Either<E, T>) {
   return E.chain((input: TInput) =>
@@ -142,9 +142,6 @@ export const resultAll = <T, E>(results: Result<T, E>[]): Result<T[], E[]> => {
   const successes = results.filter(isOk).map(x => x.right)
   return ok(successes)
 }
-
-// export const isErr = <T, TErr>(x: Result<T, TErr>): x is Left<TErr> => x._tag === "Left"
-// export const isOk = <T, TErr>(x: Result<T, TErr>): x is Right<T> => x._tag === "Right"
 
 export const valueOrUndefined = <TInput, TOutput, TErrorOutput>(
   input: TInput | undefined,
@@ -409,4 +406,4 @@ export type RightArg<T> = T extends E.Right<infer U> ? U : never
 const isOk = E.isRight
 const isErr = E.isLeft
 
-export { EDo as do, chainTup, ok, err, isOk, isErr, success }
+export { _do as do, chainTup, ok, err, isOk, isErr, success }

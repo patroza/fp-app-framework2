@@ -130,8 +130,8 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
     lockRecordOnDisk(this.type, record.id, () =>
       pipe(
         TE.startWithVal(void 0)<DbError>(),
-        TE.chain(() => async () =>
-          E.right(await deleteFile(getFilename(this.type, record.id))),
+        TE.chain(() =>
+          TE.tryExecute(() => deleteFile(getFilename(this.type, record.id))),
         ),
       ),
     )
