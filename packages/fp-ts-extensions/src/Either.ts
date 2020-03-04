@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // export * from "fp-ts/lib/Either"
 
-import { Either, Right, left, right } from "fp-ts/lib/Either"
+import { Either, Right } from "fp-ts/lib/Either"
 import { pipe } from "fp-ts/lib/pipeable"
 
 import * as E from "fp-ts/lib/Either"
@@ -13,8 +13,8 @@ import { toValue, tee, liftType, flattenErrors } from "./general"
 export * from "fp-ts/lib/Either"
 
 export type Result<TSuccess, TError> = Either<TError, TSuccess>
-const err = left
-const ok = right
+const err = E.left
+const ok = E.right
 
 export const fromBool = <T>(
   value: T,

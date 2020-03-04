@@ -48,6 +48,7 @@
   },
   "scripts": {
     "start": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling nodemon --exec ts-node --transpile-only -r tsconfig-paths/register --files src/start-server.ts",
+    "start:debug": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling nodemon --exec node --inspect -r ts-node/register/transpile-only -r tsconfig-paths/register src/start-server.ts",
     "start:prod": "ts-node --transpile-only -r tsconfig-paths/register --files src/start-server.ts",
     "prettier": "prettier --write \"src/**/*.ts\"",
     "test": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling jest",
