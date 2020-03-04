@@ -34,16 +34,35 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
     TE.compose(
       TE.chainEitherK(pipe(validateCreateTrainTripInfo, _.liftE)),
       TE.chainTup(
-        TE.compose(
-          TE.map(i => i.templateId),
-          TE.chain(pipe(getTrip, _.liftTE)),
-        ),
+        // pipe(
+        //   getTrip,
+        //   mapper((i: { templateId: string }) => i.templateId),
+        //   _.liftTE,
+        // ),
+        // ALT
+        //i => pipe(getTrip, _.liftTE)(i.templateId),
+        // ALT1
+        //pipe(mapper((i: { templateId: string }) => i.templateId)(getTrip), _.liftTE),
+        // ALT2
+        pipe(getTripFromTrainTripInfo(getTrip), _.liftTE),
+        // const getTripFromTrainTripInfo = (getTrip: typeof getTripKey) => (i: {
+        //   templateId: string
+        // }) => getTrip(i.templateId)
+        // ALT3
+        // TE.compose(
+        //   TE.map(i => i.templateId),
+        //   TE.chain(pipe(getTrip, _.liftTE)),
+        // ),
       ),
       TE.map(reverseApply(TrainTrip.create)),
       TE.do(db.trainTrips.add),
       TE.map(trainTrip => trainTrip.id),
     ),
 )
+
+const getTripFromTrainTripInfo = (getTrip: typeof getTripKey) => (i: {
+  templateId: string
+}) => getTrip(i.templateId)
 
 export default createTrainTrip
 export interface Input {
