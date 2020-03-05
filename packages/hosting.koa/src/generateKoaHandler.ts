@@ -18,7 +18,7 @@ import {
   requestType,
   ValidationError,
 } from "@fp-app/framework"
-import { Result, pipe, TE, E } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, TE, E, trampoline, ToolDeps } from "@fp-app/fp-ts-extensions"
 
 export default function generateKoaHandler<
   TDeps,
@@ -36,36 +36,35 @@ export default function generateKoaHandler<
   > = defaultErrorPassthrough,
   responseTransform?: <TOutput>(input: T, ctx: Koa.Context) => TOutput,
 ) {
-  const generateTask = (ctx: Koa.Context) => {
-    const input: I = { ...ctx.request.body, ...ctx.request.query, ...ctx.params }
+  // DbError, because request handler is enhanced with it (decorator)
+  // E2 because the validator enhances it.
+  const generateTask = trampoline(
+    (_: ToolDeps<DbError | E | E2>) => (ctx: Koa.Context) => {
+      const input: I = { ...ctx.request.body, ...ctx.request.query, ...ctx.params }
+      const handleRequest = (i: I) => request(handler, i)
+      const shouldHandleError = handleErrorOrPassthrough(ctx)
+      const handleError = handleDefaultError(ctx)
 
-    // DbError, because request handler is enhanced with it (decorator)
-    // E2 because the validator enhances it.
-    const liftErr = TE.lift<DbError | E | E2>()
-    const handleRequest = (i: I) => request(handler, i)
-    const shouldHandleError = handleErrorOrPassthrough(ctx)
-    const handleError = handleDefaultError(ctx)
-
-    return pipe(
-      TE.ok(input),
-      TE.chain(pipe(validate, E.toTaskEither)),
-      TE.chain(pipe(handleRequest, liftErr)),
-      TE.bimap(
-        err => (shouldHandleError(err) ? handleError(err) : undefined),
-        result => {
-          if (responseTransform) {
-            ctx.body = responseTransform(result, ctx)
-          } else {
-            ctx.body = result
-          }
-          if (ctx.method === "POST" && result) {
-            ctx.status = 201
-          }
-        },
-      ),
-    )
-  }
-
+      return pipe(
+        TE.ok(input),
+        TE.chain(pipe(validate, E.toTaskEither)),
+        TE.chain(pipe(handleRequest, _.TE.liftErr)),
+        TE.bimap(
+          err => (shouldHandleError(err) ? handleError(err) : undefined),
+          result => {
+            if (responseTransform) {
+              ctx.body = responseTransform(result, ctx)
+            } else {
+              ctx.body = result
+            }
+            if (ctx.method === "POST" && result) {
+              ctx.status = 201
+            }
+          },
+        ),
+      )
+    },
+  )
   return async (ctx: Koa.Context) => {
     try {
       const task = generateTask(ctx)

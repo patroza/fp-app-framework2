@@ -3,6 +3,7 @@ import { ErrorBase } from "../errors"
 import { ValidatorType } from "../utils/validation"
 import { DbError } from "./errors"
 import { NamedHandlerWithDependencies, requestType } from "./mediator"
+import { tuple } from "fp-ts/lib/function"
 
 export default abstract class RouteBuilder<TContext> {
   private static register = <TContext>(
@@ -38,8 +39,8 @@ export default abstract class RouteBuilder<TContext> {
   abstract build(request: requestType): any
 
   getJsonSchema() {
-    return this.setup.map(
-      ({ method, path, validator }) => [method, path, validator.jsonSchema] as const,
+    return this.setup.map(({ method, path, validator }) =>
+      tuple(method, path, validator.jsonSchema),
     )
   }
 

@@ -12,46 +12,49 @@ import {
   RecordNotFound,
   typedKeysOf,
 } from "@fp-app/framework"
-import { pipe, TE, E } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, E, trampoline, ToolDeps } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
 import { TravelClassName } from "../TravelClassDefinition"
 import Trip, { TravelClass, TripWithSelectedTravelClass } from "../Trip"
 
-const getTrip = ({
-  getTemplate,
-}: {
-  getTemplate: getTemplateType
-}): TE.PipeFunction<
-  string,
-  TripWithSelectedTravelClass,
-  ApiError | InvalidStateError
-> =>
-  TE.compose(
-    TE.chain(pipe(getTemplate, TE.lift<InvalidStateError | ApiError>())),
-    TE.chain(toTrip(getTemplate)),
-  )
-
-const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
-  const currentTravelClass = tplToTravelClass(tpl)
-  const resolveTravelClasses = TE.sequence(
-    [TE.startWithVal(currentTravelClass)<ApiError>()].concat(
-      typedKeysOf(tpl.travelClasses)
-        .filter(x => x !== currentTravelClass.name)
-        .map(slKey => tpl.travelClasses[slKey]!)
-        .map(sl => pipe(getTemplate(sl.id), TE.map(tplToTravelClass))),
+const getTrip = trampoline(
+  (_: ToolDeps<ApiError | InvalidStateError>) => ({
+    getTemplate,
+  }: {
+    getTemplate: getTemplateType
+  }) =>
+    TE.compose(
+      TE.chain(pipe(getTemplate, _.TE.liftErr)),
+      TE.chain(toTrip(getTemplate)),
     ),
-  )
-  const liftErr = E.lift<ApiError | InvalidStateError>()
-  const createTripWithSelectedTravelClass = (trip: Trip) =>
-    TripWithSelectedTravelClass.create(trip, currentTravelClass.name)
+)
 
-  return pipe(
-    resolveTravelClasses,
-    TE.chain(pipe(Trip.create, liftErr, E.toTaskEither)),
-    TE.chain(pipe(createTripWithSelectedTravelClass, liftErr, E.toTaskEither)),
-  )
-}
+// would be great to merge here also the dependency configuration
+// and the trampoline
+const toTrip = trampoline(
+  (_: ToolDeps<ApiError | InvalidStateError>) => (getTemplate: getTemplateType) => (
+    tpl: Template,
+  ) => {
+    const currentTravelClass = tplToTravelClass(tpl)
+    const resolveTravelClasses = TE.sequence(
+      [TE.startWithVal(currentTravelClass)<ApiError>()].concat(
+        typedKeysOf(tpl.travelClasses)
+          .filter(x => x !== currentTravelClass.name)
+          .map(slKey => tpl.travelClasses[slKey]!)
+          .map(sl => pipe(getTemplate(sl.id), TE.map(tplToTravelClass))),
+      ),
+    )
+    const createTripWithSelectedTravelClass = (trip: Trip) =>
+      TripWithSelectedTravelClass.create(trip, currentTravelClass.name)
+
+    return pipe(
+      resolveTravelClasses,
+      TE.chain(pipe(Trip.create, _.E.liftErr, E.toTaskEither)),
+      TE.chain(pipe(createTripWithSelectedTravelClass, _.E.liftErr, E.toTaskEither)),
+    )
+  },
+)
 
 const tplToTravelClass = (tpl: Template) =>
   new TravelClass(tpl.id, getTplLevelName(tpl))

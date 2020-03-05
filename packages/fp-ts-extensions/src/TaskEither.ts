@@ -9,7 +9,7 @@ import * as T from "fp-ts/lib/Task"
 import * as TE from "fp-ts/lib/TaskEither"
 
 import { TaskEither } from "fp-ts/lib/TaskEither"
-import { flow } from "fp-ts/lib/function"
+import { flow, tuple } from "fp-ts/lib/function"
 import { toValue, tee, liftType, ThenArg } from "./general"
 
 export * from "fp-ts/lib/TaskEither"
@@ -53,7 +53,7 @@ export function chainTup<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
   return TE.chain((input: TInput) =>
     pipe(
       f(input),
-      TE.map(x => [x, input] as const),
+      TE.map(x => tuple(x, input)),
     ),
   )
 }
@@ -79,9 +79,11 @@ export const valueOrUndefined = <TInput, TOutput, TErrorOutput>(
   return await resultCreator(input)()
 }
 
-export const lift = <TE>() => <T, TI, TE2 extends TE>(
+export const liftLeft = <TE>() => <T, TI, TE2 extends TE>(
   e: (i: TI) => TaskEither<TE2, T>,
 ) => (i: TI) => pipe(e(i), TE.mapLeft(liftType<TE>()))
+
+export const liftErr = liftLeft
 
 // it would have to generate (event) => kickAsync(event).compose(
 // but also it would mean to add: map(event => event.id) to get just the id.
@@ -114,67 +116,6 @@ export function chainFlatTup(f: any) {
     ),
   )
 }
-
-export function toMagicTup<T1, T2, T3>(
-  input: readonly [[T1, T2], T3],
-): readonly [T1, T2, T3]
-export function toMagicTup([tup1, el]: any) {
-  return tup1.concat([el])
-}
-
-export function apply<A, B>(a: A, f: (a: A) => B): B {
-  return f(a)
-}
-export function apply2<T1, T2, TOut>(
-  func: (...args: readonly [T1, T2]) => TOut,
-): (args: readonly [T1, T2]) => TOut
-export function apply2<T1, T2, T3, TOut>(
-  func: (...args: readonly [T1, T2, T3]) => TOut,
-): (args: readonly [T1, T2, T3]) => TOut
-export function apply2(func: any) {
-  return (args: any) => func(...args)
-}
-
-export function reverseApply<T1, T2, TOut>(
-  func: (...args: readonly [T2, T1]) => TOut,
-): (args: readonly [T1, T2]) => TOut
-export function reverseApply<T1, T2, T3, TOut>(
-  func: (...args: readonly [T3, T2, T1]) => TOut,
-): (args: readonly [T1, T2, T3]) => TOut
-export function reverseApply(func: any) {
-  return (args: any) => func(...args.reverse())
-}
-
-// TODO: unbound - although who needs more than 3 anyway.
-/*
-export const apply2 = <T1, T2, TOut>(func: (t1: T1, t2: T2) => TOut) => (
-  ...args: readonly [T1, T2]
-) => func(...args)
-export const reverseApply = <T1, T2, TOut>(func: (t2: T2, t1: T1) => TOut) => (
-  ...args: readonly [T1, T2]
-) =>
-  // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-  // @ts-ignore
-  func(...(args.reverse() as any))
-
-const reverse = <A extends Array<any>>(a: A): List.Reverse<A> =>
-  (a.reverse() as unknown) as List.Reverse<A>
-
-type Flip = <A extends Array<any>, R>(f: (...a: A) => R) => (...a: List.Reverse<A>) => R
-const flip: Flip = fn => (...args) => fn(...(reverse(args) as any))
-*/
-
-// const compose = (...args) => <T>(input: T) =>
-//   pipe(
-//     TE.right(input),
-//     ...args,
-//   )
-
-// export const pipeE = (...args) => <T>(input: T) =>
-//   pipe(
-//     E.right(input),
-//     ...args,
-//   )
 
 export function compose<TInput, TError, TOutput>(
   ab: (c: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, TOutput>,
@@ -219,14 +160,9 @@ export function compose<TInput, TError, B, C, D, E, F, G, TOutput>(
   gh: (g: TE.TaskEither<TError, G>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function compose<TInput, TError, TOutput>(...a: any[]) {
-  return (input: TInput) =>
-    pipe<TE.TaskEither<TError, TInput>, TE.TaskEither<TError, TOutput>>(
-      TE.right<TError, TInput>(input),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore
-      ...a,
-    )
+export function compose(...a: any[]) {
+  const anyFlow: any = flow
+  return anyFlow(TE.right, ...a)
 }
 
 export const asyncCreateResult = <TErrorOutput = string, TInput = any, TOutput = any>(

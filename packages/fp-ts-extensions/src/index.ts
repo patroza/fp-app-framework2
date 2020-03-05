@@ -9,15 +9,13 @@ export * from "./general"
 
 import * as TE from "./TaskEither"
 import * as E from "./Either"
+import * as T from "fp-ts/lib/Task"
 
-export const createLifters = <T>() => ({
-  E: E.lift<T>(),
-  TE: TE.lift<T>(),
-})
+export { T }
 
 export const toolDeps = <TErr>(): ToolDeps<TErr> => ({
-  liftE: E.lift<TErr>(),
-  liftTE: TE.lift<TErr>(),
+  E: { liftErr: E.liftErr<TErr>() },
+  TE: { liftErr: TE.liftErr<TErr>() },
 })
 
 export const trampoline = <TErr, TOut, TArgs extends readonly any[]>(
@@ -37,12 +35,16 @@ export const trampolineE = <TErr, TOut, TArgs extends readonly any[]>(
 }
 
 export type ToolDeps<TE> = {
-  liftE: <T, TI, TE2 extends TE>(
-    e: (i: TI) => E.Either<TE2, T>,
-  ) => (i: TI) => E.Either<TE, T>
-  liftTE: <T, TI, TE2 extends TE>(
-    e: (i: TI) => TE.TaskEither<TE2, T>,
-  ) => (i: TI) => TE.TaskEither<TE, T>
+  E: {
+    liftErr: <T, TI, TE2 extends TE>(
+      e: (i: TI) => E.Either<TE2, T>,
+    ) => (i: TI) => E.Either<TE, T>
+  }
+  TE: {
+    liftErr: <T, TI, TE2 extends TE>(
+      e: (i: TI) => TE.TaskEither<TE2, T>,
+    ) => (i: TI) => TE.TaskEither<TE, T>
+  }
 }
 
 export type Tramp<TInput, TOutput, TErr> = (input: TInput) => E.Either<TErr, TOutput>

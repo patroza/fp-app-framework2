@@ -7,7 +7,7 @@ import {
   RecordContext,
   RecordNotFound,
 } from "@fp-app/framework"
-import { liftType, pipe, AsyncResult, E, TE } from "@fp-app/fp-ts-extensions"
+import { pipe, AsyncResult, E, TE } from "@fp-app/fp-ts-extensions"
 import { lock } from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
 
@@ -167,7 +167,6 @@ const lockRecordOnDisk = <T>(
 ) =>
   pipe(
     tryLock(type, id),
-    TE.mapLeft(liftType<DbError>()),
     TE.chain(release => async () => {
       try {
         return await cb()()

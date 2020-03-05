@@ -113,7 +113,7 @@ const registerUsecaseHandler = <TDependencies>(deps: TDependencies) => (
   newHandler[injectSymbol] = deps
   setFunctionName(handler, name)
 
-  // const r = [newHandler, deps, { name, type }] as const
+  // const r = tuple(newHandler, deps, { name, type })
   // dependencyMap.set(handler, r)
   requestAndEventHandlers.push(newHandler)
   return newHandler

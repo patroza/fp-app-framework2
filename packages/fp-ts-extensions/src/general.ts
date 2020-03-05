@@ -1,3 +1,5 @@
+import { flow, flip, tupled } from "fp-ts/lib/function"
+
 export type ThenArg<T> = T extends Promise<infer U>
   ? U
   : T extends (...args: any[]) => Promise<infer V>
@@ -52,22 +54,19 @@ export const applyIfNotUndefined = <T, TOutput>(
   }
   return f(input)
 }
-export function apply2<T1, T2, TOut>(
-  func: (...args: readonly [T1, T2]) => TOut,
-): (args: readonly [T1, T2]) => TOut
-export function apply2<T1, T2, T3, TOut>(
-  func: (...args: readonly [T1, T2, T3]) => TOut,
-): (args: readonly [T1, T2, T3]) => TOut
-export function apply2(func: any) {
-  return (args: any) => func(...args)
-}
 
-export function reverseApply<T1, T2, TOut>(
-  func: (...args: readonly [T2, T1]) => TOut,
-): (args: readonly [T1, T2]) => TOut
-export function reverseApply<T1, T2, T3, TOut>(
-  func: (...args: readonly [T3, T2, T1]) => TOut,
-): (args: readonly [T1, T2, T3]) => TOut
-export function reverseApply(func: any) {
-  return (args: any) => func(...args.reverse())
+export const reverseApply = flow(flip, tupled)
+
+// like: flip(func)(...args)
+// actually is just pipe(fnc, flip, tupled)
+// export function reverseApply<T1, T2, TOut>(
+//   func: (...args: readonly [T2, T1]) => TOut,
+// ): (args: readonly [T1, T2]) => TOut
+// export function reverseApply<T1, T2, T3, TOut>(
+//   func: (...args: readonly [T3, T2, T1]) => TOut,
+// ): (args: readonly [T1, T2, T3]) => TOut
+// export function reverseApply(func: any) {
+//   return (args: any) => func(...args.reverse())
+// }
+
 }
