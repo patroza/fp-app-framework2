@@ -1,4 +1,4 @@
-import { liftType, AsyncResult, TE, pipe } from "@fp-app/fp-ts-extensions"
+import { AsyncResult, TE, pipe, trampoline, ToolDeps } from "@fp-app/fp-ts-extensions"
 import { benchLog, logger, using } from "../../utils"
 import { DbError } from "../errors"
 import { configureDependencies, NamedRequestHandler, UOWKey } from "../mediator"
@@ -23,21 +23,16 @@ const loggingDecorator = (): RequestDecorator => request => (key, input) => {
 const uowDecorator = configureDependencies(
   { unitOfWork: UOWKey },
   "uowDecorator",
-  ({ unitOfWork }): RequestDecorator => request => (key, input) => {
-    if (
-      key[requestTypeSymbol] !== "COMMAND" &&
-      key[requestTypeSymbol] !== "INTEGRATIONEVENT"
-    ) {
-      return request(key, input)
-    }
-
-    const liftErr = liftType<any | DbError>()
-    return pipe(
-      request(key, input),
-      TE.mapLeft(liftErr),
-      TE.chainTee(() => pipe(unitOfWork.save(), TE.mapLeft(liftErr))),
-    )
-  },
+  ({ unitOfWork }): RequestDecorator => request =>
+    trampoline((_: ToolDeps<any | DbError>) => (key, input) => {
+      if (
+        key[requestTypeSymbol] !== "COMMAND" &&
+        key[requestTypeSymbol] !== "INTEGRATIONEVENT"
+      ) {
+        return request(key, input)
+      }
+      return pipe(request(key, input), TE.chainTee(_.TE.liftErr(unitOfWork.save)))
+    }),
 )
 
 export { loggingDecorator, uowDecorator }
