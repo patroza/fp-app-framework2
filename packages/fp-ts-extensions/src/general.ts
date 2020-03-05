@@ -62,6 +62,7 @@ export function apply2(func: any) {
   return (args: any) => func(...args)
 }
 
+// like: flip(func)(...args)
 export function reverseApply<T1, T2, TOut>(
   func: (...args: readonly [T2, T1]) => TOut,
 ): (args: readonly [T1, T2]) => TOut
