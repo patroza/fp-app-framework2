@@ -1,6 +1,13 @@
 import Event from "./event"
 import { Writeable } from "./utils"
 
+/**
+ * - An Entity has an Identifier. Unlike a Value.
+ * - An Entity is considered equal when of the same type and Identifier matches.
+ * - An Entity is usually constructed through a Factory, e.g static create()
+ *   and has a private constructor. The factory returns an Either<Error,{TypeOfEntity}>
+ *   documenting the various Errors that may occur constructing the Entity.
+ */
 export default abstract class Entity {
   private events: Event[] = []
 

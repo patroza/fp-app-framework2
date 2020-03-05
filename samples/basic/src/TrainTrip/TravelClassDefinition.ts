@@ -1,7 +1,7 @@
-import { ValidationError } from "@fp-app/framework"
+import { ValidationError, Value } from "@fp-app/framework"
 import { E } from "@fp-app/fp-ts-extensions"
 
-export default class TravelClassDefinition {
+export default class TravelClassDefinition extends Value {
   static create = (name: string) =>
     E.bimapFromBool2(
       validtravelClasses.some(x => x === name),
@@ -24,7 +24,9 @@ export default class TravelClassDefinition {
   //   ),
   // )
 
-  private constructor(readonly value: string) {}
+  private constructor(readonly value: string) {
+    super()
+  }
 }
 
 const validtravelClasses = ["second", "first", "business"]

@@ -1,9 +1,9 @@
-import { ValidationError } from "@fp-app/framework"
+import { ValidationError, Value } from "@fp-app/framework"
 import { E, pipe } from "@fp-app/fp-ts-extensions"
 
 // Can use for input, but for storage we should just store as date.
 // because it is temporal; what is today valid may be invalid tomorrow etc.
-export default class FutureDate {
+export default class FutureDate extends Value {
   static create = (date: Date) =>
     pipe(
       E.fromBool(date, isInFuture),
@@ -31,7 +31,9 @@ export default class FutureDate {
   //  : E.err(new ValidationError(`${date.toDateString()} is not in future`)
   // thats why we would use fromBool helper instead.
 
-  private constructor(readonly value: Date) {}
+  private constructor(readonly value: Date) {
+    super()
+  }
 }
 
 const isInFuture = (date: Date) => date > new Date()

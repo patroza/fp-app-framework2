@@ -1,7 +1,7 @@
-import { createValidator, Joi, predicate, typedKeysOf } from "@fp-app/framework"
+import { createValidator, Joi, predicate, typedKeysOf, Value } from "@fp-app/framework"
 import { pipe, E } from "@fp-app/fp-ts-extensions"
 
-export default class PaxDefinition {
+export default class PaxDefinition extends Value {
   static create = (pax: Pax) =>
     pipe(
       validate(pax),
@@ -20,7 +20,9 @@ export default class PaxDefinition {
       E.map(validatedPax => new PaxDefinition(validatedPax)),
     )
 
-  private constructor(readonly value: Pax) {}
+  private constructor(readonly value: Pax) {
+    super()
+  }
 }
 
 const paxEntrySchema = Joi.number()
