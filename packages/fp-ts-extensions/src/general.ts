@@ -52,23 +52,28 @@ export const applyIfNotUndefined = <T, TOutput>(
   }
   return f(input)
 }
-export function apply2<T1, T2, TOut>(
-  func: (...args: readonly [T1, T2]) => TOut,
-): (args: readonly [T1, T2]) => TOut
-export function apply2<T1, T2, T3, TOut>(
-  func: (...args: readonly [T1, T2, T3]) => TOut,
-): (args: readonly [T1, T2, T3]) => TOut
-export function apply2(func: any) {
-  return (args: any) => func(...args)
-}
+
+// this is just `tupled`
+// export function apply2<T1, T2, TOut>(
+//   func: (...args: readonly [T1, T2]) => TOut,
+// ): (args: readonly [T1, T2]) => TOut
+// export function apply2<T1, T2, T3, TOut>(
+//   func: (...args: readonly [T1, T2, T3]) => TOut,
+// ): (args: readonly [T1, T2, T3]) => TOut
+// export function apply2(func: any) {
+//   return (args: any) => func(...args)
+// }
 
 // like: flip(func)(...args)
-export function reverseApply<T1, T2, TOut>(
-  func: (...args: readonly [T2, T1]) => TOut,
-): (args: readonly [T1, T2]) => TOut
-export function reverseApply<T1, T2, T3, TOut>(
-  func: (...args: readonly [T3, T2, T1]) => TOut,
-): (args: readonly [T1, T2, T3]) => TOut
-export function reverseApply(func: any) {
-  return (args: any) => func(...args.reverse())
+// actually is just pipe(fnc, flip, tupled)
+// export function reverseApply<T1, T2, TOut>(
+//   func: (...args: readonly [T2, T1]) => TOut,
+// ): (args: readonly [T1, T2]) => TOut
+// export function reverseApply<T1, T2, T3, TOut>(
+//   func: (...args: readonly [T3, T2, T1]) => TOut,
+// ): (args: readonly [T1, T2, T3]) => TOut
+// export function reverseApply(func: any) {
+//   return (args: any) => func(...args.reverse())
+// }
+
 }
