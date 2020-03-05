@@ -1,6 +1,6 @@
 import fs from "fs"
 import { ErrorBase } from "../errors"
-import { ValidatorType } from "../utils/validation"
+import { ValidatorType, JsonValue } from "../utils/validation"
 import { DbError } from "./errors"
 import { NamedHandlerWithDependencies, requestType } from "./mediator"
 import { tuple } from "fp-ts/lib/function"
@@ -20,7 +20,7 @@ export default abstract class RouteBuilder<TContext> {
     configuration: {
       errorHandler?: ErrorHandlerType<TContext, DbError | TError | TValidationError>
       responseTransform?: ResponseTransform<TContext, TOutput>
-      validator: ValidatorType<TInput, TValidationError>
+      validator: ValidatorType<TInput, TValidationError, JsonValue>
     },
   ) => {
     obj.setup.push({ method, path, requestHandler, ...configuration })
