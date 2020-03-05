@@ -25,6 +25,18 @@ export const fromBool = <T>(
   }
   return ok(value)
 }
+export const bimapFromBool = <T, TNew, ENew>(
+  value: T,
+  predicate: (value: T) => boolean,
+  onLeft: (value: T) => TNew,
+  onRight: (value: T) => ENew,
+) => pipe(fromBool(value, predicate), E.bimap(onLeft, onRight))
+
+export const bimapFromBool2 = <TNew, ENew>(
+  bool: boolean,
+  onLeft: () => TNew,
+  onRight: () => ENew,
+) => (bool ? E.right(onRight()) : E.left(onLeft()))
 
 export const fromBool2 = <T>(predicate: (value: T) => boolean) => (
   value: T,

@@ -7,21 +7,29 @@ export default class FutureDate {
   static create = (dateStr: string) =>
     pipe(
       E.fromBool(new Date(dateStr), isInFuture),
-      E.map(d => new FutureDate(d)),
-      E.mapLeft(d => new ValidationError(`${d.toDateString()} is not in future`)),
+      E.bimap(
+        d => new ValidationError(`${d.toDateString()} is not in future`),
+        d => new FutureDate(d),
+      ),
     )
+  // Which is long for:
+  // E.bimapFromBool(
+  //   new Date(dateStr),
+  //   isInFuture,
+  //   d => new ValidationError(`${d.toDateString()} is not in future`),
+  //   d => new FutureDate(d),
+  // )
+  // ALT1
+  // E.bimapFromBool2(
+  //   isInFuture(new Date(dateStr)),
+  //   () => new ValidationError(`${dateStr} is not in future`),
+  //   () => new FutureDate(new Date(dateStr)),
+  // )
+  // ALT2: will return disjointed Left and Right with `never` on either side.
+  //  isInFuture(new Date(dateStr))
+  //  ? E.ok(new Date(dateStr))
+  //  : E.err(new ValidationError(`${dateStr} is not in future`)
 
-  // alternative:
-  /*
-  static create(dateStr: string) {
-    const date = new Date(dateStr)
-    return pipe(
-      E.fromBool(date, isInFuture),
-      E.map(d => new FutureDate(d)),
-      E.mapLeft(d => new ValidationError(`${d.toDateString()} is not in future`)),
-    )
-  }
-  */
   private constructor(readonly value: Date) {}
 }
 

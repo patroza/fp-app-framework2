@@ -1,17 +1,31 @@
 import { assert, InvalidStateError } from "@fp-app/framework"
-import { Result, pipe, E } from "@fp-app/fp-ts-extensions"
+import { Result, E } from "@fp-app/fp-ts-extensions"
 import { TemplateId } from "./TrainTrip"
 import { TravelClassName } from "./TravelClassDefinition"
 
 export default class Trip {
   static create = (serviceLevels: TravelClass[]) =>
-    pipe(
-      E.fromBool(serviceLevels, serviceLevels => !!serviceLevels.length),
-      E.map(x => new Trip(x)),
-      E.mapLeft(
-        () => new InvalidStateError("A trip requires at least 1 service level"),
-      ),
+    E.bimapFromBool2(
+      !!serviceLevels.length,
+      () => new InvalidStateError("A trip requires at least 1 service level"),
+      () => new Trip(serviceLevels),
     )
+
+  // ALT
+  // E.bimapFromBool(
+  //   serviceLevels,
+  //   serviceLevels => !!serviceLevels.length,
+  //   () => new InvalidStateError("A trip requires at least 1 service level"),
+  //   x => new Trip(x),
+  // )
+  // is in fact:
+  // pipe(
+  //   E.fromBool(serviceLevels, serviceLevels => !!serviceLevels.length),
+  //   E.bimap(
+  //     () => new InvalidStateError("A trip requires at least 1 service level"),
+  //     x => new Trip(x),
+  //   ),
+  // )
 
   constructor(readonly travelClasses: TravelClass[]) {
     assert(Boolean(travelClasses.length), "A trip must have at least 1 travel class")
