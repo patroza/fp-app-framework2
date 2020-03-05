@@ -28,7 +28,7 @@ const getTrip = ({
   ApiError | InvalidStateError
 > =>
   TE.compose(
-    TE.chain(pipe(getTemplate, TE.lift<InvalidStateError | ApiError>())),
+    TE.chain(pipe(getTemplate, TE.liftErr<InvalidStateError | ApiError>())),
     TE.chain(toTrip(getTemplate)),
   )
 
@@ -42,7 +42,7 @@ const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
         .map(sl => pipe(getTemplate(sl.id), TE.map(tplToTravelClass))),
     ),
   )
-  const liftErr = E.lift<ApiError | InvalidStateError>()
+  const liftErr = E.liftErr<ApiError | InvalidStateError>()
   const createTripWithSelectedTravelClass = (trip: Trip) =>
     TripWithSelectedTravelClass.create(trip, currentTravelClass.name)
 

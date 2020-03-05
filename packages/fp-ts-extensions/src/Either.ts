@@ -186,9 +186,11 @@ export const conditional = <TInput, TOutput, TErrorOutput>(
   return resultCreator(input)
 }
 
-export const lift = <TE>() => <T, TI, TE2 extends TE>(e: (i: TI) => Either<TE2, T>) => (
-  i: TI,
-) => pipe(e(i), E.mapLeft(liftType<TE>()))
+export const liftLeft = <TE>() => <T, TI, TE2 extends TE>(
+  e: (i: TI) => Either<TE2, T>,
+) => (i: TI) => pipe(e(i), E.mapLeft(liftType<TE>()))
+
+export const liftErr = liftLeft
 
 // Experiment
 

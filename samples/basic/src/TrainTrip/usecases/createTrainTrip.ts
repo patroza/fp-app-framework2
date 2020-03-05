@@ -23,17 +23,17 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
   ({ _, db, getTrip }) =>
     TE.compose(
-      TE.chainEitherK(pipe(validateCreateTrainTripInfo, _.liftE)),
-      TE.chainTup(pipe(getTripFromTrainTripInfo(getTrip), _.liftTE)),
+      TE.chainEitherK(pipe(validateCreateTrainTripInfo, _.E.liftErr)),
+      TE.chainTup(pipe(getTripFromTrainTripInfo(getTrip), _.TE.liftErr)),
       // pipe(
       //   getTrip,
       //   mapper((i: { templateId: string }) => i.templateId),
-      //   _.liftTE,
+      //   _.TE.liftErr,
       // ),
       // ALT
-      //i => pipe(getTrip, _.liftTE)(i.templateId),
+      //i => pipe(getTrip, _.TE.liftErr)(i.templateId),
       // ALT1
-      //pipe(mapper((i: { templateId: string }) => i.templateId)(getTrip), _.liftTE),
+      //pipe(mapper((i: { templateId: string }) => i.templateId)(getTrip), _.TE.liftErr),
       // ALT2
       // const getTripFromTrainTripInfo = (getTrip: typeof getTripKey) => (i: {
       //   templateId: string
@@ -41,7 +41,7 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
       // ALT3
       // TE.compose(
       //   TE.map(i => i.templateId),
-      //   TE.chain(pipe(getTrip, _.liftTE)),
+      //   TE.chain(pipe(getTrip, _.TE.liftErr)),
       // ),
       TE.map(reverseApply(TrainTrip.create)),
       TE.do(db.trainTrips.add),

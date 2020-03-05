@@ -79,9 +79,11 @@ export const valueOrUndefined = <TInput, TOutput, TErrorOutput>(
   return await resultCreator(input)()
 }
 
-export const lift = <TE>() => <T, TI, TE2 extends TE>(
+export const liftLeft = <TE>() => <T, TI, TE2 extends TE>(
   e: (i: TI) => TaskEither<TE2, T>,
 ) => (i: TI) => pipe(e(i), TE.mapLeft(liftType<TE>()))
+
+export const liftErr = liftLeft
 
 // it would have to generate (event) => kickAsync(event).compose(
 // but also it would mean to add: map(event => event.id) to get just the id.

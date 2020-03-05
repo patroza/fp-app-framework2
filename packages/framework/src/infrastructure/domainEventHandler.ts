@@ -25,7 +25,7 @@ export default class DomainEventHandler {
   ) =>
     pipe(
       this.executeEvents(getAndClearEvents),
-      TE.chain(pipe(commit, TE.lift<Error | TErr>())),
+      TE.chain(pipe(commit, TE.liftErr<Error | TErr>())),
       TE.do(this.publishIntegrationEvents),
     )
 

@@ -41,7 +41,7 @@ export default function generateKoaHandler<
 
     // DbError, because request handler is enhanced with it (decorator)
     // E2 because the validator enhances it.
-    const liftErr = TE.lift<DbError | E | E2>()
+    const liftErr = TE.liftErr<DbError | E | E2>()
     const handleRequest = (i: I) => request(handler, i)
     const shouldHandleError = handleErrorOrPassthrough(ctx)
     const handleError = handleDefaultError(ctx)
