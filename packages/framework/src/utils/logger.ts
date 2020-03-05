@@ -24,7 +24,7 @@ const getLogger = (name: string) => {
     return loggers.get(name)!
   }
 
-  // const levels = ["info", "log", "debug", "error", "warn"] as const
+  // const levels = tuple("info", "log", "debug", "error", "warn")
   const l = typedKeysOf(logLevels).reduce((prev, current) => {
     prev[current] = (...args: any[]) =>
       logger[current](chalk.yellow(`[${name}]`), ...args)

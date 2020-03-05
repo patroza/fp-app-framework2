@@ -98,7 +98,7 @@ export const changeTravelClass = createCommand<
     //   const f = ([, i]: typeof input) => load(i.trainTripId)
     //   return pipe(
     //     f(input),
-    //     TE.map(x => [x, input[0], input[1]] as const),
+    //     TE.map(x => tuple(x, input[0], input[1])),
     //   )
     // }),
     TE.chain(([trainTrip, sl]) => {

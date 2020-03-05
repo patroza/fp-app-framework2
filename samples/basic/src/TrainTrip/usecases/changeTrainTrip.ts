@@ -36,7 +36,7 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
       // TE.compose(
       //   TE.map(
       //     ([trainTrip, proposal]) =>
-      //       [pipe(trainTrip.proposeChanges, _.E.liftErr, E.toTaskEither), proposal] as const,
+      //       tuple(pipe(trainTrip.proposeChanges, _.E.liftErr, E.toTaskEither), proposal),
       //   ),
       //   TE.chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
       // ),

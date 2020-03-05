@@ -9,7 +9,7 @@ import * as T from "fp-ts/lib/Task"
 import * as TE from "fp-ts/lib/TaskEither"
 
 import { TaskEither } from "fp-ts/lib/TaskEither"
-import { flow } from "fp-ts/lib/function"
+import { flow, tuple } from "fp-ts/lib/function"
 import { toValue, tee, liftType, ThenArg } from "./general"
 
 export * from "fp-ts/lib/TaskEither"
@@ -53,7 +53,7 @@ export function chainTup<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
   return TE.chain((input: TInput) =>
     pipe(
       f(input),
-      TE.map(x => [x, input] as const),
+      TE.map(x => tuple(x, input)),
     ),
   )
 }

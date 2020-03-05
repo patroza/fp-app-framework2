@@ -9,6 +9,7 @@ import * as TE from "fp-ts/lib/TaskEither"
 
 import { flatten, zip } from "lodash"
 import { toValue, tee, liftType, flattenErrors } from "./general"
+import { tuple } from "fp-ts/lib/function"
 
 export * from "fp-ts/lib/Either"
 
@@ -75,7 +76,7 @@ function chainTup<TInput, T, E>(f: (x: TInput) => Either<E, T>) {
   return E.chain((input: TInput) =>
     pipe(
       f(input),
-      E.map(x => [x, input] as const),
+      E.map(x => tuple(x, input)),
     ),
   )
 }
