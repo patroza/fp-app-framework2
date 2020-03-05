@@ -23,8 +23,10 @@ const loggingDecorator = (): RequestDecorator => request => (key, input) => {
 const uowDecorator = configureDependencies(
   { unitOfWork: UOWKey },
   "uowDecorator",
-  ({ unitOfWork }): RequestDecorator => request =>
-    trampoline((_: ToolDeps<any | DbError>) => (key, input) => {
+  ({ unitOfWork }) => <TInput, TOutput, TError>(
+    request: TRequest<TInput, TOutput, TError>,
+  ): TDecoratedRequest<TInput, TOutput, TError, TError | DbError | Error> =>
+    trampoline((_: ToolDeps<TError | DbError | Error>) => (key, input) => {
       if (
         key[requestTypeSymbol] !== "COMMAND" &&
         key[requestTypeSymbol] !== "INTEGRATIONEVENT"
@@ -38,11 +40,19 @@ const uowDecorator = configureDependencies(
 export { loggingDecorator, uowDecorator }
 
 type RequestDecorator = <TInput, TOutput, TError>(
-  request: (
-    key: NamedRequestHandler<TInput, TOutput, TError>,
-    input: TInput,
-  ) => AsyncResult<TOutput, TError>,
-) => (
+  request: TRequest<TInput, TOutput, TError>,
+) => TRequest<TInput, TOutput, TError>
+
+// type RequestDecoratorT<TInput, TOutput, TError> = (
+//   request: TRequest<TInput, TOutput, TError>,
+// ) => TRequest<TInput, TOutput, TError>
+
+type TRequest<TInput, TOutput, TError> = (
   key: NamedRequestHandler<TInput, TOutput, TError>,
   input: TInput,
 ) => AsyncResult<TOutput, TError>
+
+type TDecoratedRequest<TInput, TOutput, TError extends TErrorOut, TErrorOut> = (
+  key: NamedRequestHandler<TInput, TOutput, TError>,
+  input: TInput,
+) => AsyncResult<TOutput, TErrorOut>
