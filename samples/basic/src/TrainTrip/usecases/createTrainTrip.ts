@@ -7,12 +7,11 @@ import {
   toFieldError,
   ValidationError,
 } from "@fp-app/framework"
-import { Result, pipe, E, TE } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, E, TE, reverseApply } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
 import { DbContextKey, defaultDependencies, getTripKey } from "./types"
-import { tupled, flip } from "fp-ts/lib/function"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -44,7 +43,7 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
       //   TE.map(i => i.templateId),
       //   TE.chain(pipe(getTrip, _.TE.liftErr)),
       // ),
-      TE.map(pipe(TrainTrip.create, flip, tupled)),
+      TE.map(pipe(TrainTrip.create, reverseApply)),
       TE.do(db.trainTrips.add),
       TE.map(trainTrip => trainTrip.id),
     ),

@@ -9,7 +9,7 @@ import * as TE from "fp-ts/lib/TaskEither"
 
 import { flatten, zip } from "lodash"
 import { toValue, tee, liftType, flattenErrors } from "./general"
-import { tuple } from "fp-ts/lib/function"
+import { tuple, flow } from "fp-ts/lib/function"
 
 export * from "fp-ts/lib/Either"
 
@@ -344,15 +344,34 @@ export function compose<TInput, TError, B, C, D, TOutput>(
   cd: (b: E.Either<TError, C>) => E.Either<TError, D>,
   de: (c: E.Either<TError, D>) => E.Either<TError, TOutput>,
 ): (input: TInput) => E.Either<TError, TOutput>
+export function compose<TInput, TError, B, C, D, E, TOutput>(
+  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
+  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
+  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
+  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
+  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, TOutput>,
+): (input: TInput) => TE.TaskEither<TError, TOutput>
+export function compose<TInput, TError, B, C, D, E, F, TOutput>(
+  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
+  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
+  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
+  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
+  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, F>,
+  fg: (f: TE.TaskEither<TError, F>) => TE.TaskEither<TError, TOutput>,
+): (input: TInput) => TE.TaskEither<TError, TOutput>
+export function compose<TInput, TError, B, C, D, E, F, G, TOutput>(
+  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
+  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
+  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
+  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
+  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, F>,
+  fg: (f: TE.TaskEither<TError, F>) => TE.TaskEither<TError, G>,
+  gh: (g: TE.TaskEither<TError, G>) => TE.TaskEither<TError, TOutput>,
+): (input: TInput) => TE.TaskEither<TError, TOutput>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function compose<TInput, TError, TOutput>(...a: any[]) {
-  return (input: TInput) =>
-    pipe<E.Either<TError, TInput>, E.Either<TError, TOutput>>(
-      E.right<TError, TInput>(input),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore
-      ...a,
-    )
+export function compose(...a: any[]) {
+  const anyFlow: any = flow
+  return anyFlow(E.right, ...a)
 }
 
 export type LeftArg<T> = T extends E.Left<infer U> ? U : never

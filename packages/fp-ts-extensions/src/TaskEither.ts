@@ -160,14 +160,9 @@ export function compose<TInput, TError, B, C, D, E, F, G, TOutput>(
   gh: (g: TE.TaskEither<TError, G>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function compose<TInput, TError, TOutput>(...a: any[]) {
-  return (input: TInput) =>
-    pipe<TE.TaskEither<TError, TInput>, TE.TaskEither<TError, TOutput>>(
-      TE.right<TError, TInput>(input),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-      // @ts-ignore
-      ...a,
-    )
+export function compose(...a: any[]) {
+  const anyFlow: any = flow
+  return anyFlow(TE.right, ...a)
 }
 
 export const asyncCreateResult = <TErrorOutput = string, TInput = any, TOutput = any>(

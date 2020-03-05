@@ -9,6 +9,9 @@ export * from "./general"
 
 import * as TE from "./TaskEither"
 import * as E from "./Either"
+import * as T from "fp-ts/lib/Task"
+
+export { T }
 
 export const toolDeps = <TErr>(): ToolDeps<TErr> => ({
   E: { liftErr: E.liftErr<TErr>() },
