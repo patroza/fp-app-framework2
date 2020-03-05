@@ -1,4 +1,11 @@
-import { pipe, AsyncResult, TE, E } from "@fp-app/fp-ts-extensions"
+import {
+  pipe,
+  AsyncResult,
+  TE,
+  E,
+  trampoline,
+  ToolDeps,
+} from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { EventHandlerWithDependencies } from "./mediator"
 import { publishType } from "./mediator/publish"
@@ -23,10 +30,12 @@ export default class DomainEventHandler {
     getAndClearEvents: () => Event[],
     commit: () => AsyncResult<T, TErr>,
   ) =>
-    pipe(
-      this.executeEvents(getAndClearEvents),
-      TE.chain(pipe(commit, TE.liftErr<Error | TErr>())),
-      TE.do(this.publishIntegrationEvents),
+    trampoline((_: ToolDeps<Error | TErr>) =>
+      pipe(
+        this.executeEvents(getAndClearEvents),
+        TE.chain(pipe(commit, _.TE.liftErr)),
+        TE.do(this.publishIntegrationEvents),
+      ),
     )
 
   private readonly executeEvents = (
