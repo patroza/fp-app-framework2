@@ -56,7 +56,7 @@ export default createTrainTrip
 export interface Input {
   templateId: string
   pax: Pax
-  startDate: string
+  startDate: Date
 }
 
 // the problem is that the fp-ts compose doesnt return a data last function, but data first ;-)

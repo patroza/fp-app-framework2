@@ -59,7 +59,7 @@ export const changeStartDate = createCommand<
 
 export interface ChangeStartDateInput {
   trainTripId: string
-  startDate: string
+  startDate: Date
 }
 type ChangeStartDateError = ValidationError | ForbiddenError | DbError
 

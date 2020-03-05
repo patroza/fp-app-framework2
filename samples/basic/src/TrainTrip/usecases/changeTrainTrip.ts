@@ -55,7 +55,7 @@ export interface Input extends StateProposition {
 
 export interface StateProposition {
   pax?: Pax
-  startDate?: string
+  startDate?: Date
   travelClass?: string
 }
 

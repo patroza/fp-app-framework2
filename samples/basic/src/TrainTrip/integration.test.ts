@@ -55,7 +55,7 @@ beforeEach(() =>
       pax: { adults: 2, children: 0, babies: 0, infants: 0, teenagers: 0 },
       startDate: moment()
         .add(1, "year")
-        .format("YYYY-MM-DD"),
+        .toDate(),
       templateId,
     })()
 
@@ -112,7 +112,7 @@ describe("usecases", () => {
       createRootAndBind(async () => {
         const state: StateProposition = {
           pax: { adults: 2, babies: 2, children: 1, infants: 1, teenagers: 0 },
-          startDate: "2030-01-01T00:00:00.000Z",
+          startDate: new Date("2030-01-01T00:00:00.000Z"),
           travelClass: "first",
         }
 
@@ -125,7 +125,7 @@ describe("usecases", () => {
         expect(unsafeUnwrap(result)).toBe(void 0)
         const r = unsafeUnwrap(newTrainTripResult)
         expect(r.travelClass).toBe(state.travelClass)
-        expect(r.startDate).toEqual(state.startDate!)
+        expect(r.startDate).toEqual(state.startDate!.toISOString())
         expect(r.pax).toEqual(state.pax)
         expect(executePostCommitHandlersMock).toBeCalledTimes(1)
         logger.log(r)
@@ -150,7 +150,7 @@ describe("usecases", () => {
         const state: StateProposition = {
           travelClass: "bogus",
           pax: { children: 0 } as any,
-          startDate: "2000-01-01",
+          startDate: moment("2000-01-01", "YYYY-MM-DD").toDate(),
         }
 
         const r = await root.request(changeTrainTrip, { trainTripId, ...state })()

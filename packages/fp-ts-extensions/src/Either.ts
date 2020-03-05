@@ -16,15 +16,25 @@ export type Result<TSuccess, TError> = Either<TError, TSuccess>
 const err = E.left
 const ok = E.right
 
-export const fromBool = <T>(
-  value: T,
+export const fromBool = <T, TInput extends T = T>(
+  value: TInput,
   predicate: (value: T) => boolean,
-): E.Either<T, T> => {
+): E.Either<TInput, TInput> => {
   if (!predicate(value)) {
     return err(value)
   }
   return ok(value)
 }
+
+/**
+ * Curried version..
+ */
+export const fromBoolC = <T>(predicate: (value: T) => boolean) => <
+  TInput extends T = T
+>(
+  value: TInput,
+): E.Either<TInput, TInput> => fromBool(value, predicate)
+
 export const bimapFromBool = <T, TNew, ENew>(
   value: T,
   predicate: (value: T) => boolean,
@@ -37,15 +47,6 @@ export const bimapFromBool2 = <TNew, ENew>(
   onLeft: () => TNew,
   onRight: () => ENew,
 ) => (bool ? E.right(onRight()) : E.left(onLeft()))
-
-export const fromBool2 = <T>(predicate: (value: T) => boolean) => (
-  value: T,
-): E.Either<T, T> => {
-  if (!predicate(value)) {
-    return err(value)
-  }
-  return ok(value)
-}
 
 export const fromErrorish = <T, TE extends Error>(
   errorish: T & {
