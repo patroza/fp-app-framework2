@@ -29,26 +29,17 @@ export const fromBool = <T, TInput extends T = T>(
   return ok(value)
 }
 
-/**
- * Curried version..
- */
-export const fromBoolC = <T>(predicate: (value: T) => boolean) => <
-  TInput extends T = T
->(
-  value: TInput,
-): E.Either<TInput, TInput> => fromBool(value, predicate)
-
 export const bimapFromBool = <T, TNew, ENew>(
   value: T,
   predicate: (value: T) => boolean,
-  onLeft: (value: T) => TNew,
-  onRight: (value: T) => ENew,
+  onLeft: (value: T) => ENew,
+  onRight: (value: T) => TNew,
 ) => pipe(fromBool(value, predicate), E.bimap(onLeft, onRight))
 
 export const bimapFromBool2 = <TNew, ENew>(
   bool: boolean,
-  onLeft: () => TNew,
-  onRight: () => ENew,
+  onLeft: () => ENew,
+  onRight: () => TNew,
 ) => (bool ? E.right(onRight()) : E.left(onLeft()))
 
 export const fromErrorish = <T, TE extends Error>(
