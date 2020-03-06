@@ -160,11 +160,11 @@ export function compose(...a: any[]) {
 export const asyncCreateResult = <TErrorOutput = string, TInput = any, TOutput = any>(
   input: TInput | undefined,
   resultCreator: (input: TInput) => Promise<TOutput>,
-): AsyncResult<TOutput | undefined, TErrorOutput> => async () => {
+): AsyncResult<TOutput | undefined, TErrorOutput> => {
   if (input === undefined) {
-    return E.ok(undefined)
+    return ok(undefined)
   }
-  return E.ok(await resultCreator(input))
+  return TE.rightTask(() => resultCreator(input))
 }
 
 export function chainTasks<TErr, T = void>(

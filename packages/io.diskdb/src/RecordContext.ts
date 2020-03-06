@@ -146,16 +146,16 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
       ),
     )
 
-  private readonly actualSave = (record: T, version: number) => async () => {
-    const data = this.serializer(record)
+  private readonly actualSave = (record: T, version: number) =>
+    TE.tryExecute<void, any>(async () => {
+      const data = this.serializer(record)
 
-    const serialized = JSON.stringify({ version: version + 1, data })
-    await writeFile(getFilename(this.type, record.id), serialized, {
-      encoding: "utf-8",
+      const serialized = JSON.stringify({ version: version + 1, data })
+      await writeFile(getFilename(this.type, record.id), serialized, {
+        encoding: "utf-8",
+      })
+      this.cache.set(record.id, { version, data: record })
     })
-    this.cache.set(record.id, { version, data: record })
-    return E.success<any>()
-  }
 }
 
 interface DBRecord {
@@ -181,13 +181,11 @@ const lockRecordOnDisk = <T>(type: string, id: string, cb: AsyncResult<T, DbErro
 const tryLock = (
   type: string,
   id: string,
-): AsyncResult<() => Promise<void>, CouldNotAquireDbLockError> => async () => {
-  try {
-    return E.ok(await lock(getFilename(type, id)))
-  } catch (er) {
-    return E.err(new CouldNotAquireDbLockError(type, id, er))
-  }
-}
+): AsyncResult<() => Promise<void>, CouldNotAquireDbLockError> =>
+  TE.tryCatch(
+    () => lock(getFilename(type, id)),
+    er => new CouldNotAquireDbLockError(type, id, er as Error),
+  )
 
 const tryReadFromDb = (
   type: string,
