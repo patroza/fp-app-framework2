@@ -90,9 +90,9 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
     forEachSave?: (item: T) => AsyncResult<void, DbError>,
   ): AsyncResult<void, DbError> =>
     TE.chainTasks(
-      [...this.cache.entries()]
-        .map(e =>
-          [this.saveRecord(e[1].data), forEachSave && forEachSave(e[1].data)].filter(
+      Array.from(this.cache.values())
+        .map(({ data }) =>
+          [this.saveRecord(data), forEachSave && forEachSave(data)].filter(
             isTruthyFilter,
           ),
         )
