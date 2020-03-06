@@ -75,7 +75,8 @@ export const valueOrUndefined = <TInput, TOutput, TErrorOutput>(
   if (input === undefined) {
     return E.right(undefined)
   }
-  return await resultCreator(input)()
+  const resultCreatorTask = resultCreator(input)
+  return await resultCreatorTask()
 }
 
 export const liftLeft = <TE>() => <T, TI, TE2 extends TE>(
@@ -83,16 +84,6 @@ export const liftLeft = <TE>() => <T, TI, TE2 extends TE>(
 ) => (i: TI) => pipe(e(i), TE.mapLeft(liftType<TE>()))
 
 export const liftErr = liftLeft
-
-// it would have to generate (event) => kickAsync(event).compose(
-// but also it would mean to add: map(event => event.id) to get just the id.
-// const startWithValInt = <TErr>() => <T>(value: T) => ok<T, TErr>(value) as Result<T, TErr>
-
-// export const startWithVal = <TErr>() => <T>(value: T) => Promise.resolve(startWithValInt<TErr>()(value))
-// reversed curry:
-export const startWithVal = <T>(value: T) => <TErr>() => TE.right<TErr, T>(value)
-// export const startWithVal2 = startWithVal()
-export const startWithVal2 = <T>(value: T) => startWithVal(value)()
 
 export type PipeFunction<TInput, TOutput, TErr> = (
   input: TInput,
