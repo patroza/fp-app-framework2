@@ -68,12 +68,14 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
     forEachDelete?: (item: T) => AsyncResult<void, DbError>,
   ): AsyncResult<void, DbError> => async () => {
     for (const e of this.removals) {
-      const r = await this.deleteRecord(e)()
+      const del = this.deleteRecord(e)
+      const r = await del()
       if (E.isErr(r)) {
         return r
       }
       if (forEachDelete) {
-        const rEs = await forEachDelete(e)()
+        const _foreachDelete = forEachDelete(e)
+        const rEs = await _foreachDelete()
         if (E.isErr(rEs)) {
           return rEs
         }
