@@ -13,6 +13,8 @@ import { tuple, flow } from "fp-ts/lib/function"
 
 export * from "fp-ts/lib/Either"
 
+import { pipe as _pipe } from "lodash/fp"
+
 export type Result<TSuccess, TError> = Either<TError, TSuccess>
 const err = E.left
 const ok = E.right
@@ -204,14 +206,10 @@ export const anyTrue = <TErr = any>(...mappers: any[]): Result<boolean, TErr> =>
   const items = mappers.map(() => mapHasChanged)
   const execution = flatten(zip(mappers, items))
 
-  const an = ok<TErr, boolean>(false) as any
-  // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-  // @ts-ignore
-  return pipe(
-    an,
+  return _pipe(
     ...execution,
     E.map(() => hasChanged),
-  )
+  )(ok(false))
 }
 
 export type PipeFunction2<TInput, TOutput, TErr> = (
@@ -373,6 +371,13 @@ export function compose<TInput, TError, B, C, D, E, F, G, TOutput>(
 export function compose(...a: any[]) {
   const anyFlow: any = flow
   return anyFlow(E.right, ...a)
+}
+
+export function chainTasks<TErr, T = void>(
+  tasks: (() => Either<TErr, T>)[],
+): Either<TErr, T> {
+  const exec = _pipe(...tasks.map(t => E.chain(t)))
+  return exec(ok(void 0))
 }
 
 export type LeftArg<T> = T extends E.Left<infer U> ? U : never

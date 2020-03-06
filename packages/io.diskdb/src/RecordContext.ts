@@ -6,6 +6,7 @@ import {
   OptimisticLockError,
   RecordContext,
   RecordNotFound,
+  isTruthyFilter,
 } from "@fp-app/framework"
 import { pipe, AsyncResult, E, TE } from "@fp-app/fp-ts-extensions"
 import { lock } from "proper-lockfile"
@@ -87,21 +88,16 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
 
   private readonly handleInsertionsAndUpdates = (
     forEachSave?: (item: T) => AsyncResult<void, DbError>,
-  ): AsyncResult<void, DbError> => async () => {
-    for (const e of this.cache.entries()) {
-      const r = await this.saveRecord(e[1].data)()
-      if (E.isErr(r)) {
-        return r
-      }
-      if (forEachSave) {
-        const rEs = await forEachSave(e[1].data)()
-        if (E.isErr(rEs)) {
-          return rEs
-        }
-      }
-    }
-    return E.success()
-  }
+  ): AsyncResult<void, DbError> =>
+    TE.chainTasks(
+      [...this.cache.entries()]
+        .map(e =>
+          [this.saveRecord(e[1].data), forEachSave && forEachSave(e[1].data)].filter(
+            isTruthyFilter,
+          ),
+        )
+        .flat(),
+    )
 
   private readonly saveRecord = (record: T): AsyncResult<void, DbError> => async () => {
     const cachedRecord = this.cache.get(record.id)!

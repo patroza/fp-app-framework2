@@ -12,8 +12,6 @@ import { publishType } from "./mediator/publish"
 import { generateKey } from "./SimpleContainer"
 import { TaskEither } from "fp-ts/lib/TaskEither"
 
-import { pipe as _pipe } from "lodash/fp"
-
 // tslint:disable-next-line:max-classes-per-file
 export default class DomainEventHandler {
   private events: Event[] = []
@@ -69,10 +67,8 @@ export default class DomainEventHandler {
     return E.success()
   }
 
-  private readonly publishEvents = (events: Event[]): AsyncResult<void, Error> => {
-    const tasks = events.map(this.publish)
-    return _pipe(tasks[0], ...tasks.slice(1).map(t => TE.chain(() => t)))
-  }
+  private readonly publishEvents = (events: Event[]): AsyncResult<void, Error> =>
+    TE.chainTasks(events.map(e => this.publish(e)))
 
   private readonly publishIntegrationEvents = () => {
     this.events = []

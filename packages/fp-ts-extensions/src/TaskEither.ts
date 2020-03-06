@@ -11,6 +11,7 @@ import * as TE from "fp-ts/lib/TaskEither"
 import { TaskEither } from "fp-ts/lib/TaskEither"
 import { flow, tuple } from "fp-ts/lib/function"
 import { toValue, tee, liftType, ThenArg } from "./general"
+import { pipe as _pipe } from "lodash/fp"
 
 export * from "fp-ts/lib/TaskEither"
 
@@ -164,6 +165,13 @@ export const asyncCreateResult = <TErrorOutput = string, TInput = any, TOutput =
     return E.ok(undefined)
   }
   return E.ok(await resultCreator(input))
+}
+
+export function chainTasks<TErr, T = void>(
+  tasks: TE.TaskEither<TErr, T>[],
+): TE.TaskEither<TErr, T> {
+  const exec = _pipe(...tasks.map(t => TE.chain(() => t)))
+  return exec(ok(void 0))
 }
 
 export type LeftArg<T> = E.LeftArg<ThenArg<T>>
