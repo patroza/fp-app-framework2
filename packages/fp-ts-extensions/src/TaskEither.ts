@@ -117,6 +117,7 @@ export function chainFlatTup(f: any) {
   )
 }
 
+// compose = flow(TE.right, ...rest)
 export function compose<TInput, TError, TOutput>(
   ab: (c: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>

@@ -325,6 +325,7 @@ export const toTaskEither = <T, T2, TE>(func: (i: T) => Either<TE, T2>) => <
   i: TI,
 ) => TE.fromEither(func(i))
 
+// compose = flow(E.right, ...rest)
 export function compose<TInput, TError, TOutput>(
   ab: (c: E.Either<TError, TInput>) => E.Either<TError, TOutput>,
 ): (input: TInput) => E.Either<TError, TOutput>
