@@ -144,10 +144,11 @@ export default function createDependencyNamespace(
       const correllationId = requestId || context.id
       Object.assign(context, { correllationId })
 
-      return processReceivedEvent({
+      const process = processReceivedEvent({
         publish: publishIntegrationEventHandler,
         resolveEvent: container.getF(resolveEventKey),
-      })(evt)
+      })
+      return process(evt)
     })
 
   const requestInNewContext: requestInNewScopeType = <TInput, TOutput>(
