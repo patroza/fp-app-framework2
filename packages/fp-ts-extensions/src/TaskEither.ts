@@ -27,8 +27,7 @@ export const toVoid = toValue<void>(void 0)
 /**
  * Execute promise, if success return right, if fail; won't catch thrown Exception.
  */
-export const tryExecute = <T, TE>(func: () => Promise<T>) => async () =>
-  E.right<TE, T>(await func())
+export const tryExecute = <T, TE>(func: () => Promise<T>) => TE.rightTask<TE, T>(func)
 
 /**
  * Execute promise, if success return right, if fail; won't catch thrown Exception.
@@ -37,7 +36,7 @@ export const tryExecuteFW = <T, TI, TE>(func: (input: TI) => Promise<T>) => <
   TI2 extends TI
 >(
   i: TI2,
-): TE.TaskEither<TE, T> => async () => E.right(await func(i))
+): TE.TaskEither<TE, T> => TE.rightTask<TE, T>(() => func(i))
 
 export function chainTee<T, TDontCare, E>(
   f: PipeFunction<T, TDontCare, E>,
