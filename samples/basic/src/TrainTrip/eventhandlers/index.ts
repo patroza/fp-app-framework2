@@ -33,12 +33,6 @@ import { CustomerRequestedChanges } from "./integration.events"
 // So that we may ensure the events will be processed.
 // Other options can be to have a compensating action running regularly that checks and fixes things. A sort of eventual consistency.
 
-// There are some pitfalls: when turning into an integration event callback
-// one should generally not access dependencies that were passed into the domain event :/
-// because of possible scope mismatch issues (ie a db context should be closed after a request has finished processing).
-// Below implementations violate this principal, at the time of writing ;-)
-// (trainTripPublisher is passed in as part of the domain event handler, and used by the integration event handler)
-
 const createIntegrationEventHandler = createIntegrationEventHandlerWithDeps({
   trainTripPublisher: TrainTripPublisherKey,
   ...defaultDependencies,

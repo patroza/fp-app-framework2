@@ -9,22 +9,24 @@ export { Joi }
 import { convert } from "@yeongjet/joi-to-json-schema"
 import { logger } from "./logger"
 
-const createValidator = <TIn>(
+const createValidator = <TOut, TIn = JsonValue>(
   schema: Joi.Schema,
-): ValidatorType<TIn, ValidationError> => {
-  const validator = (object: TIn): Result<TIn, ValidationError> => {
+): ValidatorType<TOut, ValidationError, TIn> => {
+  const validator = (object: TIn): Result<TOut, ValidationError> => {
     const r = schema.validate(object, { abortEarly: false })
-    return mapValidationResult(r)
+    return mapValidationResult<TOut>(r)
   }
   validator.jsonSchema = convert(schema)
   return validator
 }
 
-const mapValidationResult = (result: ValidationResult) =>
+export type JsonValue = number | boolean | string | any[] | Record<string, any>
+
+const mapValidationResult = <TOut = any>(result: ValidationResult) =>
   pipe(
     E.fromErrorish(result),
     E.do(x => x.warning && logger.warn("Warning during validation: " + x.warning)),
-    E.map(x => x.value),
+    E.map(x => x.value as TOut),
     E.mapLeft(joiValidationErrorToCombinedValidationError),
   )
 // Alternative:
@@ -40,7 +42,9 @@ const mapValidationResult = (result: ValidationResult) =>
 //  ? E.err(joiValidationErrorToCombinedValidationError(r.error))
 //  : E.ok(r.value)
 
-export type ValidatorType<TIn, TErr> = ((object: TIn) => Result<TIn, TErr>) & {
+export type ValidatorType<TOut, TErr, TIn = JsonValue> = ((
+  object: TIn,
+) => Result<TOut, TErr>) & {
   jsonSchema: string
 }
 

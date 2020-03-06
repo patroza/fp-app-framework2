@@ -11,7 +11,8 @@ export default class KoaRouteBuilder extends RouteBuilder<Koa.Context> {
       if (!this.userPass) {
         throw new Error("cannot enable auth without loginPass")
       }
-      router.use(authMiddleware(this.userPass)())
+      const createMiddleware = authMiddleware(this.userPass)
+      router.use(createMiddleware())
     }
 
     this.setup.forEach(

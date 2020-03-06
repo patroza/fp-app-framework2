@@ -13,9 +13,16 @@ import { tuple, flow } from "fp-ts/lib/function"
 
 export * from "fp-ts/lib/Either"
 
+import { pipe as _pipe } from "lodash/fp"
+
 export type Result<TSuccess, TError> = Either<TError, TSuccess>
 const err = E.left
 const ok = E.right
+
+export const exec = <TErr = any>(func: () => void) => {
+  func()
+  return success<TErr>()
+}
 
 export const fromBool = <T, TInput extends T = T>(
   value: TInput,
@@ -27,26 +34,17 @@ export const fromBool = <T, TInput extends T = T>(
   return ok(value)
 }
 
-/**
- * Curried version..
- */
-export const fromBoolC = <T>(predicate: (value: T) => boolean) => <
-  TInput extends T = T
->(
-  value: TInput,
-): E.Either<TInput, TInput> => fromBool(value, predicate)
-
 export const bimapFromBool = <T, TNew, ENew>(
   value: T,
   predicate: (value: T) => boolean,
-  onLeft: (value: T) => TNew,
-  onRight: (value: T) => ENew,
+  onLeft: (value: T) => ENew,
+  onRight: (value: T) => TNew,
 ) => pipe(fromBool(value, predicate), E.bimap(onLeft, onRight))
 
 export const bimapFromBool2 = <TNew, ENew>(
   bool: boolean,
-  onLeft: () => TNew,
-  onRight: () => ENew,
+  onLeft: () => ENew,
+  onRight: () => TNew,
 ) => (bool ? E.right(onRight()) : E.left(onLeft()))
 
 export const fromErrorish = <T, TE extends Error>(
@@ -204,14 +202,10 @@ export const anyTrue = <TErr = any>(...mappers: any[]): Result<boolean, TErr> =>
   const items = mappers.map(() => mapHasChanged)
   const execution = flatten(zip(mappers, items))
 
-  const an = ok<TErr, boolean>(false) as any
-  // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-  // @ts-ignore
-  return pipe(
-    an,
+  return _pipe(
     ...execution,
     E.map(() => hasChanged),
-  )
+  )(ok(false))
 }
 
 export type PipeFunction2<TInput, TOutput, TErr> = (
@@ -325,6 +319,7 @@ export const toTaskEither = <T, T2, TE>(func: (i: T) => Either<TE, T2>) => <
   i: TI,
 ) => TE.fromEither(func(i))
 
+// compose = flow(E.right, ...rest)
 export function compose<TInput, TError, TOutput>(
   ab: (c: E.Either<TError, TInput>) => E.Either<TError, TOutput>,
 ): (input: TInput) => E.Either<TError, TOutput>
@@ -372,6 +367,13 @@ export function compose<TInput, TError, B, C, D, E, F, G, TOutput>(
 export function compose(...a: any[]) {
   const anyFlow: any = flow
   return anyFlow(E.right, ...a)
+}
+
+export function chainTasks<TErr, T = void>(
+  tasks: (() => Either<TErr, T>)[],
+): Either<TErr, T> {
+  const exec = _pipe(...tasks.map(t => E.chain(t)))
+  return exec(ok(void 0))
 }
 
 export type LeftArg<T> = T extends E.Left<infer U> ? U : never

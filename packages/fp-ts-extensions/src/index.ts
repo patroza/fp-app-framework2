@@ -14,8 +14,8 @@ import * as T from "fp-ts/lib/Task"
 export { T }
 
 export const toolDeps = <TErr>(): ToolDeps<TErr> => ({
-  E: { liftErr: E.liftErr<TErr>() },
-  TE: { liftErr: TE.liftErr<TErr>() },
+  E: { liftErr: E.liftErr<TErr>(), startWith: i => E.right(i) },
+  TE: { liftErr: TE.liftErr<TErr>(), startWith: i => TE.right(i) },
 })
 
 export const trampoline = <TErr, TOut, TArgs extends readonly any[]>(
@@ -39,11 +39,13 @@ export type ToolDeps<TE> = {
     liftErr: <T, TI, TE2 extends TE>(
       e: (i: TI) => E.Either<TE2, T>,
     ) => (i: TI) => E.Either<TE, T>
+    startWith: <T>(i: T) => E.Either<TE, T>
   }
   TE: {
     liftErr: <T, TI, TE2 extends TE>(
       e: (i: TI) => TE.TaskEither<TE2, T>,
     ) => (i: TI) => TE.TaskEither<TE, T>
+    startWith: <T>(i: T) => TE.TaskEither<TE, T>
   }
 }
 

@@ -6,10 +6,19 @@ import {
   OptimisticLockError,
   RecordContext,
   RecordNotFound,
+  isTruthyFilter,
 } from "@fp-app/framework"
-import { pipe, AsyncResult, E, TE } from "@fp-app/fp-ts-extensions"
+import {
+  pipe,
+  AsyncResult,
+  E,
+  TE,
+  trampoline,
+  ToolDeps,
+} from "@fp-app/fp-ts-extensions"
 import { lock } from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
+import { assertIsNotUndefined } from "@fp-app/framework"
 
 // tslint:disable-next-line:max-classes-per-file
 export default class DiskRecordContext<T extends DBRecord> implements RecordContext<T> {
@@ -66,85 +75,81 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
 
   private readonly handleDeletions = (
     forEachDelete?: (item: T) => AsyncResult<void, DbError>,
-  ): AsyncResult<void, DbError> => async () => {
-    for (const e of this.removals) {
-      const r = await this.deleteRecord(e)()
-      if (E.isErr(r)) {
-        return r
-      }
-      if (forEachDelete) {
-        const rEs = await forEachDelete(e)()
-        if (E.isErr(rEs)) {
-          return rEs
-        }
-      }
-      this.cache.delete(e.id)
-    }
-    return E.success()
-  }
+  ): AsyncResult<void, DbError> =>
+    TE.chainTasks(
+      this.removals
+        .map(e =>
+          [
+            this.deleteRecord(e),
+            forEachDelete && forEachDelete(e),
+            TE.fromEither(E.exec(() => this.cache.delete(e.id))),
+          ].filter(isTruthyFilter),
+        )
+        .flat(),
+    )
 
   private readonly handleInsertionsAndUpdates = (
     forEachSave?: (item: T) => AsyncResult<void, DbError>,
-  ): AsyncResult<void, DbError> => async () => {
-    for (const e of this.cache.entries()) {
-      const r = await this.saveRecord(e[1].data)()
-      if (E.isErr(r)) {
-        return r
-      }
-      if (forEachSave) {
-        const rEs = await forEachSave(e[1].data)()
-        if (E.isErr(rEs)) {
-          return rEs
-        }
-      }
-    }
-    return E.success()
-  }
+  ): AsyncResult<void, DbError> =>
+    TE.chainTasks(
+      Array.from(this.cache.values())
+        .map(({ data }) =>
+          [this.saveRecord(data), forEachSave && forEachSave(data)].filter(
+            isTruthyFilter,
+          ),
+        )
+        .flat(),
+    )
 
-  private readonly saveRecord = (record: T): AsyncResult<void, DbError> => async () => {
-    const cachedRecord = this.cache.get(record.id)!
+  private readonly saveRecord = trampoline(
+    (_: ToolDeps<DbError>) => (record: T): AsyncResult<void, DbError> => {
+      const cachedRecord = this.cache.get(record.id)
+      assertIsNotUndefined(cachedRecord, { cachedRecord })
 
-    if (!cachedRecord.version) {
-      await this.actualSave(record, cachedRecord.version)
-      return E.success()
-    }
-
-    return await lockRecordOnDisk(this.type, record.id, () =>
-      pipe(
-        tryReadFromDb(this.type, record.id),
-        TE.chain(
-          (storedSerialized): AsyncResult<void, DbError> => async () => {
-            const { version } = JSON.parse(storedSerialized) as SerializedDBRecord
-            if (version !== cachedRecord.version) {
-              return E.err(new OptimisticLockError(this.type, record.id))
-            }
-            await this.actualSave(record, version)
-            return E.success()
-          },
-        ),
-      ),
-    )()
-  }
+      return !cachedRecord.version
+        ? this.actualSave(record, cachedRecord.version)
+        : lockRecordOnDisk(
+            this.type,
+            record.id,
+            pipe(
+              tryReadFromDb(this.type, record.id),
+              TE.map(s => JSON.parse(s) as SerializedDBRecord),
+              TE.chain(
+                _.TE.liftErr(
+                  TE.fromPredicate(
+                    ({ version }) => version === cachedRecord.version,
+                    () => new OptimisticLockError(this.type, record.id),
+                  ),
+                ),
+              ),
+              TE.chain(_.TE.liftErr(({ version }) => this.actualSave(record, version))),
+            ),
+          )
+    },
+  )
 
   private readonly deleteRecord = (record: T): AsyncResult<void, DbError> =>
-    lockRecordOnDisk(this.type, record.id, () =>
+    lockRecordOnDisk(
+      this.type,
+      record.id,
       pipe(
-        TE.startWithVal(void 0)<DbError>(),
+        TE.right(void 0),
         TE.chain(() =>
           TE.tryExecute(() => deleteFile(getFilename(this.type, record.id))),
         ),
       ),
     )
 
-  private readonly actualSave = async (record: T, version: number) => {
-    const data = this.serializer(record)
+  private readonly actualSave = (record: T, version: number) =>
+    TE.tryExecute<void, any>(async () => {
+      const data = this.serializer(record)
 
-    const serialized = JSON.stringify({ version: version + 1, data })
-    await writeFile(getFilename(this.type, record.id), serialized, {
-      encoding: "utf-8",
+      const serialized = JSON.stringify({ version: version + 1, data })
+      await writeFile(getFilename(this.type, record.id), serialized, {
+        encoding: "utf-8",
+      })
+      this.cache.set(record.id, { version, data: record })
     })
-    this.cache.set(record.id, { version, data: record })
-  }
 }
 
 interface DBRecord {
@@ -160,32 +165,21 @@ interface CachedRecord<T> {
   data: T
 }
 
-const lockRecordOnDisk = <T>(
-  type: string,
-  id: string,
-  cb: TE.PipeFunctionN<T, DbError>,
-) =>
+const lockRecordOnDisk = <T>(type: string, id: string, cb: AsyncResult<T, DbError>) =>
   pipe(
     tryLock(type, id),
-    TE.chain(release => async () => {
-      try {
-        return await cb()()
-      } finally {
-        await release()
-      }
-    }),
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    TE.chain(release => () => cb().finally(release)),
   )
 
 const tryLock = (
   type: string,
   id: string,
-): AsyncResult<() => Promise<void>, CouldNotAquireDbLockError> => async () => {
-  try {
-    return E.ok(await lock(getFilename(type, id)))
-  } catch (er) {
-    return E.err(new CouldNotAquireDbLockError(type, id, er))
-  }
-}
+): AsyncResult<() => Promise<void>, CouldNotAquireDbLockError> =>
+  TE.tryCatch(
+    () => lock(getFilename(type, id)),
+    er => new CouldNotAquireDbLockError(type, id, er as Error),
+  )
 
 const tryReadFromDb = (
   type: string,

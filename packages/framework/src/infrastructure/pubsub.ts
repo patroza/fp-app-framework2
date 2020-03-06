@@ -14,7 +14,8 @@ const processReceivedEvent = ({
     return
   }
   // TODO: process the result
-  return await publish(event)()
+  const publishTask = publish(event)
+  return await publishTask()
 }
 
 export interface EventDTO {

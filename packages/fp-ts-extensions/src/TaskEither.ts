@@ -11,6 +11,7 @@ import * as TE from "fp-ts/lib/TaskEither"
 import { TaskEither } from "fp-ts/lib/TaskEither"
 import { flow, tuple } from "fp-ts/lib/function"
 import { toValue, tee, liftType, ThenArg } from "./general"
+import { pipe as _pipe } from "lodash/fp"
 
 export * from "fp-ts/lib/TaskEither"
 
@@ -27,8 +28,7 @@ export const toVoid = toValue<void>(void 0)
 /**
  * Execute promise, if success return right, if fail; won't catch thrown Exception.
  */
-export const tryExecute = <T, TE>(func: () => Promise<T>) => async () =>
-  E.right<TE, T>(await func())
+export const tryExecute = <T, TE>(func: () => Promise<T>) => TE.rightTask<TE, T>(func)
 
 /**
  * Execute promise, if success return right, if fail; won't catch thrown Exception.
@@ -37,7 +37,7 @@ export const tryExecuteFW = <T, TI, TE>(func: (input: TI) => Promise<T>) => <
   TI2 extends TI
 >(
   i: TI2,
-): TE.TaskEither<TE, T> => async () => E.right(await func(i))
+): TE.TaskEither<TE, T> => TE.rightTask<TE, T>(() => func(i))
 
 export function chainTee<T, TDontCare, E>(
   f: PipeFunction<T, TDontCare, E>,
@@ -76,7 +76,8 @@ export const valueOrUndefined = <TInput, TOutput, TErrorOutput>(
   if (input === undefined) {
     return E.right(undefined)
   }
-  return await resultCreator(input)()
+  const resultCreatorTask = resultCreator(input)
+  return await resultCreatorTask()
 }
 
 export const liftLeft = <TE>() => <T, TI, TE2 extends TE>(
@@ -84,16 +85,6 @@ export const liftLeft = <TE>() => <T, TI, TE2 extends TE>(
 ) => (i: TI) => pipe(e(i), TE.mapLeft(liftType<TE>()))
 
 export const liftErr = liftLeft
-
-// it would have to generate (event) => kickAsync(event).compose(
-// but also it would mean to add: map(event => event.id) to get just the id.
-// const startWithValInt = <TErr>() => <T>(value: T) => ok<T, TErr>(value) as Result<T, TErr>
-
-// export const startWithVal = <TErr>() => <T>(value: T) => Promise.resolve(startWithValInt<TErr>()(value))
-// reversed curry:
-export const startWithVal = <T>(value: T) => <TErr>() => TE.right<TErr, T>(value)
-// export const startWithVal2 = startWithVal()
-export const startWithVal2 = <T>(value: T) => startWithVal(value)()
 
 export type PipeFunction<TInput, TOutput, TErr> = (
   input: TInput,
@@ -117,6 +108,7 @@ export function chainFlatTup(f: any) {
   )
 }
 
+// compose = flow(TE.right, ...rest)
 export function compose<TInput, TError, TOutput>(
   ab: (c: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, TOutput>,
 ): (input: TInput) => TE.TaskEither<TError, TOutput>
@@ -168,11 +160,18 @@ export function compose(...a: any[]) {
 export const asyncCreateResult = <TErrorOutput = string, TInput = any, TOutput = any>(
   input: TInput | undefined,
   resultCreator: (input: TInput) => Promise<TOutput>,
-): AsyncResult<TOutput | undefined, TErrorOutput> => async () => {
+): AsyncResult<TOutput | undefined, TErrorOutput> => {
   if (input === undefined) {
-    return E.ok(undefined)
+    return ok(undefined)
   }
-  return E.ok(await resultCreator(input))
+  return TE.rightTask(() => resultCreator(input))
+}
+
+export function chainTasks<TErr, T = void>(
+  tasks: TE.TaskEither<TErr, T>[],
+): TE.TaskEither<TErr, T> {
+  const exec = _pipe(...tasks.map(t => TE.chain(() => t)))
+  return exec(ok(void 0))
 }
 
 export type LeftArg<T> = E.LeftArg<ThenArg<T>>
