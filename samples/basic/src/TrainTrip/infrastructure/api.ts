@@ -38,7 +38,7 @@ const toTrip = trampoline(
   ) => {
     const currentTravelClass = tplToTravelClass(tpl)
     const resolveTravelClasses = TE.sequence(
-      [TE.startWithVal(currentTravelClass)<ApiError>()].concat(
+      [_.TE.startWith(currentTravelClass)].concat(
         typedKeysOf(tpl.travelClasses)
           .filter(x => x !== currentTravelClass.name)
           .map(slKey => tpl.travelClasses[slKey]!)
