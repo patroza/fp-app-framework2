@@ -8,9 +8,17 @@ import {
   RecordNotFound,
   isTruthyFilter,
 } from "@fp-app/framework"
-import { pipe, AsyncResult, E, TE } from "@fp-app/fp-ts-extensions"
+import {
+  pipe,
+  AsyncResult,
+  E,
+  TE,
+  trampoline,
+  ToolDeps,
+} from "@fp-app/fp-ts-extensions"
 import { lock } from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
+import { assertIsNotUndefined } from "@fp-app/framework"
 
 // tslint:disable-next-line:max-classes-per-file
 export default class DiskRecordContext<T extends DBRecord> implements RecordContext<T> {
@@ -99,34 +107,32 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
         .flat(),
     )
 
-  private readonly saveRecord = (record: T): AsyncResult<void, DbError> => async () => {
-    const cachedRecord = this.cache.get(record.id)!
+  private readonly saveRecord = trampoline(
+    (_: ToolDeps<DbError>) => (record: T): AsyncResult<void, DbError> => {
+      const cachedRecord = this.cache.get(record.id)
+      assertIsNotUndefined(cachedRecord, { cachedRecord })
 
-    if (!cachedRecord.version) {
-      await this.actualSave(record, cachedRecord.version)
-      return E.success()
-    }
-
-    const f = lockRecordOnDisk(
-      this.type,
-      record.id,
-      pipe(
-        tryReadFromDb(this.type, record.id),
-        TE.chain(
-          (storedSerialized): AsyncResult<void, DbError> => async () => {
-            const { version } = JSON.parse(storedSerialized) as SerializedDBRecord
-            if (version !== cachedRecord.version) {
-              return E.err(new OptimisticLockError(this.type, record.id))
-            }
-            await this.actualSave(record, version)
-            return E.success()
-          },
-        ),
-      ),
-    )
-
-    return await f()
-  }
+      return !cachedRecord.version
+        ? this.actualSave(record, cachedRecord.version)
+        : lockRecordOnDisk(
+            this.type,
+            record.id,
+            pipe(
+              tryReadFromDb(this.type, record.id),
+              TE.map(s => JSON.parse(s) as SerializedDBRecord),
+              TE.chain(
+                _.TE.liftErr(
+                  TE.fromPredicate(
+                    ({ version }) => version === cachedRecord.version,
+                    () => new OptimisticLockError(this.type, record.id),
+                  ),
+                ),
+              ),
+              TE.chain(_.TE.liftErr(({ version }) => this.actualSave(record, version))),
+            ),
+          )
+    },
+  )
 
   private readonly deleteRecord = (record: T): AsyncResult<void, DbError> =>
     lockRecordOnDisk(
@@ -140,7 +146,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
       ),
     )
 
-  private readonly actualSave = async (record: T, version: number) => {
+  private readonly actualSave = (record: T, version: number) => async () => {
     const data = this.serializer(record)
 
     const serialized = JSON.stringify({ version: version + 1, data })
@@ -148,6 +154,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
       encoding: "utf-8",
     })
     this.cache.set(record.id, { version, data: record })
+    return E.success<any>()
   }
 }
 
