@@ -75,24 +75,18 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
 
   private readonly handleDeletions = (
     forEachDelete?: (item: T) => AsyncResult<void, DbError>,
-  ): AsyncResult<void, DbError> => async () => {
-    for (const e of this.removals) {
-      const del = this.deleteRecord(e)
-      const r = await del()
-      if (E.isErr(r)) {
-        return r
-      }
-      if (forEachDelete) {
-        const _foreachDelete = forEachDelete(e)
-        const rEs = await _foreachDelete()
-        if (E.isErr(rEs)) {
-          return rEs
-        }
-      }
-      this.cache.delete(e.id)
-    }
-    return E.success()
-  }
+  ): AsyncResult<void, DbError> =>
+    TE.chainTasks(
+      this.removals
+        .map(e =>
+          [
+            this.deleteRecord(e),
+            forEachDelete && forEachDelete(e),
+            TE.fromEither(E.exec(() => this.cache.delete(e.id))),
+          ].filter(isTruthyFilter),
+        )
+        .flat(),
+    )
 
   private readonly handleInsertionsAndUpdates = (
     forEachSave?: (item: T) => AsyncResult<void, DbError>,

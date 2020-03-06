@@ -19,6 +19,11 @@ export type Result<TSuccess, TError> = Either<TError, TSuccess>
 const err = E.left
 const ok = E.right
 
+export const exec = <TErr = any>(func: () => void) => {
+  func()
+  return success<TErr>()
+}
+
 export const fromBool = <T, TInput extends T = T>(
   value: TInput,
   predicate: (value: T) => boolean,
