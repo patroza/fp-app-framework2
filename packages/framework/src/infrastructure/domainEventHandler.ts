@@ -5,7 +5,6 @@ import {
   E,
   trampoline,
   ToolDeps,
-  Result,
 } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { EventHandlerWithDependencies } from "./mediator"
@@ -56,7 +55,8 @@ export default class DomainEventHandler {
       const events = this.events
       this.events = []
       processedEvents = processedEvents.concat(events)
-      const r = await this.publishEvents(events)
+      const publishTask = this.publishEvents(events)
+      const r = await publishTask()
       if (E.isErr(r)) {
         this.events = processedEvents
         return E.err(r.left)
@@ -67,16 +67,16 @@ export default class DomainEventHandler {
     return E.success()
   }
 
-  private readonly publishEvents = async (
-    events: Event[],
-  ): Promise<Result<void, Error>> => {
-    for (const evt of events) {
-      const r = await this.publish(evt)
-      if (E.isErr(r)) {
-        return E.err(r.left)
+  private readonly publishEvents = (events: Event[]): AsyncResult<void, Error> => {
+    return async () => {
+      for (const evt of events) {
+        const r = await this.publish(evt)()
+        if (E.isErr(r)) {
+          return E.err(r.left)
+        }
       }
+      return E.success()
     }
-    return E.success()
   }
 
   private readonly publishIntegrationEvents = () => {

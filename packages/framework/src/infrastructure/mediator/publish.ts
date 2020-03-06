@@ -1,4 +1,4 @@
-import { E, TE, Result } from "@fp-app/fp-ts-extensions"
+import { AsyncResult, E, TE } from "@fp-app/fp-ts-extensions"
 
 import Event from "../../event"
 import { getLogger } from "../../utils"
@@ -9,7 +9,7 @@ const publish = (
   getMany: <TInput extends Event>(
     evt: TInput,
   ) => TE.PipeFunction<TInput, DomainEventReturnType, Error>[],
-): publishType => async <TInput extends Event>(evt: TInput) => {
+): publishType => <TInput extends Event>(evt: TInput) => async () => {
   const hndl = getMany(evt)
   logger.log(
     `Publishing Domain event: ${evt.constructor.name} (${
@@ -39,7 +39,7 @@ export default publish
 // tslint:disable-next-line:max-line-length
 export type publishType = <TInput extends Event>(
   evt: TInput,
-) => Promise<Result<void, Error>>
+) => AsyncResult<void, Error>
 
 export type DomainEventReturnType = void | IntegrationEventReturnType
 export interface IntegrationEventReturnType {
