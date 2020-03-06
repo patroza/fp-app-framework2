@@ -109,7 +109,9 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
       return E.success()
     }
 
-    return await lockRecordOnDisk(this.type, record.id, () =>
+    const f = lockRecordOnDisk(
+      this.type,
+      record.id,
       pipe(
         tryReadFromDb(this.type, record.id),
         TE.chain(
@@ -123,13 +125,17 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
           },
         ),
       ),
-    )()
+    )
+
+    return await f()
   }
 
   private readonly deleteRecord = (record: T): AsyncResult<void, DbError> =>
-    lockRecordOnDisk(this.type, record.id, () =>
+    lockRecordOnDisk(
+      this.type,
+      record.id,
       pipe(
-        TE.startWithVal(void 0)<DbError>(),
+        TE.right(void 0),
         TE.chain(() =>
           TE.tryExecute(() => deleteFile(getFilename(this.type, record.id))),
         ),
@@ -160,20 +166,11 @@ interface CachedRecord<T> {
   data: T
 }
 
-const lockRecordOnDisk = <T>(
-  type: string,
-  id: string,
-  cb: TE.PipeFunctionN<T, DbError>,
-) =>
+const lockRecordOnDisk = <T>(type: string, id: string, cb: AsyncResult<T, DbError>) =>
   pipe(
     tryLock(type, id),
-    TE.chain(release => async () => {
-      try {
-        return await cb()()
-      } finally {
-        await release()
-      }
-    }),
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    TE.chain(release => () => cb().finally(release)),
   )
 
 const tryLock = (
