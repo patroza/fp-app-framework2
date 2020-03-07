@@ -22,27 +22,27 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
   ({ _, db }) =>
     TE.compose(
-      TE.chainTup(pipe(validateStateProposition, _.E.liftErr, E.toTaskEither)),
+      TE.chainTup(pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)),
       TE.chainFlatTup(
         TE.compose(
           TE.map(([, i]) => i.trainTripId),
-          TE.chain(pipe(db.trainTrips.load, _.TE.liftErr)),
+          TE.chain(pipe(db.trainTrips.load, _.RTE.liftErr)),
         ),
       ),
       TE.chain(([trainTrip, proposal]) =>
-        pipe(trainTrip.proposeChanges, _.E.liftErr, E.toTaskEither, f => f(proposal)),
+        pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither, f => f(proposal)),
       ),
       // ALT1
       // TE.compose(
       //   TE.map(
       //     ([trainTrip, proposal]) =>
-      //       tuple(pipe(trainTrip.proposeChanges, _.E.liftErr, E.toTaskEither), proposal),
+      //       tuple(pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither), proposal),
       //   ),
       //   TE.chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
       // ),
       // ALT2
       //{
-      //  const proposeChanges = pipe(trainTrip.proposeChanges, _.E.liftErr, E.toTaskEither)
+      //  const proposeChanges = pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither)
       //  return proposeChanges(proposal)
       //}
     ),

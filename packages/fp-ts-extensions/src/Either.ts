@@ -5,10 +5,11 @@ import { Either, Right } from "fp-ts/lib/Either"
 import { pipe } from "fp-ts/lib/pipeable"
 
 import * as E from "fp-ts/lib/Either"
+import * as RE from "fp-ts/lib/ReaderEither"
 import * as TE from "fp-ts/lib/TaskEither"
 
 import { flatten, zip } from "lodash"
-import { toValue, tee, liftType, flattenErrors } from "./general"
+import { toValue, tee, flattenErrors } from "./general"
 import { tuple, flow } from "fp-ts/lib/function"
 
 export * from "fp-ts/lib/Either"
@@ -62,7 +63,7 @@ export const mapStatic = <TCurrent, TNew>(value: TNew) =>
   E.map<TCurrent, TNew>(toValue(value))
 
 export function chainTee<T, TDontCare, E>(
-  f: PipeFunction2<T, TDontCare, E>,
+  f: RE.ReaderEither<T, E, TDontCare>,
 ): (inp: Result<T, E>) => Result<T, E>
 export function chainTee(f: any) {
   return E.chain((input: any) => pipe(f(input), mapStatic(input)))
@@ -177,7 +178,7 @@ export const createResult = <TErrorOutput = string, TInput = any, TOutput = any>
 
 export const conditional = <TInput, TOutput, TErrorOutput>(
   input: TInput | undefined,
-  resultCreator: PipeFunction2<TInput, TOutput, TErrorOutput>,
+  resultCreator: RE.ReaderEither<TInput, TErrorOutput, TOutput>,
 ): Result<TOutput | undefined, TErrorOutput> => {
   if (input === undefined) {
     return ok(undefined)
@@ -185,9 +186,8 @@ export const conditional = <TInput, TOutput, TErrorOutput>(
   return resultCreator(input)
 }
 
-export const liftLeft = <TE>() => <T, TI, TE2 extends TE>(
-  e: (i: TI) => Either<TE2, T>,
-) => (i: TI) => pipe(e(i), E.mapLeft(liftType<TE>()))
+export const liftLeft = <TE>() => <T, TE2 extends TE>(e: () => Either<TE2, T>) =>
+  e as () => Either<TE, T>
 
 export const liftErr = liftLeft
 
@@ -207,11 +207,6 @@ export const anyTrue = <TErr = any>(...mappers: any[]): Result<boolean, TErr> =>
     E.map(() => hasChanged),
   )(ok(false))
 }
-
-export type PipeFunction2<TInput, TOutput, TErr> = (
-  input: TInput,
-) => Result<TOutput, TErr>
-export type PipeFunction2N<TOutput, TErr> = () => Result<TOutput, TErr>
 
 export function chainFlatTup<
   TInput,

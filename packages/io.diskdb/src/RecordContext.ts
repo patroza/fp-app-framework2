@@ -15,6 +15,7 @@ import {
   TE,
   trampoline,
   ToolDeps,
+  RTE,
 } from "@fp-app/fp-ts-extensions"
 import { lock } from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
@@ -39,7 +40,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
     this.removals.push(record)
   }
 
-  readonly load = (id: string): AsyncResult<T, DbError> => {
+  readonly load: RTE.ReaderTaskEither<string, DbError, T> = id => {
     const cachedRecord = this.cache.get(id)
     if (cachedRecord) {
       return TE.ok(cachedRecord.data)
@@ -64,6 +65,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
     )
   }
 
+  // TODO: reader should be single object input
   readonly intSave = (
     forEachSave?: (item: T) => AsyncResult<void, DbError>,
     forEachDelete?: (item: T) => AsyncResult<void, DbError>,
@@ -115,14 +117,16 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
               tryReadFromDb(this.type, record.id),
               TE.map(s => JSON.parse(s) as SerializedDBRecord),
               TE.chain(
-                _.TE.liftErr(
+                _.RTE.liftErr(
                   TE.fromPredicate(
                     ({ version }) => version === cachedRecord.version,
                     () => new OptimisticLockError(this.type, record.id),
                   ),
                 ),
               ),
-              TE.chain(_.TE.liftErr(({ version }) => this.actualSave(record, version))),
+              TE.chain(
+                _.RTE.liftErr(({ version }) => this.actualSave(record, version)),
+              ),
             ),
           )
     },

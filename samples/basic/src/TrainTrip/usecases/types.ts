@@ -8,7 +8,7 @@ import {
   RequestContextBase,
   UnitOfWork,
 } from "@fp-app/framework"
-import { AsyncResult, TE } from "@fp-app/fp-ts-extensions"
+import { AsyncResult, RTE } from "@fp-app/fp-ts-extensions"
 import { TrainTripPublisher } from "../eventhandlers"
 import { getTrip, sendCloudSyncFake, Template, TravelPlan } from "../infrastructure/api"
 import PaxDefinition from "../PaxDefinition"
@@ -17,8 +17,8 @@ export const getTripKey = generateKeyFromFn(getTrip)
 export const sendCloudSyncKey = generateKey<ReturnType<typeof sendCloudSyncFake>>(
   "sendCloudSync",
 )
-export type getTravelPlanType = TE.PipeFunction<string, TravelPlan, ApiError>
-export type getTemplateType = TE.PipeFunction<string, Template, ApiError>
+export type getTravelPlanType = RTE.ReaderTaskEither<string, ApiError, TravelPlan>
+export type getTemplateType = RTE.ReaderTaskEither<string, ApiError, Template>
 export type getPricingType = (
   templateId: string,
   pax: PaxDefinition,

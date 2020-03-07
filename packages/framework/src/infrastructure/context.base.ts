@@ -1,4 +1,4 @@
-import { TE, AsyncResult } from "@fp-app/fp-ts-extensions"
+import { TE, AsyncResult, RTE } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { Disposable } from "../utils"
 import DomainEventHandler from "./domainEventHandler"
@@ -32,11 +32,12 @@ export default abstract class ContextBase implements Disposable {
 }
 
 export interface UnitOfWork extends Disposable {
-  save: TE.PipeFunctionN<void, DbError | Error>
+  // TODO: Why Error?
+  save: () => TE.TaskEither<DbError | Error, void>
 }
 
 export interface RecordContext<T> {
   add: (record: T) => void
   remove: (record: T) => void
-  load: TE.PipeFunction<string, T, DbError>
+  load: RTE.ReaderTaskEither<string, DbError, T>
 }

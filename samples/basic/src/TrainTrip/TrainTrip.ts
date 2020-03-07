@@ -90,7 +90,7 @@ export default class TrainTrip extends Entity {
       pipe(
         this.confirmUserChangeAllowed(),
         E.mapStatic(state),
-        E.chain(pipe(this.applyDefinedChanges, _.E.liftErr)),
+        E.chain(pipe(this.applyDefinedChanges, _.RE.liftErr)),
         E.map(this.createChangeEvents),
       ),
     // ALT1
@@ -161,7 +161,7 @@ export default class TrainTrip extends Entity {
       pipe(
         this.confirmUserChangeAllowed(),
         E.mapStatic(travelClass),
-        E.chain(pipe(this.intChangeTravelClass, _.E.liftErr)),
+        E.chain(pipe(this.intChangeTravelClass, _.RE.liftErr)),
         E.map(this.createChangeEvents),
       ),
   )

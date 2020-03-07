@@ -23,8 +23,8 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
   ({ _, db, getTrip }) =>
     TE.compose(
-      TE.chainEitherK(pipe(validateCreateTrainTripInfo, _.E.liftErr)),
-      TE.chainTup(pipe(getTripFromTrainTripInfo(getTrip), _.TE.liftErr)),
+      TE.chainEitherK(pipe(validateCreateTrainTripInfo, _.RE.liftErr)),
+      TE.chainTup(pipe(getTripFromTrainTripInfo(getTrip), _.RTE.liftErr)),
       // pipe(
       //   getTrip,
       //   mapper((i: { templateId: string }) => i.templateId),

@@ -7,10 +7,11 @@ import { pipe } from "fp-ts/lib/pipeable"
 import * as E from "./Either"
 import * as T from "fp-ts/lib/Task"
 import * as TE from "fp-ts/lib/TaskEither"
+import * as RTE from "fp-ts/lib/ReaderTaskEither"
 
 import { TaskEither } from "fp-ts/lib/TaskEither"
 import { flow, tuple } from "fp-ts/lib/function"
-import { toValue, tee, liftType, ThenArg } from "./general"
+import { toValue, tee, ThenArg } from "./general"
 import { pipe as _pipe } from "lodash/fp"
 
 export * from "fp-ts/lib/TaskEither"
@@ -40,7 +41,7 @@ export const tryExecuteFW = <T, TI, TE>(func: (input: TI) => Promise<T>) => <
 ): TE.TaskEither<TE, T> => TE.rightTask<TE, T>(() => func(i))
 
 export function chainTee<T, TDontCare, E>(
-  f: PipeFunction<T, TDontCare, E>,
+  f: RTE.ReaderTaskEither<T, E, TDontCare>,
 ): (inp: AsyncResult<T, E>) => AsyncResult<T, E>
 export function chainTee(f: any) {
   return TE.chain((input: any) => pipe(f(input), mapStatic(input)))
@@ -71,7 +72,7 @@ export const resultAll = <T, E>(
 // Unused
 export const valueOrUndefined = <TInput, TOutput, TErrorOutput>(
   input: TInput | undefined,
-  resultCreator: PipeFunction<TInput, TOutput, TErrorOutput>,
+  resultCreator: RTE.ReaderTaskEither<TInput, TErrorOutput, TOutput>,
 ): AsyncResult<TOutput | undefined, TErrorOutput> => async () => {
   if (input === undefined) {
     return E.right(undefined)
@@ -80,16 +81,11 @@ export const valueOrUndefined = <TInput, TOutput, TErrorOutput>(
   return await resultCreatorTask()
 }
 
-export const liftLeft = <TE>() => <T, TI, TE2 extends TE>(
-  e: (i: TI) => TaskEither<TE2, T>,
-) => (i: TI) => pipe(e(i), TE.mapLeft(liftType<TE>()))
+export const liftLeft = <TE>() => <T, TE2 extends TE>(e: () => TaskEither<TE2, T>) =>
+  e as () => TaskEither<TE, T>
+// flow(e, TE.mapLeft(liftType<TE>()))
 
 export const liftErr = liftLeft
-
-export type PipeFunction<TInput, TOutput, TErr> = (
-  input: TInput,
-) => AsyncResult<TOutput, TErr>
-export type PipeFunctionN<TOutput, TErr> = () => AsyncResult<TOutput, TErr>
 
 // We create tuples in reverse, under the assumption that the further away we are
 // from previous statements, the less important their output becomes..

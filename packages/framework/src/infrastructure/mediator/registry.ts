@@ -1,4 +1,4 @@
-import { AsyncResult, ToolDeps, toolDeps, TE } from "@fp-app/fp-ts-extensions"
+import { AsyncResult, ToolDeps, toolDeps, RTE } from "@fp-app/fp-ts-extensions"
 import chalk from "chalk"
 import Event from "../../event"
 import { Constructor, getLogger, setFunctionName, typedKeysOf } from "../../utils"
@@ -48,6 +48,7 @@ export type UsecaseWithDependencies<
   TError
 >
 
+// TODO: one with built in trampoline?
 export const configureDependencies = <TDependencies, T>(
   deps: TDependencies,
   name: string,
@@ -70,7 +71,7 @@ export const resolveEventKey = generateKey<resolveEventType>("resolveEvent")
 
 type HandlerWithDependencies<TDependencies, TInput, TOutput, TError> = WithDependencies<
   TDependencies,
-  TE.PipeFunction<TInput, TOutput, TError>
+  RTE.ReaderTaskEither<TInput, TError, TOutput>
 >
 
 // tslint:disable-next-line:max-line-length
@@ -248,10 +249,10 @@ export type requestType = <TInput, TOutput, TError>(
 
 export type requestInNewScopeType = requestType
 
-export type NamedRequestHandler<TInput, TOutput, TErr> = TE.PipeFunction<
+export type NamedRequestHandler<TInput, TOutput, TErr> = RTE.ReaderTaskEither<
   TInput,
-  TOutput,
-  TErr
+  TErr,
+  TOutput
 > &
   HandlerInfo<any>
 
@@ -270,7 +271,7 @@ export const requestInNewScopeKey = generateKey<requestInNewScopeType>(
 // const generateConfiguredHandler = <TInput, TOutput, TErr>(
 //   // Have to specify name as we don't use classes to retrieve the name from
 //   name: string,
-//   createHandler: () => PipeFunction<TInput, TOutput, TErr>,
+//   createHandler: () => RTE.ReaderTaskEither<TInput, TErr, TOutput>,
 //   decoratorFactories: Array<() => RequestHandlerDecorator>,
 //   isCommand = false,
 // ): NamedRequestHandler<TInput, TOutput, TErr> => {
@@ -283,7 +284,7 @@ export const requestInNewScopeKey = generateKey<requestInNewScopeType>(
 // }
 
 // tslint:disable-next-line:max-line-length
-// type RequestHandlerDecorator<TInput = any, TOutput = any, TErr = any> = Decorator<NamedRequestHandler<TInput, TOutput, TErr>, PipeFunction<TInput, TOutput, TErr>>
+// type RequestHandlerDecorator<TInput = any, TOutput = any, TErr = any> = Decorator<NamedRequestHandler<TInput, TOutput, TErr>, RTE.ReaderTaskEither<TInput, TErr, TOutput>>
 // type RequestDecorator = <TInput, TOutput, TErr>(
 // handler: NamedRequestHandler<TInput, TOutput, TErr>) => (input: TInput) => AsyncResult<TOutput, TErr>
 

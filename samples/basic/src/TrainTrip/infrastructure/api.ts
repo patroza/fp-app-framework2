@@ -12,7 +12,7 @@ import {
   RecordNotFound,
   typedKeysOf,
 } from "@fp-app/framework"
-import { pipe, TE, E, trampoline, ToolDeps } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, E, trampoline, ToolDeps, RTE } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
 import { TravelClassName } from "../TravelClassDefinition"
@@ -25,7 +25,7 @@ const getTrip = trampoline(
     getTemplate: getTemplateType
   }) =>
     TE.compose(
-      TE.chain(pipe(getTemplate, _.TE.liftErr)),
+      TE.chain(pipe(getTemplate, _.RTE.liftErr)),
       TE.chain(toTrip(getTemplate)),
     ),
 )
@@ -50,8 +50,8 @@ const toTrip = trampoline(
 
     return pipe(
       resolveTravelClasses,
-      TE.chain(pipe(Trip.create, _.E.liftErr, E.toTaskEither)),
-      TE.chain(pipe(createTripWithSelectedTravelClass, _.E.liftErr, E.toTaskEither)),
+      TE.chain(pipe(Trip.create, _.RE.liftErr, E.toTaskEither)),
+      TE.chain(pipe(createTripWithSelectedTravelClass, _.RE.liftErr, E.toTaskEither)),
     )
   },
 )
@@ -100,10 +100,10 @@ const getFakePriceFromTemplate = () => ({ price: { amount: 100, currency: "EUR" 
 const createTravelPlanFake = (): createTravelPlanType => () => async () =>
   E.ok<ConnectionError, string>(v4())
 
-const sendCloudSyncFake = (): TE.PipeFunction<
+const sendCloudSyncFake = (): RTE.ReaderTaskEither<
   TrainTrip,
-  string,
-  ConnectionError
+  ConnectionError,
+  string
 > => () => TE.right<ConnectionError, string>(v4())
 
 const getTravelPlanFake = (): getTravelPlanType => travelPlanId =>

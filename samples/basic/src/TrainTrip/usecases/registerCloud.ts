@@ -14,7 +14,7 @@ const registerCloud = createCommand<Input, void, DbError>(
     TE.compose(
       TE.map(({ trainTripId }) => trainTripId),
       TE.chain(db.trainTrips.load),
-      TE.chainTup(pipe(sendCloudSync, _.TE.liftErr)),
+      TE.chainTup(pipe(sendCloudSync, _.RTE.liftErr)),
       TE.map(([opportunityId, trainTrip]) =>
         trainTrip.assignOpportunity(opportunityId),
       ),
