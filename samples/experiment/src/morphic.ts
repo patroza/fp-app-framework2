@@ -1,10 +1,12 @@
 import { summon } from "@morphic-ts/batteries/lib/summoner"
+import { fastCheckConfig } from "@morphic-ts/fastcheck-interpreters"
 
 export const Person = summon(F =>
   F.interface(
     {
       name: F.string(),
       age: F.number(),
+      blas: F.nullable(F.array(F.string(), fastCheckConfig(undefined))),
     },
     "Person",
   ),
