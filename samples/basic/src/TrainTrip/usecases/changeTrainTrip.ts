@@ -69,8 +69,7 @@ const validateStateProposition = (
         E.mapLeft(toFieldError("travelClass")),
       ),
       pipe(
-        E.valueOrUndefined(startDate, FutureDate.decode),
-        E.mapLeft(x => new ValidationError(x.join(", "))),
+        E.valueOrUndefined(startDate, FutureDate.create),
         E.mapLeft(toFieldError("startDate")),
       ),
       pipe(

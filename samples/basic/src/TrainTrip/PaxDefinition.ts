@@ -1,58 +1,96 @@
 //import { summon } from "@morphic-ts/batteries/lib/summoner"
 
-import { createValidator, Joi, predicate, typedKeysOf, Value } from "@fp-app/framework"
-import { pipe, E, t } from "@fp-app/fp-ts-extensions"
+import { typedKeysOf, ValidationError } from "@fp-app/framework"
+import { E, t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
+import { PositiveInt } from "@fp-app/fp-ts-extensions/src/Io"
+import { flow } from "fp-ts/lib/function"
 
-export default class PaxDefinition extends Value {
-  static create = (pax: Pax) =>
-    pipe(
-      validate(pax),
-      E.chain(
-        predicate(
-          p => typedKeysOf(p).some(k => p[k] > 0),
-          "pax requires at least 1 person",
-        ),
-      ),
-      E.chain(
-        predicate(
-          p => typedKeysOf(p).reduce((prev, cur) => (prev += p[cur]), 0) <= 6,
-          "pax must be 6 or less people",
-        ),
-      ),
-      E.map(validatedPax => new PaxDefinition(validatedPax)),
-    )
-
-  private constructor(readonly value: Pax) {
-    super()
-  }
-}
-
+/* Pax: No domain validation, just primitives. **/
 const Pax = t.type(
   {
-    // adults: t.Int,
-    adults: t.number,
-    babies: t.number,
-    children: t.number,
-    infants: t.number,
-    teenagers: t.number,
+    adults: t.Int,
+    babies: t.Int,
+    children: t.Int,
+    infants: t.Int,
+    teenagers: t.Int,
   },
   "Pax",
 )
 
-interface PositiveBrand {
-  readonly Positive: unique symbol // use `unique symbol` here to ensure uniqueness across modules / packages
+type Pax = t.TypeOf<typeof Pax>
+export { Pax }
+
+export interface PaxNumberBrand {
+  readonly PaxNumber: unique symbol // use `unique symbol` here to ensure uniqueness across modules / packages
 }
 
-const Positive = t.brand(
-  t.number, // a codec representing the type to be refined
-  (n): n is t.Branded<number, PositiveBrand> => n >= 0, // a custom type guard using the build-in helper `Branded`
-  "Positive", // the name must match the readonly field in the brand
+const PaxNumber = withBla(
+  t.brand(
+    PositiveInt, // a codec representing the type to be refined
+    (n): n is t.Branded<PositiveInt, PaxNumberBrand> => n >= 0 && n <= 6, // a custom type guard using the build-in helper `Branded`
+    "PaxNumber", // the name must match the readonly field in the brand
+  ),
+  value => {
+    if (!PositiveInt.is(value)) {
+      return "Invalid input"
+    }
+    return `requires between 0 and max 6, but ${value} was specified.`
+  },
 )
 
-export type Positive = t.TypeOf<typeof Positive>
-export const PositiveInt = t.intersection([t.Int, Positive])
+export type PaxNumber = t.TypeOf<typeof PaxNumber>
 
-export type PositiveInt = t.TypeOf<typeof PositiveInt>
+const PaxFields = t.type(
+  {
+    adults: PaxNumber,
+    babies: PaxNumber,
+    children: PaxNumber,
+    infants: PaxNumber,
+    teenagers: PaxNumber,
+  },
+  "PaxFields",
+)
+
+type PaxFields = t.TypeOf<typeof PaxFields>
+
+export interface PaxDefinitionBrand {
+  readonly PaxDefinition: unique symbol // use `unique symbol` here to ensure uniqueness across modules / packages
+}
+
+const _PaxDefinition = withBla(
+  t.brand(
+    PaxFields, // a codec representing the type to be refined
+    (p): p is t.Branded<PaxFields, PaxDefinitionBrand> =>
+      typedKeysOf(p).some(k => p[k] > 0) &&
+      typedKeysOf(p).reduce((prev, cur) => (prev += p[cur]), 0) <= 6, // a custom type guard using the build-in helper `Branded`
+    "PaxDefinition", // the name must match the readonly field in the brand
+  ),
+  value => {
+    if (!PaxFields.is(value)) {
+      return "Invalid input"
+    }
+    return `requires at least 1 and max 6 people, but ${typedKeysOf(value).reduce(
+      (prev, cur) => (prev += value[cur]),
+      0,
+    )} were specified`
+  },
+)
+
+const PaxDefinitionExtension = {
+  create: flow(
+    _PaxDefinition.decode,
+    E.mapLeft(x => new ValidationError(decodeErrors(x))),
+  ),
+}
+
+const PaxDefinition = {
+  ..._PaxDefinition,
+  ...PaxDefinitionExtension,
+} as typeof _PaxDefinition & typeof PaxDefinitionExtension
+
+type PaxDefinition = t.TypeOf<typeof PaxDefinition>
+
+export default PaxDefinition
 
 // COmpiler gives some errors about PURI and unique symbol etc..
 // const Pax = summon(F =>
@@ -68,19 +106,3 @@ export type PositiveInt = t.TypeOf<typeof PositiveInt>
 //   ),
 // )
 // export type Pax = t.TypeOf<typeof Pax.type>
-
-export type Pax = t.TypeOf<typeof Pax>
-
-const paxEntrySchema = Joi.number()
-  .integer()
-  .min(0)
-  .max(6)
-  .required()
-export const paxSchema = Joi.object({
-  adults: paxEntrySchema,
-  babies: paxEntrySchema,
-  children: paxEntrySchema,
-  infants: paxEntrySchema,
-  teenagers: paxEntrySchema,
-}).required()
-const validate = createValidator<Pax>(paxSchema)

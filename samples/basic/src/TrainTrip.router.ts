@@ -1,11 +1,11 @@
 import { createValidator, Joi } from "@fp-app/framework"
 import { KoaRouteBuilder } from "@fp-app/hosting.koa"
-import { Pax } from "./TrainTrip/PaxDefinition"
 import changeTrainTrip from "./TrainTrip/usecases/changeTrainTrip"
 import createTrainTrip from "./TrainTrip/usecases/createTrainTrip"
 import deleteTrainTrip from "./TrainTrip/usecases/deleteTrainTrip"
 import getTrainTrip from "./TrainTrip/usecases/getTrainTrip"
 import lockTrainTrip from "./TrainTrip/usecases/lockTrainTrip"
+import { Pax } from "./TrainTrip/PaxDefinition"
 
 const createTrainTripRouter = () =>
   new KoaRouteBuilder()
@@ -50,7 +50,7 @@ const routeWithTrainTripId = Joi.object({
 const paxEntrySchema = Joi.number()
   .integer()
   .required()
-// No domain validation, just primitives.
+
 const paxSchema = Joi.object<Pax>({
   adults: paxEntrySchema,
   babies: paxEntrySchema,

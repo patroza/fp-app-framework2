@@ -1,8 +1,9 @@
 import * as t from "io-ts"
 export * from "io-ts"
 import { PathReporter } from "io-ts/lib/PathReporter"
-
-export { PathReporter }
+import { withMessage } from "io-ts-types/lib/withMessage"
+import { withValidate } from "io-ts-types/lib/withValidate"
+export { PathReporter, withMessage, withValidate }
 
 export interface PositiveBrand {
   readonly Positive: unique symbol // use `unique symbol` here to ensure uniqueness across modules / packages

@@ -11,7 +11,7 @@ import {
 import { DiskRecordContext } from "@fp-app/io.diskdb"
 import { AsyncResult, TE } from "@fp-app/fp-ts-extensions"
 import { parse, stringify } from "flatted"
-import PaxDefinition, { Pax } from "../PaxDefinition"
+import PaxDefinition from "../PaxDefinition"
 import { TravelClassName } from "../TravelClassDefinition"
 import { TravelClass } from "../Trip"
 import { TrainTripView } from "../usecases/getTrainTrip"
@@ -68,7 +68,7 @@ const TrainTripToView = (trip: TrainTrip): TrainTripView => {
     allowUserModification: !isLocked,
     createdAt,
 
-    pax: pax.value,
+    pax,
     startDate,
     travelClass: currentTravelClassConfiguration.travelClass.name,
     travelClasses: travelClassConfiguration.map(
@@ -85,7 +85,7 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
     currentTravelClassConfiguration,
     id,
     lockedAt,
-    pax: paxInput,
+    pax,
     startDate,
     travelClassConfiguration,
     ...rest
@@ -99,7 +99,7 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
   )
   const trainTrip = new TrainTrip(
     id,
-    new (PaxDefinition as any)(paxInput.value),
+    pax,
     new Date(startDate),
     travelClassConfigurations,
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -144,9 +144,7 @@ interface TrainTripDTO {
   trip: TripDTO
   startDate: string
   lockedAt?: string
-  pax: {
-    value: Pax
-  }
+  pax: PaxDefinition
   travelClassConfiguration: TravelClassConfigurationDTO[]
 }
 interface TravelClassConfigurationDTO {

@@ -20,6 +20,7 @@ import deleteTrainTrip from "./usecases/deleteTrainTrip"
 import getTrainTrip from "./usecases/getTrainTrip"
 import lockTrainTrip from "./usecases/lockTrainTrip"
 import registerCloud from "./usecases/registerCloud"
+import { Pax } from "./PaxDefinition"
 
 let trainTripId: string
 let executePostCommitHandlersMock: jest.Mock<ReturnType<
@@ -52,7 +53,9 @@ beforeEach(() =>
     const templateId = "template-id1"
 
     const result = await root.request(createTrainTrip, {
-      pax: { adults: 2, children: 0, babies: 0, infants: 0, teenagers: 0 },
+      pax: unsafeUnwrap(
+        Pax.decode({ adults: 2, children: 0, babies: 0, infants: 0, teenagers: 0 }),
+      ),
       startDate: moment()
         .add(1, "year")
         .toDate(),
@@ -111,7 +114,15 @@ describe("usecases", () => {
     it("changes state accordingly", () =>
       createRootAndBind(async () => {
         const state: StateProposition = {
-          pax: { adults: 2, babies: 2, children: 1, infants: 1, teenagers: 0 },
+          pax: unsafeUnwrap(
+            Pax.decode({
+              adults: 2,
+              babies: 2,
+              children: 1,
+              infants: 1,
+              teenagers: 0,
+            }),
+          ),
           startDate: new Date("2030-01-01T00:00:00.000Z"),
           travelClass: "first",
         }

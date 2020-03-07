@@ -65,11 +65,7 @@ const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
   pipe(
     E.resultTuple(
       pipe(PaxDefinition.create(pax), E.mapLeft(toFieldError("pax"))),
-      pipe(
-        FutureDate.decode(startDate),
-        E.mapLeft(x => new ValidationError(x.join(", "))),
-        E.mapLeft(toFieldError("startDate")),
-      ),
+      pipe(FutureDate.create(startDate), E.mapLeft(toFieldError("startDate"))),
       pipe(validateString(templateId), E.mapLeft(toFieldError("templateId"))),
     ),
     E.mapLeft(combineValidationErrors),

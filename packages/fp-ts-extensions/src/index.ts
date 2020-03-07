@@ -69,3 +69,54 @@ export type ToolDeps<TE> = {
 export { AsyncResult, Result }
 export { TE, E }
 export { pipe }
+
+export function withBla<T, TI>(
+  codec: T & { validate: any },
+  message: (i: TI) => string,
+) {
+  return t.withValidate(codec as any, function(i: any, c: any) {
+    return E.mapLeft(function(errors: any[]) {
+      // When children have errors, report them
+      // otherwise if parent has errors, report that
+      if (c.length === 1 && errors[0].value != i) {
+        return errors
+      }
+      return [
+        {
+          value: i,
+          context: c,
+          message: message(i),
+          actual: i,
+        },
+      ]
+    })(codec.validate(i, c))
+  }) as T
+}
+
+export function decodeErrors(x: t.Errors) {
+  return x
+    .map(({ message, context: [total, current], value }) => {
+      const processCtx = (current: t.ContextEntry) =>
+        `${current.key ? `[${current.key}]: ` : ""}${current.type.name}: ${
+          message ? message : getErrorMessage(current.type.name, value)
+        }`
+      return current ? processCtx(current) : processCtx(total)
+    })
+    .join("\n")
+}
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const getErrorMessage = (type: string, value: any) => {
+  // switch (type) {
+  //   case "PaxNumber":
+  //     return `requires between 0 and max 6, but ${value} was specified.`
+  //   case "PaxDefinition":
+  //     return `requires at least 1 and max 6 people, but ${Object.keys(value).reduce(
+  //       (prev, cur) => (prev += value[cur]),
+  //       0,
+  //     )} were specified`
+  // }
+  return "unknown error"
+}
