@@ -11,9 +11,13 @@
     "io-ts": "^2.1.2",
     "io-ts-promise": "^2.0.2",
     "monocle-ts": "^2.1.0",
-    "newtype-ts": "^0.3.4"
+    "newtype-ts": "^0.3.4",
+    "npm-check-updates": "^4.0.4"
   },
   "devDependencies": {
     "@types/node": "^13.9.0"
+  },
+  "resolutions": {
+    "@hapi/joi": "^17.1.0"
   }
 }
