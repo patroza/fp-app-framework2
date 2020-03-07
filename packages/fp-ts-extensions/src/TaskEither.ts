@@ -11,7 +11,7 @@ import * as RTE from "fp-ts/lib/ReaderTaskEither"
 
 import { TaskEither } from "fp-ts/lib/TaskEither"
 import { flow, tuple } from "fp-ts/lib/function"
-import { toValue, tee, liftType, ThenArg } from "./general"
+import { toValue, tee, ThenArg } from "./general"
 import { pipe as _pipe } from "lodash/fp"
 
 export * from "fp-ts/lib/TaskEither"
@@ -82,7 +82,8 @@ export const valueOrUndefined = <TInput, TOutput, TErrorOutput>(
 }
 
 export const liftLeft = <TE>() => <T, TE2 extends TE>(e: () => TaskEither<TE2, T>) =>
-  flow(e, TE.mapLeft(liftType<TE>()))
+  e as () => TaskEither<TE, T>
+// flow(e, TE.mapLeft(liftType<TE>()))
 
 export const liftErr = liftLeft
 

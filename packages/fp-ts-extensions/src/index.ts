@@ -15,17 +15,18 @@ import * as RTE from "./ReaderTaskEither"
 
 export { T, RE, RTE }
 
-export const toolDeps = <TErr>(): ToolDeps<TErr> => ({
-  E: { liftErr: E.liftErr<TErr>(), startWith: i => E.right(i) },
-  TE: { liftErr: TE.liftErr<TErr>(), startWith: i => TE.right(i) },
-  RE: { liftErr: RE.liftErr<TErr>() },
-  RTE: { liftErr: RTE.liftErr<TErr>() },
+const toolDepsInstance = Object.freeze({
+  E: Object.freeze({ liftErr: E.liftErr(), startWith: E.right }),
+  TE: Object.freeze({ liftErr: TE.liftErr(), startWith: TE.right }),
+  RE: Object.freeze({ liftErr: RE.liftErr() }),
+  RTE: Object.freeze({ liftErr: RTE.liftErr() }),
 })
+export const toolDeps = <TErr>(): ToolDeps<TErr> => toolDepsInstance as ToolDeps<TErr>
 
 export const trampoline = <TErr, TOut, TArgs extends readonly any[]>(
   func: (lifters: ToolDeps<TErr>) => (...args: TArgs) => TOut,
 ) => {
-  const lifters = toolDeps<TErr>()
+  const lifters = toolDepsInstance as ToolDeps<TErr>
   const withLifters = func(lifters)
   return withLifters
 }
@@ -62,8 +63,6 @@ export type ToolDeps<TE> = {
     //startWith: <T>(i: T) => RTE.ReaderTaskEither<TE, T>
   }
 }
-
-export type Tramp<TInput, TOutput, TErr> = (input: TInput) => E.Either<TErr, TOutput>
 
 export { AsyncResult, Result }
 export { TE, E }

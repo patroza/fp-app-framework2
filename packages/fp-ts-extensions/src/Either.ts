@@ -9,7 +9,7 @@ import * as RE from "fp-ts/lib/ReaderEither"
 import * as TE from "fp-ts/lib/TaskEither"
 
 import { flatten, zip } from "lodash"
-import { toValue, tee, liftType, flattenErrors } from "./general"
+import { toValue, tee, flattenErrors } from "./general"
 import { tuple, flow } from "fp-ts/lib/function"
 
 export * from "fp-ts/lib/Either"
@@ -187,7 +187,7 @@ export const conditional = <TInput, TOutput, TErrorOutput>(
 }
 
 export const liftLeft = <TE>() => <T, TE2 extends TE>(e: () => Either<TE2, T>) =>
-  flow(e, E.mapLeft(liftType<TE>()))
+  e as () => Either<TE, T>
 
 export const liftErr = liftLeft
 
