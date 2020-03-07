@@ -32,7 +32,6 @@ export default abstract class ContextBase implements Disposable {
 }
 
 export interface UnitOfWork extends Disposable {
-  // TODO: Why Error?
   save: TE.PipeFunctionN<void, DbError | Error>
 }
 
