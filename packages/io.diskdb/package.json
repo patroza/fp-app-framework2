@@ -50,6 +50,9 @@
     "ts-jest": "^25.2.1",
     "ts-node": "^8.6.2"
   },
+  "resolutions": {
+    "@hapi/joi": "^17.1.0"
+  },
   "scripts": {
     "prettier": "prettier --write \"src/**/*.ts\"",
     "test": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling jest",
