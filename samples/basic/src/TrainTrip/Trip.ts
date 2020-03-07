@@ -1,7 +1,7 @@
 import { assert, InvalidStateError, Value } from "@fp-app/framework"
 import { Result, E } from "@fp-app/fp-ts-extensions"
 import { TemplateId } from "./TrainTrip"
-import { TravelClassName } from "./TravelClassDefinition"
+import TravelClassDefinition from "./TravelClassDefinition"
 
 export default class Trip extends Value {
   static create = (serviceLevels: TravelClass[]) =>
@@ -36,7 +36,7 @@ export default class Trip extends Value {
 export class TripWithSelectedTravelClass {
   static create(
     trip: Trip,
-    travelClassName: TravelClassName,
+    travelClassName: TravelClassDefinition,
   ): Result<TripWithSelectedTravelClass, InvalidStateError> {
     const selectedTravelClass = trip.travelClasses.find(x => x.name === travelClassName)
     if (!selectedTravelClass) {
@@ -55,5 +55,5 @@ export class TripWithSelectedTravelClass {
 export class TravelClass {
   readonly createdAt = new Date()
 
-  constructor(public templateId: TemplateId, public name: TravelClassName) {}
+  constructor(public templateId: TemplateId, public name: TravelClassDefinition) {}
 }

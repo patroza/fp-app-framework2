@@ -217,12 +217,10 @@ export default class TrainTrip extends Entity {
     travelClass: TravelClassDefinition,
   ): Result<boolean, InvalidStateError> => {
     const slc = this.travelClassConfiguration.find(
-      x => x.travelClass.name === travelClass.value,
+      x => x.travelClass.name === travelClass,
     )
     if (!slc) {
-      return E.err(
-        new InvalidStateError(`${travelClass.value} not available currently`),
-      )
+      return E.err(new InvalidStateError(`${travelClass} not available currently`))
     }
     if (this.currentTravelClassConfiguration === slc) {
       return E.ok(false)

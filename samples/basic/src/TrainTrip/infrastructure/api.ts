@@ -15,7 +15,7 @@ import {
 import { pipe, TE, E, trampoline, ToolDeps, RTE } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
-import { TravelClassName } from "../TravelClassDefinition"
+import TravelClassDefinition from "../TravelClassDefinition"
 import Trip, { TravelClass, TripWithSelectedTravelClass } from "../Trip"
 
 const getTrip = trampoline(
@@ -62,7 +62,7 @@ const tplToTravelClass = (tpl: Template) =>
 const getTplLevelName = (tpl: Template) =>
   typedKeysOf(tpl.travelClasses).find(
     x => tpl.travelClasses[x]!.id === tpl.id,
-  ) as TravelClassName
+  ) as TravelClassDefinition
 
 // Typescript support for partial application is not really great, so we try currying instead for now
 // https://stackoverflow.com/questions/50400120/using-typescript-for-partial-application

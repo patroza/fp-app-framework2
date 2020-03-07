@@ -12,7 +12,7 @@ import { DiskRecordContext } from "@fp-app/io.diskdb"
 import { AsyncResult, TE } from "@fp-app/fp-ts-extensions"
 import { parse, stringify } from "flatted"
 import PaxDefinition from "../PaxDefinition"
-import { TravelClassName } from "../TravelClassDefinition"
+import TravelClassDefinition from "../TravelClassDefinition"
 import { TravelClass } from "../Trip"
 import { TrainTripView } from "../usecases/getTrainTrip"
 import TrainTripReadContext from "./TrainTripReadContext.disk"
@@ -155,6 +155,6 @@ interface TripDTO {
 }
 interface TravelClassDTO {
   createdAt: string
-  name: TravelClassName
+  name: TravelClassDefinition
   templateId: string
 }

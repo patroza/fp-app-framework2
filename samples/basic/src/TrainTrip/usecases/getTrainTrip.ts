@@ -1,7 +1,7 @@
 import { createQueryWithDeps, DbError } from "@fp-app/framework"
 import { trainTripReadContextKey } from "../infrastructure/TrainTripReadContext.disk"
 import { Pax } from "../PaxDefinition"
-import { TravelClassName } from "../TravelClassDefinition"
+import TravelClassDefinition from "../TravelClassDefinition"
 import { defaultDependencies } from "./types"
 
 const createQuery = createQueryWithDeps({
@@ -26,7 +26,7 @@ export interface TrainTripView {
   allowUserModification: boolean
 
   pax: Pax
-  travelClass: TravelClassName
-  travelClasses: { templateId: string; name: TravelClassName }[]
+  travelClass: TravelClassDefinition
+  travelClasses: { templateId: string; name: TravelClassDefinition }[]
   startDate: Date
 }
