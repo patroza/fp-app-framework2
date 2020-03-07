@@ -117,14 +117,16 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
               tryReadFromDb(this.type, record.id),
               TE.map(s => JSON.parse(s) as SerializedDBRecord),
               TE.chain(
-                _.TE.liftErr(
+                _.RTE.liftErr(
                   TE.fromPredicate(
                     ({ version }) => version === cachedRecord.version,
                     () => new OptimisticLockError(this.type, record.id),
                   ),
                 ),
               ),
-              TE.chain(_.TE.liftErr(({ version }) => this.actualSave(record, version))),
+              TE.chain(
+                _.RTE.liftErr(({ version }) => this.actualSave(record, version)),
+              ),
             ),
           )
     },

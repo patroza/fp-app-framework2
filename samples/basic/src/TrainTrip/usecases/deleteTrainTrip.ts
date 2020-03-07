@@ -12,7 +12,7 @@ const deleteTrainTrip = createCommand<Input, void, DeleteTrainTripError>(
   ({ _, db }) =>
     TE.compose(
       TE.map(({ trainTripId }) => trainTripId),
-      TE.chain(pipe(db.trainTrips.load, _.TE.liftErr)),
+      TE.chain(pipe(db.trainTrips.load, _.RTE.liftErr)),
       // TODO: this should normally be on a different object.
       TE.map(x => {
         x.delete()

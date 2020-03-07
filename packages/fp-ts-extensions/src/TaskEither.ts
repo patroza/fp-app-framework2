@@ -81,9 +81,8 @@ export const valueOrUndefined = <TInput, TOutput, TErrorOutput>(
   return await resultCreatorTask()
 }
 
-export const liftLeft = <TE>() => <T, TI, TE2 extends TE>(
-  e: (i: TI) => TaskEither<TE2, T>,
-) => (i: TI) => pipe(e(i), TE.mapLeft(liftType<TE>()))
+export const liftLeft = <TE>() => <T, TE2 extends TE>(e: () => TaskEither<TE2, T>) =>
+  flow(e, TE.mapLeft(liftType<TE>()))
 
 export const liftErr = liftLeft
 

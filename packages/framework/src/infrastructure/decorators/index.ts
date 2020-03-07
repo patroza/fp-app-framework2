@@ -33,7 +33,7 @@ const uowDecorator = configureDependencies(
       ) {
         return request(key, input)
       }
-      return pipe(request(key, input), TE.chainTee(_.TE.liftErr(unitOfWork.save)))
+      return pipe(request(key, input), TE.chainTee(pipe(unitOfWork.save, _.TE.liftErr)))
     }),
 )
 

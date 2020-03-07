@@ -25,7 +25,7 @@ const getTrip = trampoline(
     getTemplate: getTemplateType
   }) =>
     TE.compose(
-      TE.chain(pipe(getTemplate, _.TE.liftErr)),
+      TE.chain(pipe(getTemplate, _.RTE.liftErr)),
       TE.chain(toTrip(getTemplate)),
     ),
 )
@@ -50,8 +50,8 @@ const toTrip = trampoline(
 
     return pipe(
       resolveTravelClasses,
-      TE.chain(pipe(Trip.create, _.E.liftErr, E.toTaskEither)),
-      TE.chain(pipe(createTripWithSelectedTravelClass, _.E.liftErr, E.toTaskEither)),
+      TE.chain(pipe(Trip.create, _.RE.liftErr, E.toTaskEither)),
+      TE.chain(pipe(createTripWithSelectedTravelClass, _.RE.liftErr, E.toTaskEither)),
     )
   },
 )
