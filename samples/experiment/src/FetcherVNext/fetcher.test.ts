@@ -56,12 +56,15 @@ it("works", async () => {
     )
 
   const headersDecoder: Decoder<Error, FourTwoTwo> = response =>
-    TE.tryCatch(
-      async () => ({
-        code: +response.headers.get("X-CODE")!,
-        correlationId: response.headers.get("X-CORRELATIONID")!,
-      }),
-      handleError,
+    pipe(
+      E.tryCatch(
+        () => ({
+          code: +response.headers.get("X-CODE")!,
+          correlationId: response.headers.get("X-CORRELATIONID")!,
+        }),
+        handleError,
+      ),
+      TE.fromEither,
     )
 
   const handleFourTwoTwo = (res: Response) =>
