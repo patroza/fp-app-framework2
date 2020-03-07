@@ -11,6 +11,7 @@ import { TE, pipe, E } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
 import { DbContextKey, defaultDependencies } from "./types"
+import { flow } from "fp-ts/lib/function"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -26,7 +27,16 @@ export const changeStartDate = createCommand<
     TE.chainTup(
       TE.compose(
         TE.map(i => i.startDate),
-        TE.chain(pipe(FutureDate.create, _.RE.liftErr, E.toTaskEither)),
+        TE.chain(
+          pipe(
+            flow(
+              FutureDate.decode,
+              E.mapLeft(x => new ValidationError(x.join(", "))),
+            ),
+            _.RE.liftErr,
+            E.toTaskEither,
+          ),
+        ),
       ),
       // ALT
       // pipe(

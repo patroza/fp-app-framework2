@@ -6,7 +6,6 @@ import {
   generateUuid,
   InvalidStateError,
   ValidationError,
-  valueEquals,
 } from "@fp-app/framework"
 import Event from "@fp-app/framework/src/event"
 import {
@@ -40,7 +39,7 @@ export default class TrainTrip extends Entity {
     const t = new TrainTrip(
       generateUuid(),
       pax,
-      startDate.value,
+      startDate,
       travelClassConfiguration,
       currentTravelClassConfiguration,
     )
@@ -193,11 +192,11 @@ export default class TrainTrip extends Entity {
     )
 
   private readonly intChangeStartDate = (startDate: FutureDate) => {
-    if (valueEquals(startDate, this.startDate, v => v.toISOString())) {
+    if (startDate.toISOString() === this.startDate.toISOString()) {
       return false
     }
 
-    this.w.startDate = startDate.value
+    this.w.startDate = startDate
     // TODO: other business logic
 
     return true

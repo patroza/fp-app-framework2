@@ -13,7 +13,9 @@ import * as RE from "./ReaderEither"
 import * as T from "fp-ts/lib/Task"
 import * as RTE from "./ReaderTaskEither"
 
-export { T, RE, RTE }
+import * as t from "./Io"
+
+export { t, T, RE, RTE }
 
 const toolDepsInstance = Object.freeze({
   E: Object.freeze({ liftErr: E.liftErr(), startWith: E.right }),
