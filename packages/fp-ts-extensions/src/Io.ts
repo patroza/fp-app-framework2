@@ -1,7 +1,10 @@
 import * as t from "io-ts"
 export * from "io-ts"
+import { PathReporter } from "io-ts/lib/PathReporter"
 
-interface PositiveBrand {
+export { PathReporter }
+
+export interface PositiveBrand {
   readonly Positive: unique symbol // use `unique symbol` here to ensure uniqueness across modules / packages
 }
 
