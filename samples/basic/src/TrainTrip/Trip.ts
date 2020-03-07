@@ -1,9 +1,10 @@
-import { assert, InvalidStateError, Value } from "@fp-app/framework"
+import { assert, InvalidStateError } from "@fp-app/framework"
 import { Result, E } from "@fp-app/fp-ts-extensions"
 import { TemplateId } from "./TrainTrip"
 import TravelClassDefinition from "./TravelClassDefinition"
+// TODO: Value or Entity?
 
-export default class Trip extends Value {
+export default class Trip {
   static create = (serviceLevels: TravelClass[]) =>
     E.bimapFromBool2(
       !!serviceLevels.length,
@@ -28,7 +29,6 @@ export default class Trip extends Value {
   // )
 
   private constructor(readonly travelClasses: TravelClass[]) {
-    super()
     assert(Boolean(travelClasses.length), "A trip must have at least 1 travel class")
   }
 }
