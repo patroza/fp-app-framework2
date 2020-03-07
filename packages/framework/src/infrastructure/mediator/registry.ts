@@ -48,6 +48,7 @@ export type UsecaseWithDependencies<
   TError
 >
 
+// TODO: can we manage one with integrated trampoline?
 export const configureDependencies = <TDependencies, T>(
   deps: TDependencies,
   name: string,
