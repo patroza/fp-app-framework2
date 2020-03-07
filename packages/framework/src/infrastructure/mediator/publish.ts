@@ -1,4 +1,4 @@
-import { AsyncResult, E, TE } from "@fp-app/fp-ts-extensions"
+import { AsyncResult, E, RTE } from "@fp-app/fp-ts-extensions"
 
 import Event from "../../event"
 import { getLogger } from "../../utils"
@@ -8,7 +8,7 @@ const logger = getLogger("publish")
 const publish = (
   getMany: <TInput extends Event>(
     evt: TInput,
-  ) => TE.PipeFunction<TInput, DomainEventReturnType, Error>[],
+  ) => RTE.ReaderTaskEither<TInput, Error, void>[],
 ): publishType => <TInput extends Event>(evt: TInput) => async () => {
   const hndl = getMany(evt)
   logger.log(
@@ -40,9 +40,3 @@ export default publish
 export type publishType = <TInput extends Event>(
   evt: TInput,
 ) => AsyncResult<void, Error>
-
-export type DomainEventReturnType = void | IntegrationEventReturnType
-export interface IntegrationEventReturnType {
-  consistency?: "eventual" | "strict"
-  handler: TE.PipeFunctionN<void, Error>
-}

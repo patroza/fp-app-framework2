@@ -9,9 +9,11 @@ export * from "./general"
 
 import * as TE from "./TaskEither"
 import * as E from "./Either"
+import * as RE from "fp-ts/lib/ReaderEither"
 import * as T from "fp-ts/lib/Task"
+import * as RTE from "fp-ts/lib/ReaderTaskEither"
 
-export { T }
+export { T, RE, RTE }
 
 export const toolDeps = <TErr>(): ToolDeps<TErr> => ({
   E: { liftErr: E.liftErr<TErr>(), startWith: i => E.right(i) },
