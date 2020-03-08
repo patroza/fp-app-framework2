@@ -9,13 +9,14 @@ import {
   RecordContext,
 } from "@fp-app/framework"
 import { DiskRecordContext } from "@fp-app/io.diskdb"
-import { AsyncResult, TE } from "@fp-app/fp-ts-extensions"
+import { AsyncResult, TE, unsafeUnwrapDecode } from "@fp-app/fp-ts-extensions"
 import { parse, stringify } from "flatted"
 import PaxDefinition from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { TravelClass } from "../Trip"
 import { TrainTripView } from "../usecases/getTrainTrip"
 import TrainTripReadContext from "./TrainTripReadContext.disk"
+import { DateFromISOString } from "@fp-app/fp-ts-extensions/src/Io"
 
 // Since we assume that saving a valid object, means restoring a valid object
 // we can assume data correctness and can skip normal validation and constructing.
@@ -100,7 +101,7 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
   const trainTrip = new TrainTrip(
     id,
     pax,
-    new Date(startDate), // we could decode, DateFromString.decode(startDate)
+    unsafeUnwrapDecode(DateFromISOString.decode(startDate)),
     travelClassConfigurations,
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     travelClassConfigurations.find(
@@ -108,8 +109,10 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
     )!,
     {
       ...rest,
-      createdAt: new Date(createdAt),
-      lockedAt: lockedAt ? new Date(lockedAt) : undefined,
+      createdAt: unsafeUnwrapDecode(DateFromISOString.decode(createdAt)),
+      lockedAt: lockedAt
+        ? unsafeUnwrapDecode(DateFromISOString.decode(lockedAt))
+        : undefined,
     },
   )
 
@@ -127,15 +130,8 @@ const mapTravelClassConfigurationDTO = ({
   return slc
 }
 
-const mapTravelClassDTO = ({
-  createdAt,
-  name,
-  templateId,
-}: TravelClassDTO): TravelClass => ({
-  createdAt: new Date(createdAt),
-  templateId,
-  name,
-})
+const mapTravelClassDTO = (dto: TravelClassDTO): TravelClass =>
+  unsafeUnwrapDecode(TravelClass.fromWire(dto))
 
 interface TrainTripDTO {
   createdAt: string

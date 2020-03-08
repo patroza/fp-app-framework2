@@ -93,6 +93,13 @@ export function withBla<T, TI>(
   }) as T
 }
 
+export const unsafeUnwrapDecode = <A, E extends t.Errors>(e: Result<A, E>) => {
+  if (E.isErr(e)) {
+    throw new Error(decodeErrors(e.left))
+  }
+  return e.right
+}
+
 export function decodeErrors(x: t.Errors) {
   return x
     .map(({ message, context: [total, current], value }) => {
