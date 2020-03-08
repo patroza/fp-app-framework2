@@ -1,5 +1,6 @@
 import { ValidationError } from "@fp-app/framework"
 import { E, t, pipe } from "@fp-app/fp-ts-extensions"
+import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 
 const _TravelClassDefinition = t.keyof({
   first: null,
@@ -16,10 +17,10 @@ const TravelClassDefinitionExtensions = {
     ),
 }
 
-const TravelClassDefinition = {
-  ..._TravelClassDefinition,
-  ...TravelClassDefinitionExtensions,
-} as typeof _TravelClassDefinition & typeof TravelClassDefinitionExtensions
+const TravelClassDefinition = merge(
+  _TravelClassDefinition,
+  TravelClassDefinitionExtensions,
+)
 
 type TravelClassDefinition = t.TypeOf<typeof TravelClassDefinition>
 

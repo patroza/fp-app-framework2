@@ -100,7 +100,7 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
   const trainTrip = new TrainTrip(
     id,
     pax,
-    new Date(startDate),
+    new Date(startDate), // we could decode, DateFromString.decode(startDate)
     travelClassConfigurations,
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     travelClassConfigurations.find(
@@ -131,11 +131,11 @@ const mapTravelClassDTO = ({
   createdAt,
   name,
   templateId,
-}: TravelClassDTO): TravelClass => {
-  const sl = new TravelClass(templateId, name)
-  Object.assign(sl, { createdAt: new Date(createdAt) })
-  return sl
-}
+}: TravelClassDTO): TravelClass => ({
+  createdAt: new Date(createdAt),
+  templateId,
+  name,
+})
 
 interface TrainTripDTO {
   createdAt: string

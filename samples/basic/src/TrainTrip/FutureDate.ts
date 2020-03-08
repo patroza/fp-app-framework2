@@ -1,18 +1,9 @@
-import * as t from "io-ts"
 import { flow } from "fp-ts/lib/function"
-import { E, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
+import { E, t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
 import { ValidationError } from "@fp-app/framework"
+import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 
 const isInFuture = (date: Date) => date > new Date()
-
-const date = new t.Type<Date, Date, Date>(
-  "Date",
-  (input): input is Date => input instanceof Date,
-  // `t.success` and `t.failure` are helpers used to build `Either` instances
-  input => t.success(input),
-  // `A` and `O` are the same, so `encode` is just the identity function
-  t.identity,
-)
 
 // a unique brand for positive numbers
 export interface FutureDate2Brand {
@@ -21,12 +12,12 @@ export interface FutureDate2Brand {
 
 export const _FutureDate = withBla(
   t.brand(
-    date, // a codec representing the type to be refined
+    t.date, // a codec representing the type to be refined
     (n): n is t.Branded<Date, FutureDate2Brand> => isInFuture(n), // a custom type guard using the build-in helper `Branded`
     "FutureDate", // the name must match the readonly field in the brand
   ),
   value => {
-    if (!date.is(value)) {
+    if (!t.date.is(value)) {
       return "invalid value"
     }
     return `${value.toDateString()} is not in the Future`
@@ -40,10 +31,7 @@ const FutureDateExtension = {
   ),
 }
 
-const FutureDate = {
-  ..._FutureDate,
-  ...FutureDateExtension,
-} as typeof _FutureDate & typeof FutureDateExtension
+const FutureDate = merge(_FutureDate, FutureDateExtension)
 
 type FutureDateType = t.TypeOf<typeof FutureDate>
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

@@ -2,7 +2,7 @@
 
 import { typedKeysOf, ValidationError } from "@fp-app/framework"
 import { E, t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
-import { PositiveInt } from "@fp-app/fp-ts-extensions/src/Io"
+import { PositiveInt, merge } from "@fp-app/fp-ts-extensions/src/Io"
 import { flow } from "fp-ts/lib/function"
 
 /* Pax: No domain validation, just primitives. **/
@@ -87,10 +87,7 @@ const PaxDefinitionExtension = {
   ),
 }
 
-const PaxDefinition = {
-  ..._PaxDefinition,
-  ...PaxDefinitionExtension,
-} as typeof _PaxDefinition & typeof PaxDefinitionExtension
+const PaxDefinition = merge(_PaxDefinition, PaxDefinitionExtension)
 
 type PaxDefinitionType = t.TypeOf<typeof PaxDefinition>
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
