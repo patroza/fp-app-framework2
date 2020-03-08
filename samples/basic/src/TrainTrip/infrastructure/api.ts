@@ -65,7 +65,14 @@ const toTrip = trampoline(
             ),
         ),
       ),
-      TE.chain(pipe(Trip.create, _.RE.liftErr, E.toTaskEither)),
+      TE.chain(
+        pipe(
+          Trip.create,
+          RE.mapLeft(x => new InvalidStateError(x.message)),
+          _.RE.liftErr,
+          E.toTaskEither,
+        ),
+      ),
       TE.chain(pipe(createTripWithSelectedTravelClass, _.RE.liftErr, E.toTaskEither)),
     )
   },

@@ -9,18 +9,15 @@ const _TravelClassDefinition = t.keyof({
   // etc...
 })
 
-const TravelClassDefinitionExtensions = {
-  create: (name: string) =>
-    pipe(
-      TravelClassDefinition.decode(name),
-      E.mapLeft(() => new ValidationError(`${name} is not a valid travel class name`)),
-    ),
-}
+const createTravelClassDefinition = (name: string) =>
+  pipe(
+    TravelClassDefinition.decode(name),
+    E.mapLeft(() => new ValidationError(`${name} is not a valid travel class name`)),
+  )
 
-const TravelClassDefinition = merge(
-  _TravelClassDefinition,
-  TravelClassDefinitionExtensions,
-)
+const TravelClassDefinition = merge(_TravelClassDefinition, {
+  create: createTravelClassDefinition,
+})
 
 type TravelClassDefinition = t.TypeOf<typeof TravelClassDefinition>
 
