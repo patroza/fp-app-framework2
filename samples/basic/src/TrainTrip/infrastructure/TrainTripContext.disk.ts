@@ -125,9 +125,12 @@ const mapTravelClassConfigurationDTO = ({
 }: {
   travelClass: TravelClassDTO
 }) => {
-  const slc = new TravelClassConfiguration(mapTravelClassDTO(travelClass))
-  Object.assign(slc, slRest)
-  return slc
+  const slc = TravelClassConfiguration.decode({
+    ...slRest,
+    // TODO: The travelClass should actually be a reference to an existing / shared object.
+    travelClass: mapTravelClassDTO(travelClass),
+  })
+  return unsafeUnwrapDecode(slc)
 }
 
 const mapTravelClassDTO = (dto: TravelClassDTO): TravelClass =>
