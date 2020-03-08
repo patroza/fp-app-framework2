@@ -9,5 +9,8 @@
 	"scripts": {
 		"start": "cd samples/basic && yarn start",
 		"testsuite": "cd packages/framework && yarn testsuite && cd ../../samples/basic && yarn testsuite"
+	},
+	"resolutions": {
+		"@hapi/joi": "^17.1.0"
 	}
 }

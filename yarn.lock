@@ -3126,7 +3126,7 @@ io-ts-promise@^2.0.2:
   dependencies:
     deep-equal "^1.1.0"
 
-io-ts-types@^0.5.5:
+io-ts-types@^0.5.5, io-ts-types@^0.5.6:
   version "0.5.6"
   resolved "https://registry.yarnpkg.com/io-ts-types/-/io-ts-types-0.5.6.tgz#4d9afdf7220d865c5bf74f30d9b2fcf1d51f11e3"
   integrity sha512-E8mClvIN6sotGqICJQMyt8nMG9VkwejRYwOcKjAj5hndlWib9o8MRmP3HiyVK4Mn1lrpY6bB/B3LrMcV/HcWGQ==
