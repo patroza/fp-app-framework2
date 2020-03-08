@@ -45,7 +45,9 @@ const FutureDate = {
   ...FutureDateExtension,
 } as typeof _FutureDate & typeof FutureDateExtension
 
-type FutureDate = t.TypeOf<typeof FutureDate>
+type FutureDateType = t.TypeOf<typeof FutureDate>
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface FutureDate extends FutureDateType {}
 
 export default FutureDate
 

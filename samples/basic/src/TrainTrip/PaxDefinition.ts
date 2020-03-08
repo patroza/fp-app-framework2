@@ -17,7 +17,9 @@ const Pax = t.type(
   "Pax",
 )
 
-type Pax = t.TypeOf<typeof Pax>
+type PaxType = t.TypeOf<typeof Pax>
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface Pax extends PaxType {}
 export { Pax }
 
 export interface PaxNumberBrand {
@@ -51,7 +53,9 @@ const PaxFields = t.type(
   "PaxFields",
 )
 
-type PaxFields = t.TypeOf<typeof PaxFields>
+type PaxFieldsType = t.TypeOf<typeof PaxFields>
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface PaxFields extends PaxFieldsType {}
 
 export interface PaxDefinitionBrand {
   readonly PaxDefinition: unique symbol // use `unique symbol` here to ensure uniqueness across modules / packages
@@ -88,7 +92,9 @@ const PaxDefinition = {
   ...PaxDefinitionExtension,
 } as typeof _PaxDefinition & typeof PaxDefinitionExtension
 
-type PaxDefinition = t.TypeOf<typeof PaxDefinition>
+type PaxDefinitionType = t.TypeOf<typeof PaxDefinition>
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface PaxDefinition extends PaxDefinitionType {}
 
 export default PaxDefinition
 
