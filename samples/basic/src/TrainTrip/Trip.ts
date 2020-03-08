@@ -49,10 +49,7 @@ interface TravelClass extends TravelClassType {}
 export { TravelClass }
 
 const _Trip = t.type({
-  travelClasses: withBla(
-    t.nonEmptyArray(TravelClass),
-    () => `Must have at least one travelclass`,
-  ),
+  travelClasses: t.nonEmptyArray(TravelClass),
 })
 
 const createTrip = (travelClasses: TravelClass[]): E.Either<t.Errors, Trip> =>

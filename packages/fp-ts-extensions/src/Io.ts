@@ -10,7 +10,7 @@ import { DateFromISOString } from "io-ts-types/lib/DateFromISOString"
 import { nonEmptyArray } from "io-ts-types/lib/nonEmptyArray"
 import { NonEmptyString } from "io-ts-types/lib/NonEmptyString"
 
-export { date, nonEmptyArray, NonEmptyString, DateFromISOString }
+export { date, NonEmptyString, DateFromISOString, nonEmptyArray }
 
 export interface PositiveBrand {
   readonly Positive: unique symbol // use `unique symbol` here to ensure uniqueness across modules / packages

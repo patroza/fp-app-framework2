@@ -102,12 +102,14 @@ export const unsafeUnwrapDecode = <A, E extends t.Errors>(e: Result<A, E>) => {
 
 export function decodeErrors(x: t.Errors) {
   return x
-    .map(({ message, context: [total, current], value }) => {
-      const processCtx = (current: t.ContextEntry) =>
-        `${current.key ? `[${current.key}]: ` : ""}${current.type.name}: ${
-          message ? message : getErrorMessage(current.type.name, value)
+    .map(({ message, context: [root, ...rest], value }) => {
+      const processCtx = (current: t.ContextEntry, path?: string) =>
+        `${path ? `[${path}]: ` : ""}${current.type.name}: ${
+          message ? message : getErrorMessage(current, value)
         }`
-      return current ? processCtx(current) : processCtx(total)
+      return rest.length
+        ? processCtx(rest[rest.length - 1], rest.map(x => x.key).join("."))
+        : processCtx(root)
     })
     .join("\n")
 }
@@ -115,7 +117,14 @@ export function decodeErrors(x: t.Errors) {
 // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getErrorMessage = (type: string, value: any) => {
+const getErrorMessage = (current: t.ContextEntry, value: any) => {
+  switch (current.type.name) {
+    case "NonEmptyString":
+      return "Must not be empty"
+  }
+  if (current.type.name.startsWith("NonEmptyArray<")) {
+    return "Must not be empty"
+  }
   // switch (type) {
   //   case "PaxNumber":
   //     return `requires between 0 and max 6, but ${value} was specified.`
