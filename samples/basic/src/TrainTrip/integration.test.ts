@@ -11,7 +11,7 @@ import {
   RecordNotFound,
   setLogger,
 } from "@fp-app/framework"
-import { Result, E } from "@fp-app/fp-ts-extensions"
+import { E } from "@fp-app/fp-ts-extensions"
 import moment from "moment"
 import createRoot from "../root"
 import changeTrainTrip, { StateProposition } from "./usecases/changeTrainTrip"
