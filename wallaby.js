@@ -1,4 +1,5 @@
 module.exports = function (w) {
+  process.env.TSC_WATCHFILE = "UseFsEventsWithFallbackDynamicPolling"
   return {
     files: [
       '**/*.ts',
