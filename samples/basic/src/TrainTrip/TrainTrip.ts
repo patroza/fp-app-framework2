@@ -6,7 +6,6 @@ import {
   generateUuid,
   InvalidStateError,
   ValidationError,
-  valueEquals,
 } from "@fp-app/framework"
 import Event from "@fp-app/framework/src/event"
 import {
@@ -16,12 +15,16 @@ import {
   pipe,
   trampoline,
   ToolDeps,
+  t,
+  decodeErrors,
 } from "@fp-app/fp-ts-extensions"
 import isEqual from "lodash/fp/isEqual"
 import FutureDate from "./FutureDate"
 import PaxDefinition from "./PaxDefinition"
 import TravelClassDefinition from "./TravelClassDefinition"
 import Trip, { TravelClass, TripWithSelectedTravelClass } from "./Trip"
+import { merge } from "lodash"
+import { flow } from "fp-ts/lib/function"
 
 export default class TrainTrip extends Entity {
   /** the primary way to create a new TrainTrip */
@@ -29,8 +32,8 @@ export default class TrainTrip extends Entity {
     { pax, startDate }: { startDate: FutureDate; pax: PaxDefinition },
     trip: TripWithSelectedTravelClass,
   ) => {
-    const travelClassConfiguration = trip.travelClasses.map(
-      x => new TravelClassConfiguration(x),
+    const travelClassConfiguration = trip.travelClasses.map(x =>
+      E.unsafeUnwrap(TravelClassConfiguration.create(x)),
     )
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const currentTravelClassConfiguration = travelClassConfiguration.find(
@@ -40,7 +43,7 @@ export default class TrainTrip extends Entity {
     const t = new TrainTrip(
       generateUuid(),
       pax,
-      startDate.value,
+      startDate,
       travelClassConfiguration,
       currentTravelClassConfiguration,
     )
@@ -121,8 +124,9 @@ export default class TrainTrip extends Entity {
   readonly updateTrip = (trip: Trip) => {
     // This will clear all configurations upon trip update
     // TODO: Investigate a resolution mechanism to update existing configurations, depends on business case ;-)
-    this.w.travelClassConfiguration = trip.travelClasses.map(
-      x => new TravelClassConfiguration(x),
+    // TODO: Here we could use optics for testing?
+    this.w.travelClassConfiguration = trip.travelClasses.map(x =>
+      E.unsafeUnwrap(TravelClassConfiguration.create(x)),
     )
     const currentTravelClassConfiguration = this.travelClassConfiguration.find(
       x => this.currentTravelClassConfiguration.travelClass.name === x.travelClass.name,
@@ -193,11 +197,11 @@ export default class TrainTrip extends Entity {
     )
 
   private readonly intChangeStartDate = (startDate: FutureDate) => {
-    if (valueEquals(startDate, this.startDate, v => v.toISOString())) {
+    if (startDate.toISOString() === this.startDate.toISOString()) {
       return false
     }
 
-    this.w.startDate = startDate.value
+    this.w.startDate = startDate
     // TODO: other business logic
 
     return true
@@ -218,12 +222,10 @@ export default class TrainTrip extends Entity {
     travelClass: TravelClassDefinition,
   ): Result<boolean, InvalidStateError> => {
     const slc = this.travelClassConfiguration.find(
-      x => x.travelClass.name === travelClass.value,
+      x => x.travelClass.name === travelClass,
     )
     if (!slc) {
-      return E.err(
-        new InvalidStateError(`${travelClass.value} not available currently`),
-      )
+      return E.err(new InvalidStateError(`${travelClass} not available currently`))
     }
     if (this.currentTravelClassConfiguration === slc) {
       return E.ok(false)
@@ -245,12 +247,39 @@ export default class TrainTrip extends Entity {
   }
 }
 
-export class TravelClassConfiguration {
-  readonly priceLastUpdated?: Date
-  readonly price!: Price
+const B = t.partial({
+  priceLastUpdated: t.date,
+})
 
-  constructor(readonly travelClass: TravelClass) {}
+const Price2 = t.type({
+  amount: t.number,
+  currency: t.string,
+})
+
+const A = t.type({
+  price: Price2,
+  travelClass: TravelClass,
+})
+
+const _TravelClassConfiguration = t.intersection([A, B])
+const createTravelClassConfiguration = (travelClass: TravelClass) => {
+  return _TravelClassConfiguration.decode({
+    travelClass,
+    price: { amount: 1000, currency: "EUR" },
+  })
 }
+const TravelClassConfiguration = merge(_TravelClassConfiguration, {
+  create: flow(
+    createTravelClassConfiguration,
+    E.mapLeft(x => new ValidationError(decodeErrors(x))),
+  ),
+})
+type TravelClassConfigurationType = t.TypeOf<typeof TravelClassConfiguration>
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface TravelClassConfiguration extends TravelClassConfigurationType {}
+
+export { TravelClassConfiguration }
 
 /*
 These event names look rather technical (like CRUD) and not very domain driven

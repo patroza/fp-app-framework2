@@ -1,42 +1,41 @@
-import { ValidationError, Value } from "@fp-app/framework"
-import { E, pipe } from "@fp-app/fp-ts-extensions"
-
-// Can use for input, but for storage we should just store as date.
-// because it is temporal; what is today valid may be invalid tomorrow etc.
-export default class FutureDate extends Value {
-  static create = (date: Date) =>
-    pipe(
-      E.fromBool(date, isInFuture),
-      E.bimap(
-        d => new ValidationError(`${d.toDateString()} is not in future`),
-        d => new FutureDate(d),
-      ),
-    )
-  // Which is long for:
-  // E.bimapFromBool(
-  //   date,
-  //   isInFuture,
-  //   d => new ValidationError(`${d.toDateString()} is not in future`),
-  //   d => new FutureDate(d),
-  // )
-  // ALT1
-  // E.bimapFromBool2(
-  //   isInFuture(date),
-  //   () => new ValidationError(`${date.toDateString()} is not in future`),
-  //   () => new FutureDate(date),
-  // )
-  // ALT2: will return disjointed Left and Right with `never` on either side.
-  //  isInFuture(date)
-  //  ? E.ok(date)
-  //  : E.err(new ValidationError(`${date.toDateString()} is not in future`)
-  // thats why we would use fromBool helper instead.
-
-  private constructor(readonly value: Date) {
-    super()
-  }
-}
+import { flow } from "fp-ts/lib/function"
+import { E, t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
+import { ValidationError } from "@fp-app/framework"
+import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 
 const isInFuture = (date: Date) => date > new Date()
+
+// a unique brand for positive numbers
+export interface FutureDate2Brand {
+  readonly FutureDate: unique symbol // use `unique symbol` here to ensure uniqueness across modules / packages
+}
+
+export const _FutureDate = withBla(
+  t.brand(
+    t.date, // a codec representing the type to be refined
+    (n): n is t.Branded<Date, FutureDate2Brand> => isInFuture(n), // a custom type guard using the build-in helper `Branded`
+    "FutureDate", // the name must match the readonly field in the brand
+  ),
+  value => {
+    if (!t.date.is(value)) {
+      return "invalid value"
+    }
+    return `${value.toDateString()} is not in the Future`
+  },
+)
+
+const FutureDate = merge(_FutureDate, {
+  create: flow(
+    _FutureDate.decode,
+    E.mapLeft(x => new ValidationError(decodeErrors(x))),
+  ),
+})
+
+type FutureDateType = t.TypeOf<typeof FutureDate>
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface FutureDate extends FutureDateType {}
+
+export default FutureDate
 
 // // https://dev.to/gcanti/getting-started-with-fp-ts-either-vs-validation-5eja
 // const a = compose(

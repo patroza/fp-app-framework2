@@ -11,29 +11,19 @@
             "type": "object",
             "properties": {
               "adults": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "babies": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "children": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "infants": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "teenagers": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               }
             },
             "additionalProperties": false,
@@ -92,29 +82,19 @@
             "type": "object",
             "properties": {
               "adults": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "babies": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "children": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "infants": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "teenagers": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               }
             },
             "additionalProperties": false,
@@ -195,29 +175,19 @@
             "type": "object",
             "properties": {
               "adults": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "babies": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "children": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "infants": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "teenagers": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               }
             },
             "additionalProperties": false,
@@ -276,29 +246,19 @@
             "type": "object",
             "properties": {
               "adults": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "babies": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "children": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "infants": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               },
               "teenagers": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 6
+                "type": "integer"
               }
             },
             "additionalProperties": false,

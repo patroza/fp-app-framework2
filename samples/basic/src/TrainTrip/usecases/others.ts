@@ -9,7 +9,7 @@ import {
 } from "@fp-app/framework"
 import { TE, pipe, E } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
-import TravelClassDefinition, { TravelClassName } from "../TravelClassDefinition"
+import TravelClassDefinition from "../TravelClassDefinition"
 import { DbContextKey, defaultDependencies } from "./types"
 
 const createCommand = createCommandWithDeps({
@@ -116,7 +116,7 @@ export const changeTravelClass = createCommand<
 
 export interface ChangeTravelClassInput {
   trainTripId: string
-  travelClass: TravelClassName
+  travelClass: TravelClassDefinition
 }
 type ChangeTravelClassError =
   | ForbiddenError

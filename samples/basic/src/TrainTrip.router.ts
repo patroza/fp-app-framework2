@@ -1,11 +1,11 @@
 import { createValidator, Joi } from "@fp-app/framework"
 import { KoaRouteBuilder } from "@fp-app/hosting.koa"
-import { paxSchema } from "./TrainTrip/PaxDefinition"
 import changeTrainTrip from "./TrainTrip/usecases/changeTrainTrip"
 import createTrainTrip from "./TrainTrip/usecases/createTrainTrip"
 import deleteTrainTrip from "./TrainTrip/usecases/deleteTrainTrip"
 import getTrainTrip from "./TrainTrip/usecases/getTrainTrip"
 import lockTrainTrip from "./TrainTrip/usecases/lockTrainTrip"
+import { Pax } from "./TrainTrip/PaxDefinition"
 
 const createTrainTripRouter = () =>
   new KoaRouteBuilder()
@@ -45,6 +45,18 @@ const trainTripIdValidator = Joi.string()
   .required()
 const routeWithTrainTripId = Joi.object({
   trainTripId: trainTripIdValidator,
+}).required()
+
+const paxEntrySchema = Joi.number()
+  .integer()
+  .required()
+
+const paxSchema = Joi.object<Pax>({
+  adults: paxEntrySchema,
+  babies: paxEntrySchema,
+  children: paxEntrySchema,
+  infants: paxEntrySchema,
+  teenagers: paxEntrySchema,
 }).required()
 
 export default createTrainTripRouter

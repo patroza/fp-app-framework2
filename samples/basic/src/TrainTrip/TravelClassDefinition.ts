@@ -1,34 +1,24 @@
-import { ValidationError, Value } from "@fp-app/framework"
-import { E } from "@fp-app/fp-ts-extensions"
+import { ValidationError } from "@fp-app/framework"
+import { E, t, pipe } from "@fp-app/fp-ts-extensions"
+import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 
-export default class TravelClassDefinition extends Value {
-  static create = (name: string) =>
-    E.bimapFromBool2(
-      validtravelClasses.some(x => x === name),
-      () => new ValidationError(`${name} is not a valid travel class name`),
-      () => new TravelClassDefinition(name),
-    )
-  // ALT:
-  // E.bimapFromBool(
-  //   name,
-  //   name => validtravelClasses.some(x => x === name),
-  //   x => new ValidationError(`${x} is not a valid travel class name`),
-  //   x => new TravelClassDefinition(x),
-  // )
-  // Is in fact:
-  // pipe(
-  //   E.fromBool(name, name => validtravelClasses.some(x => x === name), x => new ValidationError(`${x} is not a valid travel class name`), x => new TravelClassDefinition(x)),
-  //   E.bimap(
-  //     x => new ValidationError(`${x} is not a valid travel class name`),
-  //     x => new TravelClassDefinition(x)
-  //   ),
-  // )
+const _TravelClassDefinition = t.keyof({
+  first: null,
+  second: null,
+  business: null,
+  // etc...
+})
 
-  private constructor(readonly value: string) {
-    super()
-  }
-}
+const createTravelClassDefinition = (name: string) =>
+  pipe(
+    TravelClassDefinition.decode(name),
+    E.mapLeft(() => new ValidationError(`${name} is not a valid travel class name`)),
+  )
 
-const validtravelClasses = ["second", "first", "business"]
+const TravelClassDefinition = merge(_TravelClassDefinition, {
+  create: createTravelClassDefinition,
+})
 
-export type TravelClassName = "first" | "second" | "business"
+type TravelClassDefinition = t.TypeOf<typeof TravelClassDefinition>
+
+export default TravelClassDefinition

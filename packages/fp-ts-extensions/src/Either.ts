@@ -377,3 +377,17 @@ const isOk = E.isRight
 const isErr = E.isLeft
 
 export { _do as do, chainTup, ok, err, isOk, isErr, success }
+
+export const unsafeUnwrap = <A, E>(e: Result<A, E>) => {
+  if (isErr(e)) {
+    throw new Error(JSON.stringify(e))
+  }
+  return e.right
+}
+
+export const unsafeUnwrapErr = <A, E>(e: Result<A, E>) => {
+  if (isOk(e)) {
+    throw new Error(JSON.stringify(e))
+  }
+  return e.left
+}
