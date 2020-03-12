@@ -5,12 +5,13 @@ import {
   E,
   trampoline,
   ToolDeps,
+  O,
 } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
-import { EventHandlerWithDependencies } from "./mediator"
 import { publishType } from "./mediator/publish"
 import { generateKey } from "./SimpleContainer"
 import { TaskEither } from "fp-ts/lib/TaskEither"
+import { eventsMapType, HandlerList } from "./executePostCommitHandlers"
 
 // tslint:disable-next-line:max-classes-per-file
 export default class DomainEventHandler {
@@ -19,9 +20,7 @@ export default class DomainEventHandler {
 
   constructor(
     private readonly publish: publishType,
-    private readonly getIntegrationHandlers: (
-      evt: Event,
-    ) => EventHandlerWithDependencies<any, any, any, any>[] | undefined,
+    private readonly getIntegrationHandlers: (evt: Event) => O.Option<HandlerList>,
     private readonly executeIntegrationEvents: typeof executePostCommitHandlersKey,
   ) {}
 
@@ -72,16 +71,13 @@ export default class DomainEventHandler {
 
   private readonly publishIntegrationEvents = () => {
     this.events = []
-    const integrationEventsMap = new Map<
-      any,
-      EventHandlerWithDependencies<any, any, any, any>[]
-    >()
+    const integrationEventsMap = new Map<Event, HandlerList>()
     for (const evt of this.processedEvents) {
       const integrationEventHandlers = this.getIntegrationHandlers(evt)
-      if (!integrationEventHandlers || !integrationEventHandlers.length) {
+      if (O.isNone(integrationEventHandlers)) {
         continue
       }
-      integrationEventsMap.set(evt, integrationEventHandlers)
+      integrationEventsMap.set(evt, integrationEventHandlers.value)
     }
     if (integrationEventsMap.size) {
       this.executeIntegrationEvents(integrationEventsMap)
@@ -91,5 +87,5 @@ export default class DomainEventHandler {
 }
 
 export const executePostCommitHandlersKey = generateKey<
-  (eventMap: Map<any, EventHandlerWithDependencies<any, any, any, any>[]>) => void
+  (eventMap: eventsMapType) => void
 >("executePostCommitHandlers")

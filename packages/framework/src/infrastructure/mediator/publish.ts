@@ -1,4 +1,11 @@
-import { AsyncResult, E, RTE } from "@fp-app/fp-ts-extensions"
+import {
+  AsyncResult,
+  E,
+  RTE,
+  O,
+  pipe,
+  ReadonlyNonEmptyArray,
+} from "@fp-app/fp-ts-extensions"
 
 import Event from "../../event"
 import { getLogger } from "../../utils"
@@ -8,21 +15,21 @@ const logger = getLogger("publish")
 const publish = (
   getMany: <TInput extends Event>(
     evt: TInput,
-  ) => RTE.ReaderTaskEither<TInput, Error, void>[],
+  ) => O.Option<ReadonlyNonEmptyArray<RTE.ReaderTaskEither<TInput, Error, void>>>,
 ): publishType => <TInput extends Event>(evt: TInput) => async () => {
-  const hndl = getMany(evt)
+  const hndl = pipe(getMany(evt))
   logger.log(
     `Publishing Domain event: ${evt.constructor.name} (${
-      hndl ? hndl.length : 0
+      O.isSome(hndl) ? hndl.value.length : 0
     } handlers)`,
     JSON.stringify(evt),
   )
 
-  if (!hndl) {
+  if (O.isNone(hndl)) {
     return E.success()
   }
 
-  for (const evtHandler of hndl) {
+  for (const evtHandler of hndl.value) {
     logger.log(`Handling ${evtHandler.name}`)
     const r = await evtHandler(evt)()
     if (E.isErr(r)) {

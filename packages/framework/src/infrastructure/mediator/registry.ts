@@ -1,4 +1,4 @@
-import { AsyncResult, ToolDeps, toolDeps, RTE } from "@fp-app/fp-ts-extensions"
+import { AsyncResult, ToolDeps, toolDeps, RTE, O } from "@fp-app/fp-ts-extensions"
 import chalk from "chalk"
 import Event from "../../event"
 import { Constructor, getLogger, setFunctionName, typedKeysOf } from "../../utils"
@@ -66,7 +66,7 @@ export const configureDependencies = <TDependencies, T>(
 
 export const UOWKey = generateKey<UnitOfWork>("unit-of-work")
 
-export type resolveEventType = (evt: { type: any; payload: any }) => Event | undefined
+export type resolveEventType = (evt: { type: any; payload: any }) => O.Option<Event>
 export const resolveEventKey = generateKey<resolveEventType>("resolveEvent")
 
 type HandlerWithDependencies<TDependencies, TInput, TOutput, TError> = WithDependencies<

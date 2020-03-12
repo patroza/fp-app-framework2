@@ -2,6 +2,7 @@
 
 import { pipe } from "fp-ts/lib/pipeable"
 
+import { ReadonlyNonEmptyArray } from "fp-ts/lib/ReadonlyNonEmptyArray"
 import { AsyncResult } from "./TaskEither"
 import { Result } from "./Either"
 
@@ -9,13 +10,17 @@ export * from "./general"
 
 import * as TE from "./TaskEither"
 import * as E from "./Either"
+import * as O from "fp-ts/lib/Option"
 import * as RE from "./ReaderEither"
 import * as T from "fp-ts/lib/Task"
+import * as RA from "fp-ts/lib/ReadonlyArray"
+import * as RANE from "fp-ts/lib/ReadonlyNonEmptyArray"
+import * as RT from "fp-ts/lib/ReaderTask"
 import * as RTE from "./ReaderTaskEither"
 
 import * as t from "./Io"
 
-export { t, T, RE, RTE }
+export { O, t, T, RA, RANE, RE, RT, RTE, ReadonlyNonEmptyArray }
 
 const toolDepsInstance = Object.freeze({
   E: Object.freeze({ liftErr: E.liftErr(), startWith: E.right }),

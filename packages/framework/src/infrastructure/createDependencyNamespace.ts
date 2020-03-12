@@ -23,10 +23,12 @@ import {
   requestKey,
   requestType,
   resolveEventKey,
+  NamedHandlerWithDependencies,
 } from "./mediator"
 import { processReceivedEvent } from "./pubsub"
 import SimpleContainer, { DependencyScope, factoryOf, Key } from "./SimpleContainer"
 import { Either } from "fp-ts/lib/Either"
+import { O, pipe, RANE, RTE } from "@fp-app/fp-ts-extensions"
 
 const logger = getLogger("registry")
 
@@ -102,14 +104,32 @@ export default function createDependencyNamespace(
         )
       }),
     )
-
+  const getDomainEventHandlers = (evt: Event) =>
+    pipe(O.fromNullable(domainHandlerMap.get(evt.constructor)), O.chain(RANE.fromArray))
   const publishDomainEventHandler = publish(evt =>
-    (domainHandlerMap.get(evt.constructor) || []).map(x => container.getF(x)),
+    pipe(
+      getDomainEventHandlers(evt),
+      O.map(
+        RANE.map(
+          y => (container.getF(y) as any) as RTE.ReaderTaskEither<any, any, void>,
+        ),
+      ),
+    ),
   )
   const getIntegrationEventHandlers = (evt: Event) =>
-    integrationHandlerMap.get(evt.constructor)
+    pipe(
+      O.fromNullable(integrationHandlerMap.get(evt.constructor)),
+      O.chain(RANE.fromArray),
+    )
   const publishIntegrationEventHandler = publish(evt =>
-    (integrationHandlerMap.get(evt.constructor) || []).map(x => container.getF(x)),
+    pipe(
+      getIntegrationEventHandlers(evt),
+      O.map(
+        RANE.map(
+          y => (container.getF(y) as any) as RTE.ReaderTaskEither<any, any, void>,
+        ),
+      ),
+    ),
   )
   container.registerScopedC(
     DomainEventHandler,
@@ -148,7 +168,7 @@ export default function createDependencyNamespace(
         publish: publishIntegrationEventHandler,
         resolveEvent: container.getF(resolveEventKey),
       })
-      return process(evt)
+      return process(evt)()
     })
 
   const requestInNewContext: requestInNewScopeType = <TInput, TOutput>(
@@ -199,7 +219,13 @@ const registerIntegrationEventHandler = (event: Constructor<any>, handler: any) 
 }
 
 // tslint:disable-next-line:ban-types
-const domainHandlerMap = new Map<any, any[]>() // Array<readonly [Function, Function, {}]>
-const integrationHandlerMap = new Map<any, any[]>() // Array<readonly [Function, Function, {}]>
+const domainHandlerMap = new Map<
+  any,
+  NamedHandlerWithDependencies<any, any, any, any>[]
+>() // Array<readonly [Function, Function, {}]>
+const integrationHandlerMap = new Map<
+  any,
+  NamedHandlerWithDependencies<any, any, any, any>[]
+>() // Array<readonly [Function, Function, {}]>
 
 export { registerDomainEventHandler, registerIntegrationEventHandler }
