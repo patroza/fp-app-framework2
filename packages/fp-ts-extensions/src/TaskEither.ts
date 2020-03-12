@@ -59,7 +59,7 @@ export function chainTup<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
   )
 }
 
-export const sequence = <T, E>(results: AsyncResult<T, E>[]): AsyncResult<T[], E> => {
+export const parallel = <T, E>(results: AsyncResult<T, E>[]): AsyncResult<T[], E> => {
   return async () => E.sequence(await Promise.all(results.map(x => x())))
 }
 

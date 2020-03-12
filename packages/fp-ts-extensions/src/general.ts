@@ -27,8 +27,6 @@ export function tee(f: any) {
 
 export const regainType = <T, TOut>(f: (i: T) => TOut) => <T2 extends T>(i: T2) => f(i)
 
-export const flattenErrors = <E>(errors: E[]) => errors[0]
-
 export const mapper = <T, TOut>(mapper: (i: T) => TOut) => <FOut>(
   f: (i: TOut) => FOut,
 ) => <T2 extends T>(i: T2) => f(mapper(i))

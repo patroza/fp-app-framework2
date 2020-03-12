@@ -55,7 +55,7 @@ const toTrip = trampoline(
       )
 
     return pipe(
-      TE.sequence(
+      TE.parallel(
         [_.TE.startWith(curTC)].concat(
           typedKeysOf(tpl.travelClasses)
             .filter(x => x !== curTC.name)

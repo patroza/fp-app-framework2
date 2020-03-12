@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // export * from "fp-ts/lib/Either"
 
-import { Either, Right } from "fp-ts/lib/Either"
+import { Either } from "fp-ts/lib/Either"
 import { pipe } from "fp-ts/lib/pipeable"
 
 import * as E from "fp-ts/lib/Either"
@@ -9,12 +9,13 @@ import * as RE from "fp-ts/lib/ReaderEither"
 import * as TE from "fp-ts/lib/TaskEither"
 
 import { flatten, zip } from "lodash"
-import { toValue, tee, flattenErrors } from "./general"
+import { toValue, tee } from "./general"
 import { tuple, flow } from "fp-ts/lib/function"
 
 export * from "fp-ts/lib/Either"
 
 import { pipe as _pipe } from "lodash/fp"
+import { sequenceT } from "fp-ts/lib/Apply"
 
 export type Result<TSuccess, TError> = Either<TError, TSuccess>
 const err = E.left
@@ -107,15 +108,10 @@ export function ifError(defaultVal: any) {
   }
 }
 
-export const joinError = <T>(result: Result<T, string[]>) =>
-  pipe(
-    result,
-    E.mapLeft(x => x.join("\n")),
-  )
-
 export const sequence = <T, E>(results: Result<T, E>[]): Result<T[], E> =>
-  pipe(resultAll(results), E.mapLeft(flattenErrors))
+  sequenceT(E.either)(results[0], ...results.slice(1))
 
+// keeps all errors
 export const resultAll = <T, E>(results: Result<T, E>[]): Result<T[], E[]> => {
   const errors = results.filter(isErr).map(x => x.left)
   if (errors.length) {
