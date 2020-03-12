@@ -63,24 +63,6 @@ export const sequence = <T, E>(results: AsyncResult<T, E>[]): AsyncResult<T[], E
   return async () => E.sequence(await Promise.all(results.map(x => x())))
 }
 
-export const resultAll = <T, E>(
-  results: AsyncResult<T, E>[],
-): AsyncResult<T[], E[]> => {
-  return async () => E.resultAll(await Promise.all(results.map(x => x())))
-}
-
-// Unused
-export const valueOrUndefined = <TInput, TOutput, TErrorOutput>(
-  input: TInput | undefined,
-  resultCreator: RTE.ReaderTaskEither<TInput, TErrorOutput, TOutput>,
-): AsyncResult<TOutput | undefined, TErrorOutput> => async () => {
-  if (input === undefined) {
-    return E.right(undefined)
-  }
-  const resultCreatorTask = resultCreator(input)
-  return await resultCreatorTask()
-}
-
 export const liftLeft = <TE>() => <T, TE2 extends TE>(e: () => TaskEither<TE2, T>) =>
   e as () => TaskEither<TE, T>
 // flow(e, TE.mapLeft(liftType<TE>()))

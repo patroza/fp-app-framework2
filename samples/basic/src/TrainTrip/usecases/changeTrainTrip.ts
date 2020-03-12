@@ -6,12 +6,14 @@ import {
   InvalidStateError,
   toFieldError,
   ValidationError,
+  FieldValidationError,
 } from "@fp-app/framework"
-import { pipe, E, TE } from "@fp-app/fp-ts-extensions"
+import { pipe, E, TE, NA } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { DbContextKey, defaultDependencies } from "./types"
+import { sequenceT } from "fp-ts/lib/Apply"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -63,18 +65,21 @@ const validateStateProposition = (
   { pax, startDate, travelClass }: StateProposition, // ...rest
 ) =>
   pipe(
-    E.resultTuple(
+    sequenceT(E.getValidation(NA.getSemigroup<FieldValidationError>()))(
       pipe(
         E.valueOrUndefined(travelClass, TravelClassDefinition.create),
         E.mapLeft(toFieldError("travelClass")),
+        E.mapLeft(NA.of),
       ),
       pipe(
         E.valueOrUndefined(startDate, FutureDate.create),
         E.mapLeft(toFieldError("startDate")),
+        E.mapLeft(NA.of),
       ),
       pipe(
         E.valueOrUndefined(pax, PaxDefinition.create),
         E.mapLeft(toFieldError("pax")),
+        E.mapLeft(NA.of),
       ),
       // E.ok(rest),
     ),

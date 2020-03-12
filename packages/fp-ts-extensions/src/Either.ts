@@ -113,37 +113,6 @@ export const joinError = <T>(result: Result<T, string[]>) =>
     E.mapLeft(x => x.join("\n")),
   )
 
-export function resultTuple<T, T2, E>(
-  r1: Result<T, E>,
-  r2: Result<T2, E>,
-): Result<readonly [T, T2], E[]>
-export function resultTuple<T, T2, T3, E>(
-  r1: Result<T, E>,
-  r2: Result<T2, E>,
-  r3: Result<T3, E>,
-): Result<readonly [T, T2, T3], E[]>
-export function resultTuple<T, T2, T3, T4, E>(
-  r1: Result<T, E>,
-  r2: Result<T2, E>,
-  r3: Result<T3, E>,
-  r4: Result<T4, E>,
-): Result<readonly [T, T2, T3, T4], E[]>
-export function resultTuple<T, T2, T3, T4, T5, E>(
-  r1: Result<T, E>,
-  r2: Result<T2, E>,
-  r3: Result<T3, E>,
-  r4: Result<T4, E>,
-  r5: Result<T5, E>,
-): Result<readonly [T, T2, T3, T4, T5], E[]>
-export function resultTuple(...results: Result<any, any>[]) {
-  const errors = results.filter(isErr).map(x => x.left)
-  if (errors.length) {
-    return err(errors)
-  }
-  const successes = (results as Right<any>[]).map(x => x.right) as readonly any[]
-  return ok(successes)
-}
-
 export const sequence = <T, E>(results: Result<T, E>[]): Result<T[], E> =>
   pipe(resultAll(results), E.mapLeft(flattenErrors))
 
@@ -226,84 +195,6 @@ export function chainFlatTup(f: any) {
       E.map(x => [x, ...input] as const),
     ),
   )
-}
-
-//////
-// Stabl at simplify working with resultTuple
-// tslint:disable:max-line-length
-// Doesn't work
-export function resultTuple2<TInput, T, T2, E>(
-  r1: (input: TInput) => Result<T, E>,
-  r2: (input: TInput) => Result<T2, E>,
-): (input: TInput) => Result<readonly [T, T2], E[]>
-export function resultTuple2<TInput, T, T2, T3, E>(
-  r1: (input: TInput) => Result<T, E>,
-  r2: (input: TInput) => Result<T2, E>,
-  r3: (input: TInput) => Result<T3, E>,
-): (input: TInput) => Result<readonly [T, T2, T3], E[]>
-export function resultTuple2<TInput, T, T2, T3, T4, E>(
-  r1: (input: TInput) => Result<T, E>,
-  r2: (input: TInput) => Result<T2, E>,
-  r3: (input: TInput) => Result<T3, E>,
-  r4: (input: TInput) => Result<T4, E>,
-): (input: TInput) => Result<readonly [T, T2, T3, T4], E[]>
-export function resultTuple2<TInput, T, T2, T3, T4, T5, E>(
-  r1: (input: TInput) => Result<T, E>,
-  r2: (input: TInput) => Result<T2, E>,
-  r3: (input: TInput) => Result<T3, E>,
-  r4: (input: TInput) => Result<T4, E>,
-  r5: (input: TInput) => Result<T5, E>,
-): (input: TInput) => Result<readonly [T, T2, T3, T4, T5], E[]>
-export function resultTuple2(...resultFNs: ((input: any) => Result<any, any>)[]) {
-  return (input: any) => {
-    const results = resultFNs.map(x => x(input))
-    const errors = results.filter(isErr).map(x => x.left)
-    if (errors.length) {
-      return err(errors)
-    }
-    const successes = (results as Right<any>[]).map(x => x.right) as readonly any[]
-    return ok(successes)
-  }
-}
-
-// not so cool?
-export function resultTuple3<TInput, T, T2, E>(
-  input: TInput,
-  r1: (input: TInput) => Result<T, E>,
-  r2: (input: TInput) => Result<T2, E>,
-): Result<readonly [T, T2], E[]>
-export function resultTuple3<TInput, T, T2, T3, E>(
-  input: TInput,
-  r1: (input: TInput) => Result<T, E>,
-  r2: (input: TInput) => Result<T2, E>,
-  r3: (input: TInput) => Result<T3, E>,
-): Result<readonly [T, T2, T3], E[]>
-export function resultTuple3<TInput, T, T2, T3, T4, E>(
-  input: TInput,
-  r1: (input: TInput) => Result<T, E>,
-  r2: (input: TInput) => Result<T2, E>,
-  r3: (input: TInput) => Result<T3, E>,
-  r4: (input: TInput) => Result<T4, E>,
-): Result<readonly [T, T2, T3, T4], E[]>
-export function resultTuple3<TInput, T, T2, T3, T4, T5, E>(
-  input: TInput,
-  r1: (input: TInput) => Result<T, E>,
-  r2: (input: TInput) => Result<T2, E>,
-  r3: (input: TInput) => Result<T3, E>,
-  r4: (input: TInput) => Result<T4, E>,
-  r5: (input: TInput) => Result<T5, E>,
-): Result<readonly [T, T2, T3, T4, T5], E[]>
-export function resultTuple3(
-  input: any,
-  ...resultFNs: ((input: any) => Result<any, any>)[]
-) {
-  const results = resultFNs.map(x => x(input))
-  const errors = results.filter(isErr).map(x => x.left)
-  if (errors.length) {
-    return err(errors)
-  }
-  const successes = (results as Right<any>[]).map(x => x.right) as readonly any[]
-  return ok(successes)
 }
 
 const success = <TErr>() => ok<TErr, void>(void 0)

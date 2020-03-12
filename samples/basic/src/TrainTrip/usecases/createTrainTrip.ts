@@ -6,12 +6,14 @@ import {
   InvalidStateError,
   toFieldError,
   ValidationError,
+  FieldValidationError,
 } from "@fp-app/framework"
-import { Result, pipe, E, TE, reverseApply } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, E, TE, reverseApply, NA } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
 import { DbContextKey, defaultDependencies, getTripKey } from "./types"
+import { sequenceT } from "fp-ts/lib/Apply"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -59,14 +61,20 @@ export interface Input {
   startDate: Date
 }
 
-// the problem is that the fp-ts compose doesnt return a data last function, but data first ;-)
-
 const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
   pipe(
-    E.resultTuple(
-      pipe(PaxDefinition.create(pax), E.mapLeft(toFieldError("pax"))),
-      pipe(FutureDate.create(startDate), E.mapLeft(toFieldError("startDate"))),
-      pipe(validateString(templateId), E.mapLeft(toFieldError("templateId"))),
+    sequenceT(E.getValidation(NA.getSemigroup<FieldValidationError>()))(
+      pipe(PaxDefinition.create(pax), E.mapLeft(toFieldError("pax")), E.mapLeft(NA.of)),
+      pipe(
+        FutureDate.create(startDate),
+        E.mapLeft(toFieldError("startDate")),
+        E.mapLeft(NA.of),
+      ),
+      pipe(
+        validateString(templateId),
+        E.mapLeft(toFieldError("templateId")),
+        E.mapLeft(NA.of),
+      ),
     ),
     E.mapLeft(combineValidationErrors),
 
@@ -75,25 +83,6 @@ const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
       startDate,
       templateId,
     })),
-
-    // Alt 1
-    // flatMap(input =>
-    //   E.resultTuple3(
-    //     input,
-    //     ({ pax }) => PaxDefinition.create(pax).compose(mapErr(toFieldError('pax'))),
-    //     ({ startDate }) => FutureDate.create(startDate).compose(mapErr(toFieldError('startDate'))),
-    //     ({ templateId }) => validateString(templateId).compose(mapErr(toFieldError('templateId'))),
-    //   ).mapErr(combineValidationErrors),
-    // ),
-
-    // Alt 2
-    // Why doesn't this work?
-    // flatMap(E.resultTuple2(
-    //   ({pax}) => PaxDefinition.create(pax).compose(mapErr(toFieldError('pax'))),
-    //   ({startDate}) => FutureDate.create(startDate).compose(mapErr(toFieldError('startDate'))),
-    //   ({templateId}) => validateString(templateId).compose(mapErr(toFieldError('templateId'))),
-    // )),
-    // mapErr(combineValidationErrors),
   )
 
 type ValidatedInput = E.RightArg<ReturnType<typeof validateCreateTrainTripInfo>>

@@ -13,6 +13,7 @@ import * as E from "./Either"
 import * as O from "fp-ts/lib/Option"
 import * as RE from "./ReaderEither"
 import * as T from "fp-ts/lib/Task"
+import * as NA from "fp-ts/lib/NonEmptyArray"
 import * as RA from "fp-ts/lib/ReadonlyArray"
 import * as RANE from "fp-ts/lib/ReadonlyNonEmptyArray"
 import * as RT from "fp-ts/lib/ReaderTask"
@@ -20,7 +21,7 @@ import * as RTE from "./ReaderTaskEither"
 
 import * as t from "./Io"
 
-export { O, t, T, RA, RANE, RE, RT, RTE, ReadonlyNonEmptyArray }
+export { O, NA, t, T, RA, RANE, RE, RT, RTE, ReadonlyNonEmptyArray }
 
 const toolDepsInstance = Object.freeze({
   E: Object.freeze({ liftErr: E.liftErr(), startWith: E.right }),
