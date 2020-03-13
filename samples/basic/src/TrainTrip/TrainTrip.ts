@@ -1,4 +1,5 @@
 // tslint:disable:max-classes-per-file
+import { Lens } from "monocle-ts"
 
 import {
   Entity,
@@ -122,12 +123,25 @@ export default class TrainTrip extends Entity {
   }
 
   readonly updateTrip = (trip: Trip) => {
+    const travelClass = Lens.fromPath<TravelClassConfiguration>()(["travelClass"])
+
     // This will clear all configurations upon trip update
     // TODO: Investigate a resolution mechanism to update existing configurations, depends on business case ;-)
     // TODO: Here we could use optics for testing?
-    this.w.travelClassConfiguration = trip.travelClasses.map(x =>
-      E.unsafeUnwrap(TravelClassConfiguration.create(x)),
-    )
+    this.w.travelClassConfiguration = trip.travelClasses.map(x => {
+      const existing = this.travelClassConfiguration.find(
+        y => y.travelClass.name === x.name,
+      )
+      return existing
+        ? travelClass.modify(() => x)(existing)
+        : E.unsafeUnwrap(TravelClassConfiguration.create(x))
+    })
+    // E.unsafeUnwrap(TravelClassConfiguration.create(x)
+    // vs:
+    // this.w.travelClassConfiguration = trip.travelClasses.map(x =>
+    //   const existing = this.travelClassConfiguration.find(y => y.travelClass.name === x.name)
+    //   return { ...existing, travelClass: x }
+    // }
     const currentTravelClassConfiguration = this.travelClassConfiguration.find(
       x => this.currentTravelClassConfiguration.travelClass.name === x.travelClass.name,
     )
@@ -249,6 +263,7 @@ export default class TrainTrip extends Entity {
 
 const B = t.partial({
   priceLastUpdated: t.date,
+  options: t.type({ option1: t.boolean, option2: t.number }),
 })
 
 const Price2 = t.type({
