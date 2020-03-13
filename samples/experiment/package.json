@@ -4,9 +4,11 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@morphic-ts/batteries": "^0.6.2",
+    "@devexperts/remote-data-ts": "^2.0.3",
+    "@morphic-ts/batteries": "^0.7.0",
+    "@nll/datum": "^3.0.3",
     "cross-fetch": "^3.0.4",
-    "fetcher-ts": "^1.1.0",
+    "fetcher-ts": "^1.1.1",
     "fp-ts-contrib": "^0.1.14",
     "io-ts": "^2.1.2",
     "io-ts-promise": "^2.0.2",
@@ -15,7 +17,8 @@
     "npm-check-updates": "^4.0.4"
   },
   "devDependencies": {
-    "@types/node": "^13.9.0"
+    "@types/node": "^13.9.1",
+    "fast-check": "^1.23.0"
   },
   "resolutions": {
     "@hapi/joi": "^17.1.0"
