@@ -5,11 +5,13 @@ import { flow } from "fp-ts/lib/function"
 import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 // TODO: Value or Entity?
 
-const _TravelClass = t.type({
-  createdAt: t.date,
-  templateId: t.NonEmptyString,
-  name: TravelClassDefinition,
-})
+const _TravelClass = t.readonly(
+  t.type({
+    createdAt: t.date,
+    templateId: t.NonEmptyString,
+    name: TravelClassDefinition,
+  }),
+)
 
 const createTravelClass = ({
   name,
@@ -48,9 +50,11 @@ interface TravelClass extends TravelClassType {}
 
 export { TravelClass }
 
-const _Trip = t.type({
-  travelClasses: t.nonEmptyArray(TravelClass),
-})
+const _Trip = t.readonly(
+  t.type({
+    travelClasses: t.readonlyNonEmptyArray(TravelClass),
+  }),
+)
 
 const createTrip = (travelClasses: TravelClass[]): E.Either<t.Errors, Trip> =>
   _Trip.decode({ travelClasses })
@@ -67,7 +71,7 @@ interface Trip extends TripType {}
 
 export default Trip
 
-const SelectedTravelClass = t.type({ currentTravelClass: TravelClass })
+const SelectedTravelClass = t.readonly(t.type({ currentTravelClass: TravelClass }))
 
 const TripWithSelectedTravelClassFields = t.intersection(
   [SelectedTravelClass, Trip],
