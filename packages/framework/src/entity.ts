@@ -1,5 +1,6 @@
 import Event from "./event"
 import { Writeable } from "./utils"
+import { eqString, contramap } from "fp-ts/lib/Eq"
 
 /**
  * - An Entity has an Identifier. Unlike a Value.
@@ -29,4 +30,8 @@ export default abstract class Entity {
   protected registerDomainEvent(evt: Event) {
     this.events.push(evt)
   }
+
+  public readonly equals = eqEntity
 }
+
+const eqEntity = contramap((e: Entity) => e.id)(eqString)
