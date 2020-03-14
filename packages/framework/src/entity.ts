@@ -31,7 +31,12 @@ export default abstract class Entity {
     this.events.push(evt)
   }
 
-  public readonly equals = eqEntity
+  /**
+   * An entity of the same type is equal to this entity when it's ID match
+   * Note: Does not take inheritance into account. Strict constructor check.
+   */
+  public readonly equals = (e2: Entity) =>
+    this.constructor === e2.constructor && eqEntity.equals(this, e2)
 }
 
 const eqEntity = contramap((e: Entity) => e.id)(eqString)
