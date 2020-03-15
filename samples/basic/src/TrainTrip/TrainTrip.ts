@@ -7,6 +7,7 @@ import {
   generateUuid,
   InvalidStateError,
   ValidationError,
+  Writeable,
 } from "@fp-app/framework"
 import Event from "@fp-app/framework/src/event"
 import {
@@ -87,30 +88,7 @@ export default class TrainTrip extends Entity {
     Object.assign(this, rest)
   }
 
-  proposeChanges = trampoline(
-    (_: ToolDeps<ValidationError | InvalidStateError | ForbiddenError>) => (
-      state: StateProposition,
-    ) =>
-      pipe(
-        this.confirmUserChangeAllowed(),
-        E.mapStatic(state),
-        E.chain(pipe(this.applyDefinedChanges, _.RE.liftErr)),
-        E.map(this.createChangeEvents),
-      ),
-    // ALT1
-    // pipe(
-    //   E.ok(state),
-    //   E.chainTee(this.confirmUserChangeAllowed),
-    //   E.chain(liftE(this.applyDefinedChanges)),
-    //   E.map(this.createChangeEvents),
-    // )
-    // ALT2
-    // pipe(
-    //   this.confirmUserChangeAllowed(),
-    //   E.chain(liftErr(() => this.applyDefinedChanges(state))),
-    //   E.map(this.createChangeEvents),
-    // )
-  )
+  proposeChanges = proposeChanges(this)
 
   lock() {
     this.w.lockedAt = new Date()
@@ -199,67 +177,127 @@ export default class TrainTrip extends Entity {
   //// End Separate sample; not used other than testing
   ////////////
 
-  private readonly applyDefinedChanges = ({
-    pax,
-    startDate,
-    travelClass,
-  }: StateProposition) =>
-    E.anyTrue<ValidationError | InvalidStateError>(
-      E.map(() => applyIfNotUndefined(startDate, this.intChangeStartDate)),
-      E.map(() => applyIfNotUndefined(pax, this.intChangePax)),
-      E.chain(() => E.valueOrUndefined(travelClass, this.intChangeTravelClass)),
-    )
+  private readonly applyDefinedChanges = applyDefinedChanges(this)
 
-  private readonly intChangeStartDate = (startDate: FutureDate) => {
-    if (startDate.toISOString() === this.startDate.toISOString()) {
-      return false
-    }
+  private readonly intChangeStartDate = unwrapResult(intChangeStartDate(this))
 
-    this.w.startDate = startDate
-    // TODO: other business logic
-
-    return true
-  }
-
-  private readonly intChangePax = (pax: PaxDefinition) => {
-    if (isEqual(this.pax, pax)) {
-      return false
-    }
-
-    this.w.pax = pax
-    // TODO: other business logic
-
-    return true
-  }
-
-  private readonly intChangeTravelClass = (
-    travelClass: TravelClassDefinition,
-  ): Result<boolean, InvalidStateError> => {
-    const slc = this.travelClassConfiguration.find(
-      x => x.travelClass.name === travelClass,
-    )
-    if (!slc) {
-      return E.err(new InvalidStateError(`${travelClass} not available currently`))
-    }
-    if (this.currentTravelClassConfiguration === slc) {
-      return E.ok(false)
-    }
-    this.w.currentTravelClassConfiguration = slc
-    return E.ok(true)
-  }
-
-  private confirmUserChangeAllowed = (): Result<void, ForbiddenError> =>
-    this.isLocked
-      ? E.err(new ForbiddenError(`No longer allowed to change TrainTrip ${this.id}`))
-      : E.success()
+  private readonly intChangePax = unwrapResult(intChangePax(this))
+  private readonly intChangeTravelClass = unwrapResultEither(intChangeTravelClass(this))
+  private confirmUserChangeAllowed = confirmUserChangeAllowed(this)
 
   private readonly createChangeEvents = (changed: boolean) => {
-    this.registerDomainEvent(new UserInputReceived(this.id))
-    if (changed) {
-      this.registerDomainEvent(new TrainTripStateChanged(this.id))
+    const events = [...createChangeEvents(this)(changed)]
+    for (const event of events) {
+      this.registerDomainEvent(event)
     }
+    return events
   }
 }
+
+export const proposeChanges = (_this: TrainTrip) =>
+  trampoline(
+    (_: ToolDeps<ValidationError | InvalidStateError | ForbiddenError>) => (
+      state: StateProposition,
+    ) =>
+      pipe(
+        confirmUserChangeAllowed(_this)(),
+        E.mapStatic(state),
+        E.chain(pipe(applyDefinedChanges(_this), _.RE.liftErr)),
+        // TODO: push the events out as return
+        //E.map(x => [...createChangeEvents(_this)(x)]),
+        E.map(x => [..._this.createChangeEvents(x)]),
+      ),
+    // ALT1
+    // pipe(
+    //   E.ok(state),
+    //   E.chainTee(this.confirmUserChangeAllowed),
+    //   E.chain(liftE(this.applyDefinedChanges)),
+    //   E.map(this.createChangeEvents),
+    // )
+    // ALT2
+    // pipe(
+    //   this.confirmUserChangeAllowed(),
+    //   E.chain(liftErr(() => this.applyDefinedChanges(state))),
+    //   E.map(this.createChangeEvents),
+    // )
+  )
+
+// TODO: we have to return the object from each map
+const applyDefinedChanges = (_this: TrainTrip) => ({
+  pax,
+  startDate,
+  travelClass,
+}: StateProposition) =>
+  E.anyTrue<ValidationError | InvalidStateError>(
+    E.map(() => applyIfNotUndefined(startDate, intChangeStartDate(_this))),
+    E.map(() => applyIfNotUndefined(pax, intChangePax(_this))),
+    E.chain(() => E.valueOrUndefined(travelClass, intChangeTravelClass(_this))),
+  )
+
+const intChangeStartDate = (_this: TrainTrip) => (startDate: FutureDate) => {
+  if (startDate.toISOString() === _this.startDate.toISOString()) {
+    return [_this, false] as const
+  }
+
+  ;(_this as Writeable<TrainTrip>).startDate = startDate
+  // TODO: other business logic
+
+  return [_this, true] as const
+}
+
+const intChangePax = (_this: TrainTrip) => (pax: PaxDefinition) => {
+  if (isEqual(_this.pax, pax)) {
+    return [_this, false] as const
+  }
+
+  ;(_this as Writeable<TrainTrip>).pax = pax
+  // TODO: other business logic
+
+  return [_this, true] as const
+}
+
+const intChangeTravelClass = (_this: TrainTrip) => (
+  travelClass: TravelClassDefinition,
+): Result<readonly [TrainTrip, boolean], InvalidStateError> => {
+  const slc = _this.travelClassConfiguration.find(
+    x => x.travelClass.name === travelClass,
+  )
+  if (!slc) {
+    return E.err(new InvalidStateError(`${travelClass} not available currently`))
+  }
+  if (_this.currentTravelClassConfiguration === slc) {
+    return E.ok([_this, false])
+  }
+  ;(_this as Writeable<TrainTrip>).currentTravelClassConfiguration = slc
+  return E.ok([_this, true])
+}
+
+const unwrapResultEither = <TE, T, T2, TArgs extends any[]>(
+  func: (...args: TArgs) => E.Either<TE, readonly [T, T2]>,
+) => (...args: TArgs) => E.either.map(func(...args), ([_, r]) => r)
+
+const unwrapResult = <TT, T2, TArgs extends any[]>(
+  func: (...args: TArgs) => readonly [T, T2],
+) => (...args: TArgs) => {
+  const [_, r] = func(...args)
+  return r
+}
+
+const confirmUserChangeAllowed = (_this: TrainTrip) => (): Result<
+  void,
+  ForbiddenError
+> =>
+  _this.isLocked
+    ? E.err(new ForbiddenError(`No longer allowed to change TrainTrip ${_this.id}`))
+    : E.success()
+
+const createChangeEvents = (_this: TrainTrip) =>
+  function*(changed: boolean) {
+    yield new UserInputReceived(_this.id)
+    if (changed) {
+      yield new TrainTripStateChanged(_this.id)
+    }
+  }
 
 const Options = t.readonly(
   t.type({
