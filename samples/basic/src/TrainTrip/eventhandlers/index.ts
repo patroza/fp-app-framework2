@@ -22,6 +22,7 @@ import {
 import { pipe, TE } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"
+import { wrap } from "../infrastructure/utils"
 
 // Domain Events should primarily be used to be turned into Integration Event (Post-Commit, call other service)
 // There may be other small reasons to use it, like to talk to an external system Pre-Commit.
@@ -91,7 +92,7 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
   ({ _, db, getTrip }) =>
     TE.compose(
       TE.map(x => x.trainTripId),
-      TE.chain(pipe(db.trainTrips.load, _.RTE.liftErr)),
+      TE.chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
       TE.chainTup(pipe(getTripFromTrainTrip(getTrip), _.RTE.liftErr)),
       // ALT1
       // pipe(

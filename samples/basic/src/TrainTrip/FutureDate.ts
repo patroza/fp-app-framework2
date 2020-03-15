@@ -27,11 +27,12 @@ export const _FutureDate = withBla(
 const FutureDate = merge(_FutureDate, {
   create: flow(
     _FutureDate.decode,
+    E.map(x => x as FutureDate),
     E.mapLeft(x => new ValidationError(decodeErrors(x))),
   ),
 })
 
-type FutureDateType = t.TypeOf<typeof FutureDate>
+type FutureDateType = t.TypeOf<typeof _FutureDate>
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface FutureDate extends FutureDateType {}
 

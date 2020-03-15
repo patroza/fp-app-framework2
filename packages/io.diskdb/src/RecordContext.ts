@@ -1,25 +1,17 @@
 import {
   ConnectionException,
-  DbError,
   Event,
   OptimisticLockException,
   RecordContext,
-  RecordNotFound,
   isTruthyFilter,
   CouldNotAquireDbLockException,
 } from "@fp-app/framework"
-import {
-  pipe,
-  AsyncResult,
-  E,
-  TE,
-  trampoline,
-  ToolDeps,
-  RTE,
-} from "@fp-app/fp-ts-extensions"
+import { pipe, O, RT, T, TO } from "@fp-app/fp-ts-extensions"
 import { lock } from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
 import { assertIsNotUndefined } from "@fp-app/framework"
+import { flow } from "fp-ts/lib/function"
+import { sequenceT } from "fp-ts/lib/Apply"
 
 // tslint:disable-next-line:max-classes-per-file
 export default class DiskRecordContext<T extends DBRecord> implements RecordContext<T> {
@@ -40,16 +32,16 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
     this.removals.push(record)
   }
 
-  readonly load: RTE.ReaderTaskEither<string, DbError, T> = id => {
+  readonly load: RT.ReaderTask<string, O.Option<T>> = id => {
     const cachedRecord = this.cache.get(id)
     if (cachedRecord) {
-      return TE.ok(cachedRecord.data)
+      return TO.some(cachedRecord.data)
     }
     return pipe(
       tryReadFromDb(this.type, id),
-      TE.map(serializedStr => JSON.parse(serializedStr) as SerializedDBRecord),
-      TE.map(({ data, version }) => ({ data: this.deserializer(data), version })),
-      TE.map(({ data, version }) => {
+      TO.map(serializedStr => JSON.parse(serializedStr) as SerializedDBRecord),
+      TO.map(({ data, version }) => ({ data: this.deserializer(data), version })),
+      TO.map(({ data, version }) => {
         this.cache.set(id, { version, data })
         return data
       }),
@@ -65,95 +57,99 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
     )
   }
 
-  // TODO: reader should be single object input
   readonly intSave = (
-    forEachSave?: (item: T) => AsyncResult<void, DbError>,
-    forEachDelete?: (item: T) => AsyncResult<void, DbError>,
-  ): AsyncResult<void, DbError> =>
-    pipe(
-      this.handleDeletions(forEachDelete),
-      TE.chain(() => this.handleInsertionsAndUpdates(forEachSave)),
+    forEachSave?: (item: T) => Promise<void>,
+    forEachDelete?: (item: T) => Promise<void>,
+  ): Promise<void> =>
+    tRunSequentially(
+      () => this.handleDeletions(forEachDelete),
+      () => this.handleInsertionsAndUpdates(forEachSave),
     )
-
   private readonly handleDeletions = (
-    forEachDelete?: (item: T) => AsyncResult<void, DbError>,
-  ): AsyncResult<void, DbError> =>
-    TE.chainTasks(
-      this.removals
+    forEachDelete?: (item: T) => Promise<void>,
+  ): Promise<void> =>
+    tRunSequentially(
+      ...this.removals
         .map(e =>
           [
-            this.deleteRecord(e),
-            forEachDelete && forEachDelete(e),
-            TE.fromEither(E.exec(() => this.cache.delete(e.id))),
+            () => this.deleteRecord(e),
+            forEachDelete && (() => forEachDelete(e)),
+            () => Promise.resolve(this.cache.delete(e.id)),
           ].filter(isTruthyFilter),
         )
         .flat(),
     )
 
-  private readonly handleInsertionsAndUpdates = (
-    forEachSave?: (item: T) => AsyncResult<void, DbError>,
-  ): AsyncResult<void, DbError> =>
-    TE.chainTasks(
-      Array.from(this.cache.values())
+  private readonly handleInsertionsAndUpdates = async (
+    forEachSave?: (item: T) => Promise<void>,
+  ): Promise<void> =>
+    tRunSequentially(
+      ...Array.from(this.cache.values())
         .map(({ data }) =>
-          [this.saveRecord(data), forEachSave && forEachSave(data)].filter(
-            isTruthyFilter,
-          ),
+          [
+            () => this.saveRecord(data),
+            forEachSave && (() => forEachSave(data)),
+          ].filter(isTruthyFilter),
         )
         .flat(),
     )
 
-  private readonly saveRecord = trampoline(
-    (_: ToolDeps<DbError>) => (record: T) => async (): Promise<
-      E.Either<DbError, void>
-    > => {
-      const cachedRecord = this.cache.get(record.id)
-      assertIsNotUndefined(cachedRecord, { cachedRecord })
-      if (!cachedRecord.version) {
-        const actualSave = this.actualSave(record, cachedRecord.version)
-        return await actualSave()
-      }
+  private readonly saveRecord = async (record: T) => {
+    const cachedRecord = this.cache.get(record.id)
+    assertIsNotUndefined(cachedRecord, { cachedRecord })
+    if (!cachedRecord.version) {
+      return await this.actualSave(record, cachedRecord.version)
+    }
 
-      return await lockRecordOnDisk(
-        this.type,
-        record.id,
-        pipe(
-          tryReadFromDb(this.type, record.id),
-          TE.map(s => JSON.parse(s) as SerializedDBRecord),
-          TE.do(({ version }) => {
-            if (version !== cachedRecord.version) {
-              throw new OptimisticLockException(this.type, record.id)
-            }
-          }),
-          TE.chain(_.RTE.liftErr(({ version }) => this.actualSave(record, version))),
-        ),
-      )
-    },
-  )
-
-  private readonly deleteRecord = (record: T) => () =>
-    lockRecordOnDisk(
+    return await lockRecordOnDisk(
       this.type,
       record.id,
       pipe(
-        TE.right(void 0),
-        TE.chain(() =>
-          TE.tryExecute(() => deleteFile(getFilename(this.type, record.id))),
+        tryReadFromDb(this.type, record.id),
+        TO.map(s => JSON.parse(s) as SerializedDBRecord),
+        TO.do(({ version }) => {
+          if (version !== cachedRecord.version) {
+            throw new OptimisticLockException(this.type, record.id)
+          }
+        }),
+        TO.fold(
+          () => T.of(void 0),
+          ({ version }) => () => this.actualSave(record, version),
         ),
       ),
     )
+  }
 
-  private readonly actualSave = (record: T, version: number) =>
-    TE.tryExecute<void, any>(async () => {
-      const data = this.serializer(record)
+  private readonly deleteRecord = (record: T): Promise<void> =>
+    lockRecordOnDisk(this.type, record.id, () =>
+      deleteFile(getFilename(this.type, record.id)),
+    )
 
-      const serialized = JSON.stringify({ version: version + 1, data })
-      await writeFile(getFilename(this.type, record.id), serialized, {
-        encoding: "utf-8",
-      })
-      this.cache.set(record.id, { version, data: record })
+  private readonly actualSave = async (record: T, version: number) => {
+    const data = this.serializer(record)
+
+    const serialized = JSON.stringify({ version: version + 1, data })
+    await writeFile(getFilename(this.type, record.id), serialized, {
+      encoding: "utf-8",
     })
+    this.cache.set(record.id, { version, data: record })
+  }
 }
+
+const runSequentially = async <T>(...taskCreators: Array<T.Task<T>>): Promise<T[]> => {
+  if (taskCreators.length) {
+    const taskSequence = sequenceT(T.task)(taskCreators[0], ...taskCreators.slice(1))
+    return await taskSequence()
+  } else {
+    return []
+  }
+}
+
+const terminate = async (promise: Promise<any>) => {
+  await promise
+}
+
+const tRunSequentially = flow(runSequentially, terminate)
 
 interface DBRecord {
   id: string
@@ -168,11 +164,7 @@ interface CachedRecord<T> {
   data: T
 }
 
-const lockRecordOnDisk = async <T>(
-  type: string,
-  id: string,
-  cb: AsyncResult<T, DbError>,
-) => {
+const lockRecordOnDisk = async <T>(type: string, id: string, cb: T.Task<T>) => {
   try {
     const release = await lock(getFilename(type, id))
     try {
@@ -185,16 +177,13 @@ const lockRecordOnDisk = async <T>(
   }
 }
 
-const tryReadFromDb = (
-  type: string,
-  id: string,
-): AsyncResult<string, DbError> => async () => {
+const tryReadFromDb = (type: string, id: string): TO.TaskOption<string> => async () => {
   try {
     const filePath = getFilename(type, id)
     if (!(await exists(filePath))) {
-      return E.err(new RecordNotFound(type, id))
+      return O.none
     }
-    return E.ok(await readFile(filePath, { encoding: "utf-8" }))
+    return O.some(await readFile(filePath, { encoding: "utf-8" }))
   } catch (err) {
     throw new ConnectionException(err)
   }

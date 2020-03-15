@@ -1,6 +1,7 @@
 import { createCommandWithDeps, DbError } from "@fp-app/framework"
 import { TE } from "@fp-app/fp-ts-extensions"
 import { DbContextKey, defaultDependencies } from "./types"
+import { wrap } from "../infrastructure/utils"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -12,7 +13,7 @@ const lockTrainTrip = createCommand<Input, void, LockTrainTripError>(
   ({ db }) =>
     TE.compose(
       TE.map(({ trainTripId }) => trainTripId),
-      TE.chain(db.trainTrips.load),
+      TE.chain(wrap(db.trainTrips.load)),
       TE.map(trainTrip => trainTrip.lock()),
     ),
 )

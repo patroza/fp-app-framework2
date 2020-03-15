@@ -11,6 +11,7 @@ import { TE, pipe, E } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { DbContextKey, defaultDependencies } from "./types"
+import { wrap } from "../infrastructure/utils"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -39,7 +40,7 @@ export const changeStartDate = createCommand<
     TE.chainFlatTup(
       TE.compose(
         TE.map(([, i]) => i.trainTripId),
-        TE.chain(pipe(db.trainTrips.load, _.RTE.liftErr)),
+        TE.chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
       ),
       // ALT
       // pipe(
@@ -89,7 +90,7 @@ export const changeTravelClass = createCommand<
     TE.chainFlatTup(
       TE.compose(
         TE.map(([, i]) => i.trainTripId),
-        TE.chain(pipe(db.trainTrips.load, _.RTE.liftErr)),
+        TE.chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
       ),
     ),
     // I want to write this as: map([, i] => i.trainTripid), chain(db.trainTrips.load§)

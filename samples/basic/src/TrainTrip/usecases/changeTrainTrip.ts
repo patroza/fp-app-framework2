@@ -8,12 +8,14 @@ import {
   ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { pipe, E, TE, NA } from "@fp-app/fp-ts-extensions"
+import { pipe, E, TE, NA, t } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { DbContextKey, defaultDependencies } from "./types"
 import { sequenceT } from "fp-ts/lib/Apply"
+import { wrap } from "../infrastructure/utils"
+import { flow } from "fp-ts/lib/function"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -24,11 +26,11 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
   ({ _, db }) =>
     TE.compose(
-      TE.chainTup(pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)),
-      TE.chainFlatTup(
+      TE.chain(pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)),
+      TE.chainTup(
         TE.compose(
-          TE.map(([, i]) => i.trainTripId),
-          TE.chain(pipe(db.trainTrips.load, _.RTE.liftErr)),
+          TE.map(i => i.trainTripId),
+          TE.chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
         ),
       ),
       TE.chain(([trainTrip, proposal]) =>
@@ -61,11 +63,22 @@ export interface StateProposition {
   travelClass?: string
 }
 
-const validateStateProposition = (
-  { pax, startDate, travelClass }: StateProposition, // ...rest
-) =>
+const validateStateProposition = ({
+  pax,
+  startDate,
+  trainTripId,
+  travelClass,
+}: Input) =>
   pipe(
     sequenceT(E.getValidation(NA.getSemigroup<FieldValidationError>()))(
+      pipe(
+        flow(
+          t.NonEmptyString.decode,
+          E.mapLeft(err => new ValidationError(err.map(x => x.message).join(","))),
+        )(trainTripId),
+        E.mapLeft(toFieldError("trainTripId")),
+        E.mapLeft(NA.of),
+      ),
       pipe(
         E.valueOrUndefined(travelClass, TravelClassDefinition.create),
         E.mapLeft(toFieldError("travelClass")),
@@ -84,8 +97,8 @@ const validateStateProposition = (
       // E.ok(rest),
     ),
     E.mapLeft(combineValidationErrors),
-    E.map(([travelClass, startDate, pax]) => ({
-      //      ...rest,
+    E.map(([trainTripId, travelClass, startDate, pax]) => ({
+      trainTripId,
       pax,
       startDate,
       travelClass,

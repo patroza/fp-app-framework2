@@ -83,11 +83,12 @@ const _PaxDefinition = withBla(
 const PaxDefinition = merge(_PaxDefinition, {
   create: flow(
     _PaxDefinition.decode,
+    E.map(x => x as PaxDefinition),
     E.mapLeft(x => new ValidationError(decodeErrors(x))),
   ),
 })
 
-type PaxDefinitionType = t.TypeOf<typeof PaxDefinition>
+type PaxDefinitionType = t.TypeOf<typeof _PaxDefinition>
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface PaxDefinition extends PaxDefinitionType {}
 
