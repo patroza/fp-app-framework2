@@ -3,6 +3,7 @@
 
 import { map } from "fp-ts/lib/TaskEither"
 import { pipe } from "fp-ts/lib/pipeable"
+import { array } from "fp-ts/lib/Array"
 
 import * as E from "./Either"
 import * as T from "fp-ts/lib/Task"
@@ -59,8 +60,9 @@ export function chainTup<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
   )
 }
 
-export const parallel = <T, E>(results: AsyncResult<T, E>[]): AsyncResult<T[], E> => {
-  return async () => E.sequence(await Promise.all(results.map(x => x())))
+export const traverse = <T, E>(results: AsyncResult<T, E>[]): AsyncResult<T[], E> => {
+  const traverseM = array.traverse(TE.taskEither)
+  return traverseM(results, x => x)
 }
 
 export const liftLeft = <TE>() => <T, TE2 extends TE>(e: () => TaskEither<TE2, T>) =>

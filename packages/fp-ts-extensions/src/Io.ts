@@ -7,11 +7,19 @@ export { PathReporter, withMessage, withValidate }
 
 import { date } from "io-ts-types/lib/date"
 import { DateFromISOString } from "io-ts-types/lib/DateFromISOString"
+import { readonlyNonEmptyArray } from "./ReadonlyNonEmptyArray"
 import { nonEmptyArray } from "io-ts-types/lib/nonEmptyArray"
 import { NonEmptyString } from "io-ts-types/lib/NonEmptyString"
 import { UUID } from "io-ts-types/lib/UUID"
 
-export { date, NonEmptyString, DateFromISOString, nonEmptyArray, UUID }
+export {
+  date,
+  NonEmptyString,
+  DateFromISOString,
+  nonEmptyArray,
+  readonlyNonEmptyArray,
+  UUID,
+}
 
 export interface PositiveBrand {
   readonly Positive: unique symbol // use `unique symbol` here to ensure uniqueness across modules / packages

@@ -2492,7 +2492,7 @@ extsprintf@^1.2.0:
   resolved "https://registry.yarnpkg.com/extsprintf/-/extsprintf-1.4.0.tgz#e2689f8f356fad62cca65a3a91c5df5f9551692f"
   integrity sha1-4mifjzVvrWLMplo6kcXfX5VRaS8=
 
-fast-check@^1.22.1, fast-check@^1.23.0:
+fast-check@^1.16.0, fast-check@^1.22.1, fast-check@^1.23.0:
   version "1.23.0"
   resolved "https://registry.yarnpkg.com/fast-check/-/fast-check-1.23.0.tgz#7abe0059b192fb9025cd7d6640532fe8ab538746"
   integrity sha512-MRxcYG4YHTzP8wbjPsl6lZeUpY9sBuYsp6/w8lWmSvgS0wBrhMSErVnHmt5zi9sDWROCd+H7bk2jpr6wzToM6w==
@@ -2637,6 +2637,13 @@ fp-ts-contrib@^0.1.12, fp-ts-contrib@^0.1.14:
   version "0.1.14"
   resolved "https://registry.yarnpkg.com/fp-ts-contrib/-/fp-ts-contrib-0.1.14.tgz#2f46cf28749e927ba66962a40158d0043b7ed05b"
   integrity sha512-5mJetgRt/u4TBgBZ9dnHzKMRj5dAXFNvmE4cDU/9ObfXm4ndA0NWuDoS1VE2hTQKSV6PwuKgDfaR3Q4cuMAAIQ==
+
+fp-ts-laws@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/fp-ts-laws/-/fp-ts-laws-0.2.1.tgz#d9f7f1fd51a84e1cedcd059af10fa67d8d6e7c6a"
+  integrity sha512-KHsBlV7Cq0iHQ6x6tqZ01Kzzao/k1Z8oFHX/jPugRbd254xyDfw1sDSQYKErKInHNIwyqjnO+HU+CtJg85d38w==
+  dependencies:
+    fast-check "^1.16.0"
 
 fp-ts@2.5.3, fp-ts@^2.0.0, fp-ts@^2.4.1:
   version "2.5.3"

@@ -261,20 +261,33 @@ export default class TrainTrip extends Entity {
   }
 }
 
-const B = t.partial({
-  priceLastUpdated: t.date,
-  options: t.type({ option1: t.boolean, option2: t.number }),
-})
+const Options = t.readonly(
+  t.type({
+    option1: t.boolean,
+    option2: t.number,
+  }),
+)
 
-const Price2 = t.type({
-  amount: t.number,
-  currency: t.string,
-})
+const B = t.readonly(
+  t.partial({
+    priceLastUpdated: t.date,
+    options: Options,
+  }),
+)
 
-const A = t.type({
-  price: Price2,
-  travelClass: TravelClass,
-})
+const Price2 = t.readonly(
+  t.type({
+    amount: t.number,
+    currency: t.NonEmptyString,
+  }),
+)
+
+const A = t.readonly(
+  t.type({
+    price: Price2,
+    travelClass: TravelClass,
+  }),
+)
 
 const _TravelClassConfiguration = t.intersection([A, B])
 const createTravelClassConfiguration = (travelClass: TravelClass) => {

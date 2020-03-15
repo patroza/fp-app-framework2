@@ -1,5 +1,6 @@
 import Event from "./event"
 import { Writeable } from "./utils"
+import { eqString, contramap } from "fp-ts/lib/Eq"
 
 /**
  * - An Entity has an Identifier. Unlike a Value.
@@ -29,4 +30,13 @@ export default abstract class Entity {
   protected registerDomainEvent(evt: Event) {
     this.events.push(evt)
   }
+
+  /**
+   * An entity of the same type is equal to this entity when it's ID match
+   * Note: Does not take inheritance into account. Strict constructor check.
+   */
+  public readonly equals = (e2: Entity) =>
+    this.constructor === e2.constructor && eqEntity.equals(this, e2)
 }
+
+const eqEntity = contramap((e: Entity) => e.id)(eqString)
