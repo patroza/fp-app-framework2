@@ -7,7 +7,6 @@ import {
 } from "@/TrainTrip/usecases/types"
 import {
   ApiError,
-  ConnectionError,
   InvalidStateError,
   RecordNotFound,
   typedKeysOf,
@@ -118,13 +117,10 @@ const getFakePriceFromTemplate = () => ({ price: { amount: 100, currency: "EUR" 
 
 // eslint-disable-next-line @typescript-eslint/require-await
 const createTravelPlanFake = (): createTravelPlanType => () => async () =>
-  E.ok<ConnectionError, string>(v4())
+  E.ok<ApiError, string>(v4())
 
-const sendCloudSyncFake = (): RTE.ReaderTaskEither<
-  TrainTrip,
-  ConnectionError,
-  string
-> => () => TE.right<ConnectionError, string>(v4())
+const sendCloudSyncFake = (): RTE.ReaderTaskEither<TrainTrip, ApiError, string> => () =>
+  TE.right<ApiError, string>(v4())
 
 const getTravelPlanFake = (): getTravelPlanType => travelPlanId =>
   TE.right({ id: travelPlanId } as TravelPlan)

@@ -1,7 +1,6 @@
 import TrainTrip, { Price } from "@/TrainTrip/TrainTrip"
 import {
   ApiError,
-  ConnectionError,
   generateKey,
   generateKeyFromFn,
   RecordContext,
@@ -27,7 +26,7 @@ export type getPricingType = (
 export type createTravelPlanType = (
   templateId: string,
   info: { pax: PaxDefinition; startDate: Date },
-) => AsyncResult<string, ConnectionError>
+) => AsyncResult<string, ApiError>
 
 // tslint:disable-next-line:no-empty-interface
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

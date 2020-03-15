@@ -2,20 +2,10 @@
 
 import { ErrorBase } from "../errors"
 
-export type DbError =
-  | RecordNotFound
-  | ConnectionError
-  | OptimisticLockError
-  | CouldNotAquireDbLockError
-export type ApiError = RecordNotFound | ConnectionError
+export type DbError = RecordNotFound
+export type ApiError = RecordNotFound
 
-export class ConnectionError extends ErrorBase {
-  readonly name = "ConnectionError"
-  constructor(readonly error: Error) {
-    super("A connection error ocurred")
-  }
-}
-
+// TODO: we can model this as Some instead
 export class RecordNotFound extends ErrorBase {
   readonly name = "RecordNotFound"
   constructor(readonly type: string, readonly id: string) {
@@ -23,15 +13,21 @@ export class RecordNotFound extends ErrorBase {
   }
 }
 
-export class CouldNotAquireDbLockError extends Error {
-  readonly name = "CouldNotAquireDbLockError"
+// EXCEPTIONS
+
+export class ConnectionException extends Error {
+  constructor(readonly error: Error) {
+    super("A connection error ocurred")
+  }
+}
+
+export class CouldNotAquireDbLockException extends Error {
   constructor(readonly type: string, readonly id: string, readonly error: Error) {
     super(`Couldn't lock db record ${type}: ${id}`)
   }
 }
 
-export class OptimisticLockError extends Error {
-  readonly name = "OptimisticLockError"
+export class OptimisticLockException extends Error {
   constructor(readonly type: string, readonly id: string) {
     super(`Existing ${type} ${id} record changed`)
   }

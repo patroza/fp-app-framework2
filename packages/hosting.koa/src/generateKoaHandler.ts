@@ -2,8 +2,8 @@ import Koa from "koa"
 
 import {
   CombinedValidationError,
-  ConnectionError,
-  CouldNotAquireDbLockError,
+  ConnectionException,
+  CouldNotAquireDbLockException,
   DbError,
   defaultErrorPassthrough,
   ErrorBase,
@@ -13,7 +13,7 @@ import {
   InvalidStateError,
   logger,
   NamedHandlerWithDependencies,
-  OptimisticLockError,
+  OptimisticLockException,
   RecordNotFound,
   requestType,
   ValidationError,
@@ -71,7 +71,16 @@ export default function generateKoaHandler<
       await task()
     } catch (err) {
       logger.error(err)
-      ctx.status = 500
+
+      if (err instanceof OptimisticLockException) {
+        ctx.status = 409
+      } else if (err instanceof CouldNotAquireDbLockException) {
+        ctx.status = 503
+      } else if (err instanceof ConnectionException) {
+        ctx.status = 504
+      } else {
+        ctx.status = 500
+      }
     }
   }
 }
@@ -122,12 +131,6 @@ const handleDefaultError = (ctx: Koa.Context) => (err: ErrorBase) => {
   } else if (err instanceof ForbiddenError) {
     ctx.body = { message }
     ctx.status = 403
-  } else if (err instanceof OptimisticLockError) {
-    ctx.status = 409
-  } else if (err instanceof CouldNotAquireDbLockError) {
-    ctx.status = 503
-  } else if (err instanceof ConnectionError) {
-    ctx.status = 504
   } else {
     // Unknown error
     ctx.status = 500

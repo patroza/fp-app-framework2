@@ -1,12 +1,12 @@
 import {
-  ConnectionError,
-  CouldNotAquireDbLockError,
+  ConnectionException,
   DbError,
   Event,
-  OptimisticLockError,
+  OptimisticLockException,
   RecordContext,
   RecordNotFound,
   isTruthyFilter,
+  CouldNotAquireDbLockException,
 } from "@fp-app/framework"
 import {
   pipe,
@@ -104,35 +104,34 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
     )
 
   private readonly saveRecord = trampoline(
-    (_: ToolDeps<DbError>) => (record: T): AsyncResult<void, DbError> => {
+    (_: ToolDeps<DbError>) => (record: T) => async (): Promise<
+      E.Either<DbError, void>
+    > => {
       const cachedRecord = this.cache.get(record.id)
       assertIsNotUndefined(cachedRecord, { cachedRecord })
+      if (!cachedRecord.version) {
+        const actualSave = this.actualSave(record, cachedRecord.version)
+        return await actualSave()
+      }
 
-      return !cachedRecord.version
-        ? this.actualSave(record, cachedRecord.version)
-        : lockRecordOnDisk(
-            this.type,
-            record.id,
-            pipe(
-              tryReadFromDb(this.type, record.id),
-              TE.map(s => JSON.parse(s) as SerializedDBRecord),
-              TE.chain(
-                _.RTE.liftErr(
-                  TE.fromPredicate(
-                    ({ version }) => version === cachedRecord.version,
-                    () => new OptimisticLockError(this.type, record.id),
-                  ),
-                ),
-              ),
-              TE.chain(
-                _.RTE.liftErr(({ version }) => this.actualSave(record, version)),
-              ),
-            ),
-          )
+      return await lockRecordOnDisk(
+        this.type,
+        record.id,
+        pipe(
+          tryReadFromDb(this.type, record.id),
+          TE.map(s => JSON.parse(s) as SerializedDBRecord),
+          TE.do(({ version }) => {
+            if (version !== cachedRecord.version) {
+              throw new OptimisticLockException(this.type, record.id)
+            }
+          }),
+          TE.chain(_.RTE.liftErr(({ version }) => this.actualSave(record, version))),
+        ),
+      )
     },
   )
 
-  private readonly deleteRecord = (record: T): AsyncResult<void, DbError> =>
+  private readonly deleteRecord = (record: T) => () =>
     lockRecordOnDisk(
       this.type,
       record.id,
@@ -169,21 +168,22 @@ interface CachedRecord<T> {
   data: T
 }
 
-const lockRecordOnDisk = <T>(type: string, id: string, cb: AsyncResult<T, DbError>) =>
-  pipe(
-    tryLock(type, id),
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    TE.chain(release => () => cb().finally(release)),
-  )
-
-const tryLock = (
+const lockRecordOnDisk = async <T>(
   type: string,
   id: string,
-): AsyncResult<() => Promise<void>, CouldNotAquireDbLockError> =>
-  TE.tryCatch(
-    () => lock(getFilename(type, id)),
-    er => new CouldNotAquireDbLockError(type, id, er as Error),
-  )
+  cb: AsyncResult<T, DbError>,
+) => {
+  try {
+    const release = await lock(getFilename(type, id))
+    try {
+      return await cb()
+    } finally {
+      await release()
+    }
+  } catch (err) {
+    throw new CouldNotAquireDbLockException(type, id, err as Error)
+  }
+}
 
 const tryReadFromDb = (
   type: string,
@@ -196,7 +196,7 @@ const tryReadFromDb = (
     }
     return E.ok(await readFile(filePath, { encoding: "utf-8" }))
   } catch (err) {
-    return E.err(new ConnectionError(err))
+    throw new ConnectionException(err)
   }
 }
 
