@@ -25,6 +25,18 @@ import TravelClassDefinition from "./TravelClassDefinition"
 import Trip, { TravelClass, TripWithSelectedTravelClass } from "./Trip"
 import { merge } from "lodash"
 import { flow } from "fp-ts/lib/function"
+import {
+  err,
+  unsafeUnwrap,
+  mapStatic,
+  map,
+  chain,
+  ok,
+  success,
+  mapLeft,
+  Either,
+  either,
+} from "@fp-app/fp-ts-extensions/src/Either"
 
 export default class TrainTrip extends Entity {
   /** the primary way to create a new TrainTrip */
@@ -33,7 +45,7 @@ export default class TrainTrip extends Entity {
     trip: TripWithSelectedTravelClass,
   ) => {
     const travelClassConfiguration = trip.travelClasses.map(x =>
-      E.unsafeUnwrap(TravelClassConfiguration.create(x)),
+      unsafeUnwrap(TravelClassConfiguration.create(x)),
     )
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const currentTravelClassConfiguration = travelClassConfiguration.find(
@@ -128,17 +140,19 @@ export default class TrainTrip extends Entity {
 // changePax = (pax: PaxDefinition) =>
 //   pipe(
 //     this.confirmUserChangeAllowed(),
-//     E.mapStatic(pax),
-//     E.map(this.intChangePax),
-//     E.map(this.createChangeEvents),
+//     mapStatic(pax),
+//     map(this.intChangePax),
+//     map(this.createChangeEvents),
 //   )
 
-export const changeStartDate = (_this: TrainTrip) => (startDate: FutureDate) =>
+export const changeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">>(
+  _this: This,
+) => (startDate: FutureDate) =>
   pipe(
     confirmUserChangeAllowed(_this)(),
-    E.mapStatic(startDate),
-    E.map(intChangeStartDate(_this)),
-    E.map(
+    mapStatic(startDate),
+    map(intChangeStartDate(_this)),
+    map(
       ([_this, events, changed]) =>
         [_this, events.concat([...createChangeEvents(_this)(changed)])] as const,
     ),
@@ -151,9 +165,9 @@ export const changeTravelClass = (_this: TrainTrip) =>
     ) =>
       pipe(
         confirmUserChangeAllowed(_this)(),
-        E.mapStatic(travelClass),
-        E.chain(pipe(intChangeTravelClass(_this), _.RE.liftErr)),
-        E.map(
+        mapStatic(travelClass),
+        chain(pipe(intChangeTravelClass(_this), _.RE.liftErr)),
+        map(
           ([_this, events, changed]) =>
             [_this, events.concat([...createChangeEvents(_this)(changed)])] as const,
         ),
@@ -167,9 +181,9 @@ export const changeTravelClass = (_this: TrainTrip) =>
 // > = trampolineE(_ => travelClass =>
 //   pipe(
 //     this.confirmUserChangeAllowed(),
-//     E.mapStatic(travelClass),
-//     E.chain(_.E.liftErr(this.intChangeTravelClass)),
-//     E.map(this.createChangeEvents),
+//     mapStatic(travelClass),
+//     chain(_.E.liftErr(this.intChangeTravelClass)),
+//     map(this.createChangeEvents),
 //   ),
 // )
 //// End Separate sample; not used other than testing
@@ -204,10 +218,10 @@ const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
       )
       return existing
         ? travelClassL.modify(() => x)(existing)
-        : E.unsafeUnwrap(TravelClassConfiguration.create(x))
+        : unsafeUnwrap(TravelClassConfiguration.create(x))
     }),
   )(_this)
-  // E.unsafeUnwrap(TravelClassConfiguration.create(x)
+  // unsafeUnwrap(TravelClassConfiguration.create(x)
   // vs:
   // w.travelClassConfiguration = trip.travelClasses.map(x =>
   //   const existing = this.travelClassConfiguration.find(y => y.travelClass.name === x.name)
@@ -230,27 +244,27 @@ export const proposeChanges = (_this: TrainTrip) =>
     ) =>
       pipe(
         confirmUserChangeAllowed(_this)(),
-        E.mapStatic(state),
-        E.chain(pipe(applyDefinedChanges(_this), _.RE.liftErr)),
+        mapStatic(state),
+        chain(pipe(applyDefinedChanges(_this), _.RE.liftErr)),
         // TODO: push the events out as return
         //E.map(x => [...createChangeEvents(_this)(x)]),
-        E.map(
+        map(
           ([_this, events, changed]) =>
             [_this, events.concat([...createChangeEvents(_this)(changed)])] as const,
         ),
       ),
     // ALT1
     // pipe(
-    //   E.ok(state),
-    //   E.chainTee(this.confirmUserChangeAllowed),
-    //   E.chain(liftE(this.applyDefinedChanges)),
-    //   E.map(this.createChangeEvents),
+    //   ok(state),
+    //   chainTee(this.confirmUserChangeAllowed),
+    //   chain(liftE(this.applyDefinedChanges)),
+    //   map(this.createChangeEvents),
     // )
     // ALT2
     // pipe(
     //   this.confirmUserChangeAllowed(),
-    //   E.chain(liftErr(() => this.applyDefinedChanges(state))),
-    //   E.map(this.createChangeEvents),
+    //   chain(liftErr(() => this.applyDefinedChanges(state))),
+    //   map(this.createChangeEvents),
     // )
   )
 
@@ -290,7 +304,7 @@ const applyDefinedChanges = (_this: TrainTrip) => ({
       changed = true
     }
   }
-  return E.ok([_this, events, changed] as const)
+  return ok([_this, events, changed] as const)
 }
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 export const lock = (_this: TrainTrip) => () => {
@@ -300,6 +314,8 @@ export const lock = (_this: TrainTrip) => () => {
 
 const startDateL = Lens.fromPath<TrainTrip>()(["startDate"])
 const intChangeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">>(
+  _this: This,
+) => (startDate: FutureDate) => {
   const events: Event[] = []
   if (startDate.toISOString() === _this.startDate.toISOString()) {
     return [_this, events, false] as const
@@ -328,28 +344,27 @@ const intChangeTravelClass = (_this: TrainTrip) => (
     x => x.travelClass.name === travelClass,
   )
   if (!slc) {
-    return E.err(new InvalidStateError(`${travelClass} not available currently`))
+    return err(new InvalidStateError(`${travelClass} not available currently`))
   }
   const events: Event[] = []
   if (_this.currentTravelClassConfiguration === slc) {
-    return E.ok([_this, events, false])
+    return ok([_this, events, false])
   }
   _this = currentTravelClassConfigurationL.modify(() => slc)(_this)
-  return E.ok([_this, events, true])
+  return ok([_this, events, true])
 }
 
-const confirmUserChangeAllowed = (_this: TrainTrip) => (): Result<
-  void,
-  ForbiddenError
-> =>
+const confirmUserChangeAllowed = <This extends Pick<TrainTrip, "lockedAt" | "id">>(
+  _this: This,
+) => (): Result<void, ForbiddenError> =>
   isLocked(_this)
-    ? E.err(new ForbiddenError(`No longer allowed to change TrainTrip ${_this.id}`))
-    : E.success()
+    ? err(new ForbiddenError(`No longer allowed to change TrainTrip ${_this.id}`))
+    : success()
 
 export const isLocked = <This extends Pick<TrainTrip, "lockedAt">>(_this: This) =>
   Boolean(_this.lockedAt)
 
-const createChangeEvents = (_this: TrainTrip) =>
+const createChangeEvents = <This extends Pick<TrainTrip, "id">>(_this: This) =>
   function*(changed: boolean) {
     yield new UserInputReceived(_this.id)
     if (changed) {
@@ -395,7 +410,7 @@ const createTravelClassConfiguration = (travelClass: TravelClass) => {
 const TravelClassConfiguration = merge(_TravelClassConfiguration, {
   create: flow(
     createTravelClassConfiguration,
-    E.mapLeft(x => new ValidationError(decodeErrors(x))),
+    mapLeft(x => new ValidationError(decodeErrors(x))),
   ),
 })
 type TravelClassConfigurationType = t.TypeOf<typeof TravelClassConfiguration>
@@ -456,10 +471,10 @@ export interface Price {
 }
 
 const captureEventsEither = <TE, TEvent extends Event, TArgs extends any[]>(
-  func: (...args: TArgs) => E.Either<TE, readonly TEvent[]>,
+  func: (...args: TArgs) => Either<TE, readonly TEvent[]>,
   registerDomainEvent: (evt: Event) => void,
 ) => (...args: TArgs) =>
-  E.either.map(func(...args), evts => evts.forEach(registerDomainEvent))
+  either.map(func(...args), evts => evts.forEach(registerDomainEvent))
 
 const captureEvents = <TEvent extends Event, TArgs extends any[]>(
   func: (...args: TArgs) => readonly TEvent[],
@@ -468,9 +483,9 @@ const captureEvents = <TEvent extends Event, TArgs extends any[]>(
 
 const unwrapResultEither = <This, TE, T, T2, TArgs extends any[]>(
   t: This,
-  func: (t: This) => (...args: TArgs) => E.Either<TE, readonly [T, T2]>,
+  func: (t: This) => (...args: TArgs) => Either<TE, readonly [T, T2]>,
 ) => (...args: TArgs) =>
-  E.either.map(func(t)(...args), ([newT, r]) => {
+  either.map(func(t)(...args), ([newT, r]) => {
     // this unifies the FP and OO world right now
     Object.assign(t, newT)
     return r

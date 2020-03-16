@@ -8,7 +8,7 @@ import {
   ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { pipe, E, TE, NA, t } from "@fp-app/fp-ts-extensions"
+import { pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
@@ -16,6 +16,7 @@ import { DbContextKey, defaultDependencies } from "./types"
 import { sequenceT } from "fp-ts/lib/Apply"
 import { wrap } from "../infrastructure/utils"
 import { flow } from "fp-ts/lib/function"
+import { compose, chain, chainTup, map } from "@fp-app/fp-ts-extensions/src/TaskEither"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -25,24 +26,24 @@ const createCommand = createCommandWithDeps({
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
   ({ _, db }) =>
-    TE.compose(
-      TE.chain(pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)),
-      TE.chainTup(
-        TE.compose(
-          TE.map(i => i.trainTripId),
-          TE.chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
+    compose(
+      chain(pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)),
+      chainTup(
+        compose(
+          map(i => i.trainTripId),
+          chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
         ),
       ),
-      TE.chain(([trainTrip, proposal]) =>
+      chain(([trainTrip, proposal]) =>
         pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither, f => f(proposal)),
       ),
       // ALT1
-      // TE.compose(
-      //   TE.map(
+      // compose(
+      //   map(
       //     ([trainTrip, proposal]) =>
       //       tuple(pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither), proposal),
       //   ),
-      //   TE.chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
+      //   chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
       // ),
       // ALT2
       //{

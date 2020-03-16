@@ -23,6 +23,7 @@ import { pipe, TE } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"
 import { wrap } from "../infrastructure/utils"
+import { compose, map, chain, chainTup } from "@fp-app/fp-ts-extensions/src/TaskEither"
 
 // Domain Events should primarily be used to be turned into Integration Event (Post-Commit, call other service)
 // There may be other small reasons to use it, like to talk to an external system Pre-Commit.
@@ -43,9 +44,9 @@ createIntegrationEventHandler<TrainTripCreated, void, never>(
   /* on */ TrainTripCreated,
   "ScheduleCloudSync",
   ({ trainTripPublisher }) =>
-    TE.compose(
-      TE.map(x => x.trainTripId),
-      TE.chain(TE.tryExecuteFW(trainTripPublisher.register)),
+    compose(
+      map(x => x.trainTripId),
+      chain(TE.tryExecuteFW(trainTripPublisher.register)),
     ),
 )
 
@@ -53,9 +54,9 @@ createIntegrationEventHandler<TrainTripStateChanged, void, never>(
   /* on */ TrainTripStateChanged,
   "EitherDebounceOrScheduleCloudSync",
   ({ trainTripPublisher }) =>
-    TE.compose(
-      TE.map(x => x.trainTripId),
-      TE.chain(TE.tryExecuteFW(trainTripPublisher.register)),
+    compose(
+      map(x => x.trainTripId),
+      chain(TE.tryExecuteFW(trainTripPublisher.register)),
     ),
 )
 
@@ -63,9 +64,9 @@ createIntegrationEventHandler<UserInputReceived, void, never>(
   /* on */ UserInputReceived,
   "DebouncePendingCloudSync",
   ({ trainTripPublisher }) =>
-    TE.compose(
-      TE.map(x => x.trainTripId),
-      TE.chain(TE.tryExecuteFW(trainTripPublisher.registerIfPending)),
+    compose(
+      map(x => x.trainTripId),
+      chain(TE.tryExecuteFW(trainTripPublisher.registerIfPending)),
     ),
 )
 
@@ -90,10 +91,10 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
   /* on */ TrainTripStateChanged,
   "RefreshTripInfo",
   ({ _, db, getTrip }) =>
-    TE.compose(
-      TE.map(x => x.trainTripId),
-      TE.chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
-      TE.chainTup(pipe(getTripFromTrainTrip(getTrip), _.RTE.liftErr)),
+    compose(
+      map(x => x.trainTripId),
+      chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
+      chainTup(pipe(getTripFromTrainTrip(getTrip), _.RTE.liftErr)),
       // ALT1
       // pipe(
       //   (trainTrip: TrainTrip) =>
@@ -101,14 +102,14 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
       //   _.RTE.liftErr,
       // ),
       // ALT2
-      // TE.compose(
-      //   TE.map(
+      // compose(
+      //   map(
       //     trainTrip =>
       //       trainTrip.currentTravelClassConfiguration.travelClass.templateId,
       //   ),
-      //   TE.chain(pipe(getTrip, _.RTE.liftErr)),
+      //   chain(pipe(getTrip, _.RTE.liftErr)),
       // ),
-      TE.map(([trip, trainTrip]) => trainTrip.updateTrip(trip)),
+      map(([trip, trainTrip]) => trainTrip.updateTrip(trip)),
     ),
 )
 

@@ -1,6 +1,7 @@
 import { ValidationError } from "@fp-app/framework"
-import { E, t, pipe } from "@fp-app/fp-ts-extensions"
+import { t, pipe } from "@fp-app/fp-ts-extensions"
 import { merge } from "@fp-app/fp-ts-extensions/src/Io"
+import { mapLeft } from "@fp-app/fp-ts-extensions/src/Either"
 
 const _TravelClassDefinition = t.keyof({
   first: null,
@@ -12,7 +13,7 @@ const _TravelClassDefinition = t.keyof({
 const createTravelClassDefinition = (name: string) =>
   pipe(
     TravelClassDefinition.decode(name),
-    E.mapLeft(() => new ValidationError(`${name} is not a valid travel class name`)),
+    mapLeft(() => new ValidationError(`${name} is not a valid travel class name`)),
   )
 
 const TravelClassDefinition = merge(_TravelClassDefinition, {

@@ -162,4 +162,4 @@ export const err = TE.left
 export const isOk = E.isRight
 export const isErr = E.isLeft
 
-export { _do as do }
+export { _do as do, _do as exec }

@@ -8,12 +8,19 @@ import {
   ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { Result, pipe, E, TE, reverseApply, NA } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, E, reverseApply, NA } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
 import { DbContextKey, defaultDependencies, getTripKey } from "./types"
 import { sequenceT } from "fp-ts/lib/Apply"
+import {
+  compose,
+  chainEitherK,
+  chainTup,
+  exec,
+  map,
+} from "@fp-app/fp-ts-extensions/src/TaskEither"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -24,9 +31,9 @@ const createCommand = createCommandWithDeps({
 const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
   ({ _, db, getTrip }) =>
-    TE.compose(
-      TE.chainEitherK(pipe(validateCreateTrainTripInfo, _.RE.liftErr)),
-      TE.chainTup(pipe(getTripFromTrainTripInfo(getTrip), _.RTE.liftErr)),
+    compose(
+      chainEitherK(pipe(validateCreateTrainTripInfo, _.RE.liftErr)),
+      chainTup(pipe(getTripFromTrainTripInfo(getTrip), _.RTE.liftErr)),
       // pipe(
       //   getTrip,
       //   mapper((i: { templateId: string }) => i.templateId),
@@ -41,13 +48,13 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
       //   templateId: string
       // }) => getTrip(i.templateId)
       // ALT3
-      // TE.compose(
-      //   TE.map(i => i.templateId),
-      //   TE.chain(pipe(getTrip, _.TE.liftErr)),
+      // compose(
+      //   map(i => i.templateId),
+      //   chain(pipe(getTrip, _.TE.liftErr)),
       // ),
-      TE.map(pipe(TrainTrip.create, reverseApply)),
-      TE.do(db.trainTrips.add),
-      TE.map(trainTrip => trainTrip.id),
+      map(pipe(TrainTrip.create, reverseApply)),
+      exec(db.trainTrips.add),
+      map(trainTrip => trainTrip.id),
     ),
 )
 

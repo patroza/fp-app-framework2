@@ -1,7 +1,8 @@
 import { flow } from "fp-ts/lib/function"
-import { E, t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
+import { t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
 import { ValidationError } from "@fp-app/framework"
 import { merge } from "@fp-app/fp-ts-extensions/src/Io"
+import { map, mapLeft } from "@fp-app/fp-ts-extensions/src/Either"
 
 const isInFuture = (date: Date) => date > new Date()
 
@@ -27,8 +28,8 @@ export const _FutureDate = withBla(
 const FutureDate = merge(_FutureDate, {
   create: flow(
     _FutureDate.decode,
-    E.map(x => x as FutureDate),
-    E.mapLeft(x => new ValidationError(decodeErrors(x))),
+    map(x => x as FutureDate),
+    mapLeft(x => new ValidationError(decodeErrors(x))),
   ),
 })
 
