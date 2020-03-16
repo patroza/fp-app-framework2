@@ -89,15 +89,15 @@ export default class TrainTrip extends Entity {
   }
 
   readonly proposeChanges = captureEventsEither(
-    unwrapResultEither(proposeChanges(this)),
+    unwrapResultEither(this, proposeChanges),
     this.registerDomainEvent,
   )
 
-  readonly lock = captureEvents(unwrapResult(lock(this)), this.registerDomainEvent)
+  readonly lock = captureEvents(unwrapResult(this, lock), this.registerDomainEvent)
 
-  readonly assignOpportunity = unwrapResult(assignOpportunity(this))
+  readonly assignOpportunity = unwrapResult(this, assignOpportunity)
 
-  readonly updateTrip = unwrapResult(updateTrip(this))
+  readonly updateTrip = unwrapResult(this, updateTrip)
 
   // TODO: This seems like cheating, we're missing another Aggregate Root..
   readonly delete = del(this)
@@ -105,12 +105,12 @@ export default class TrainTrip extends Entity {
   ////////////
   //// Separate sample; not used other than testing
   changeStartDate = captureEventsEither(
-    unwrapResultEither(changeStartDate(this)),
+    unwrapResultEither(this, changeStartDate),
     this.registerDomainEvent,
   )
 
   changeTravelClass = captureEventsEither(
-    unwrapResultEither(changeTravelClass(this)),
+    unwrapResultEither(this, changeTravelClass),
     this.registerDomainEvent,
   )
 
@@ -312,14 +312,16 @@ const intChangeTravelClass = (_this: TrainTrip) => (
   return E.ok([_this, true])
 }
 
-const unwrapResultEither = <TE, T, T2, TArgs extends any[]>(
-  func: (...args: TArgs) => E.Either<TE, readonly [T, T2]>,
-) => (...args: TArgs) => E.either.map(func(...args), ([, r]) => r)
+const unwrapResultEither = <This, TE, T, T2, TArgs extends any[]>(
+  t: This,
+  func: (t: This) => (...args: TArgs) => E.Either<TE, readonly [T, T2]>,
+) => (...args: TArgs) => E.either.map(func(t)(...args), ([, r]) => r)
 
-const unwrapResult = <T, T2, TArgs extends any[]>(
-  func: (...args: TArgs) => readonly [T, T2],
+const unwrapResult = <This, T, T2, TArgs extends any[]>(
+  t: This,
+  func: (t: This) => (...args: TArgs) => readonly [T, T2],
 ) => (...args: TArgs) => {
-  const [, r] = func(...args)
+  const [, r] = func(t)(...args)
   return r
 }
 
