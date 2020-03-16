@@ -7,11 +7,9 @@ import {
   generateUuid,
   InvalidStateError,
   ValidationError,
-  Writeable,
 } from "@fp-app/framework"
 import Event from "@fp-app/framework/src/event"
 import {
-  applyIfNotUndefined,
   Result,
   E,
   pipe,
@@ -100,7 +98,7 @@ export default class TrainTrip extends Entity {
   readonly updateTrip = unwrapResult(this, updateTrip)
 
   // TODO: This seems like cheating, we're missing another Aggregate Root..
-  readonly delete = del(this)
+  readonly delete = captureEvents(del(this), this.registerDomainEvent)
 
   ////////////
   //// Separate sample; not used other than testing
@@ -180,8 +178,9 @@ export const changeTravelClass = (_this: TrainTrip) =>
 //// End Separate sample; not used other than testing
 ////////////
 
+const opportunityIdL = Lens.fromPath<TrainTrip>()(["opportunityId"])
 export const assignOpportunity = (_this: TrainTrip) => (opportunityId: string) => {
-  ;(_this as Writeable<TrainTrip>).opportunityId = opportunityId
+  _this = opportunityIdL.modify(() => opportunityId)(_this)
   return [_this, void 0 as void] as const
 }
 
@@ -189,27 +188,25 @@ const del = (_this: TrainTrip) => () => {
   return [new TrainTripDeleted(_this.id)] as const
 }
 
+const travelClassL = Lens.fromPath<TravelClassConfiguration>()(["travelClass"])
+const travelClassConfigurationL = Lens.fromPath<TrainTrip>()([
+  "travelClassConfiguration",
+])
+
+const currentTravelClassConfigurationL = Lens.fromPath<TrainTrip>()([
+  "currentTravelClassConfiguration",
+])
+
 const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
-  const travelClass = Lens.fromPath<TravelClassConfiguration>()(["travelClass"])
-
-  const travelClassConfiguration = Lens.fromPath<TrainTrip>()([
-    "travelClassConfiguration",
-  ])
-
-  const currentTravelClassConfigurationL = Lens.fromPath<TrainTrip>()([
-    "currentTravelClassConfiguration",
-  ])
-
   // This will clear all configurations upon trip update
   // TODO: Investigate a resolution mechanism to update existing configurations, depends on business case ;-)
-  // TODO: Here we could use optics for testing?
-  _this = travelClassConfiguration.modify(() =>
+  _this = travelClassConfigurationL.modify(() =>
     trip.travelClasses.map(x => {
       const existing = _this.travelClassConfiguration.find(
         y => y.travelClass.name === x.name,
       )
       return existing
-        ? travelClass.modify(() => x)(existing)
+        ? travelClassL.modify(() => x)(existing)
         : E.unsafeUnwrap(TravelClassConfiguration.create(x))
     }),
   )(_this)
@@ -299,7 +296,8 @@ const applyDefinedChanges = (_this: TrainTrip) => ({
   return E.ok([_this, events, changed] as const)
 }
 export const lock = (_this: TrainTrip) => () => {
-  ;(_this as Writeable<TrainTrip>).lockedAt = new Date()
+  const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
+  _this = lockedAtL.modify(() => new Date())(_this)
   return [_this, [new TrainTripStateChanged(_this.id)]] as const
 }
 
@@ -318,14 +316,15 @@ const intChangeStartDate = (_this: TrainTrip) => (startDate: FutureDate) => {
   ] as const
 }
 
+const paxL = Lens.fromPath<TrainTrip>()(["pax"])
 const intChangePax = (_this: TrainTrip) => (pax: PaxDefinition) => {
   const events: Event[] = []
   if (isEqual(_this.pax, pax)) {
     return [_this, events, false] as const
   }
-
+  _this = paxL.modify(() => pax)(_this)
   // TODO: other business logic
-  return [{ ..._this, pax } as TrainTrip, events, true] as const
+  return [_this, events, true] as const
 }
 
 const intChangeTravelClass = (_this: TrainTrip) => (
@@ -341,11 +340,8 @@ const intChangeTravelClass = (_this: TrainTrip) => (
   if (_this.currentTravelClassConfiguration === slc) {
     return E.ok([_this, events, false])
   }
-  return E.ok([
-    { ..._this, currentTravelClassConfiguration: slc } as TrainTrip,
-    events,
-    true,
-  ])
+  _this = currentTravelClassConfigurationL.modify(() => slc)(_this)
+  return E.ok([_this, events, true])
 }
 
 const confirmUserChangeAllowed = (_this: TrainTrip) => (): Result<

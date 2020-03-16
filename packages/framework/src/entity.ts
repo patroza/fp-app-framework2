@@ -1,5 +1,4 @@
 import Event from "./event"
-import { Writeable } from "./utils"
 import { eqString, contramap } from "fp-ts/lib/Eq"
 
 /**
@@ -12,14 +11,7 @@ import { eqString, contramap } from "fp-ts/lib/Eq"
 export default abstract class Entity {
   private events: Event[] = []
 
-  constructor(readonly id: string) {
-    // workaround so that we can make props look readonly on the outside, but allow to change on the inside.
-    // doesn't work if assigned as property :/
-    Object.defineProperty(this, "w", { value: this })
-  }
-  protected get w() {
-    return this as Writeable<this>
-  }
+  constructor(readonly id: string) {}
 
   readonly intGetAndClearEvents = () => {
     const events = this.events
