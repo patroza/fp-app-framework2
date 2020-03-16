@@ -104,12 +104,12 @@ export default class TrainTrip extends Entity {
 
   ////////////
   //// Separate sample; not used other than testing
-  changeStartDate = captureEventsEither(
+  readonly changeStartDate = captureEventsEither(
     unwrapResultEither(this, changeStartDate),
     this.registerDomainEvent,
   )
 
-  changeTravelClass = captureEventsEither(
+  readonly changeTravelClass = captureEventsEither(
     unwrapResultEither(this, changeTravelClass),
     this.registerDomainEvent,
   )
@@ -144,7 +144,8 @@ export const changeStartDate = (_this: TrainTrip) => (startDate: FutureDate) =>
     E.mapStatic(startDate),
     E.map(intChangeStartDate(_this)),
     E.map(
-      ([_this, changed]) => [_this, [...createChangeEvents(_this)(changed)]] as const,
+      ([_this, events, changed]) =>
+        [_this, events.concat([...createChangeEvents(_this)(changed)])] as const,
     ),
   )
 
@@ -158,8 +159,8 @@ export const changeTravelClass = (_this: TrainTrip) =>
         E.mapStatic(travelClass),
         E.chain(pipe(intChangeTravelClass(_this), _.RE.liftErr)),
         E.map(
-          ([_this, changed]) =>
-            [_this, [...createChangeEvents(_this)(changed)]] as const,
+          ([_this, events, changed]) =>
+            [_this, events.concat([...createChangeEvents(_this)(changed)])] as const,
         ),
       ),
   )
@@ -181,7 +182,7 @@ export const changeTravelClass = (_this: TrainTrip) =>
 
 export const assignOpportunity = (_this: TrainTrip) => (opportunityId: string) => {
   ;(_this as Writeable<TrainTrip>).opportunityId = opportunityId
-  return [_this, void 0] as const
+  return [_this, void 0 as void] as const
 }
 
 const del = (_this: TrainTrip) => () => {
@@ -191,19 +192,27 @@ const del = (_this: TrainTrip) => () => {
 const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
   const travelClass = Lens.fromPath<TravelClassConfiguration>()(["travelClass"])
 
-  const w: Writeable<TrainTrip> = _this as any
+  const travelClassConfiguration = Lens.fromPath<TrainTrip>()([
+    "travelClassConfiguration",
+  ])
+
+  const currentTravelClassConfigurationL = Lens.fromPath<TrainTrip>()([
+    "currentTravelClassConfiguration",
+  ])
 
   // This will clear all configurations upon trip update
   // TODO: Investigate a resolution mechanism to update existing configurations, depends on business case ;-)
   // TODO: Here we could use optics for testing?
-  w.travelClassConfiguration = trip.travelClasses.map(x => {
-    const existing = _this.travelClassConfiguration.find(
-      y => y.travelClass.name === x.name,
-    )
-    return existing
-      ? travelClass.modify(() => x)(existing)
-      : E.unsafeUnwrap(TravelClassConfiguration.create(x))
-  })
+  _this = travelClassConfiguration.modify(() =>
+    trip.travelClasses.map(x => {
+      const existing = _this.travelClassConfiguration.find(
+        y => y.travelClass.name === x.name,
+      )
+      return existing
+        ? travelClass.modify(() => x)(existing)
+        : E.unsafeUnwrap(TravelClassConfiguration.create(x))
+    }),
+  )(_this)
   // E.unsafeUnwrap(TravelClassConfiguration.create(x)
   // vs:
   // w.travelClassConfiguration = trip.travelClasses.map(x =>
@@ -213,22 +222,13 @@ const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
   const currentTravelClassConfiguration = _this.travelClassConfiguration.find(
     x => _this.currentTravelClassConfiguration.travelClass.name === x.travelClass.name,
   )
-  w.currentTravelClassConfiguration =
-    currentTravelClassConfiguration || _this.travelClassConfiguration[0]!
+  _this = currentTravelClassConfigurationL.modify(
+    () => currentTravelClassConfiguration || _this.travelClassConfiguration[0]!,
+  )(_this)
 
   return [_this, void 0] as const
 }
 
-const captureEventsEither = <TE, TEvent extends Event, TArgs extends any[]>(
-  func: (...args: TArgs) => E.Either<TE, readonly TEvent[]>,
-  registerDomainEvent: (evt: Event) => void,
-) => (...args: TArgs) =>
-  E.either.map(func(...args), evts => evts.forEach(registerDomainEvent))
-
-const captureEvents = <TEvent extends Event, TArgs extends any[]>(
-  func: (...args: TArgs) => readonly TEvent[],
-  registerDomainEvent: (evt: Event) => void,
-) => (...args: TArgs) => func(...args).forEach(registerDomainEvent)
 export const proposeChanges = (_this: TrainTrip) =>
   trampoline(
     (_: ToolDeps<ValidationError | InvalidStateError | ForbiddenError>) => (
@@ -240,7 +240,10 @@ export const proposeChanges = (_this: TrainTrip) =>
         E.chain(pipe(applyDefinedChanges(_this), _.RE.liftErr)),
         // TODO: push the events out as return
         //E.map(x => [...createChangeEvents(_this)(x)]),
-        E.map(x => [_this, [...createChangeEvents(_this)(x)]] as const),
+        E.map(
+          ([_this, events, changed]) =>
+            [_this, events.concat([...createChangeEvents(_this)(changed)])] as const,
+        ),
       ),
     // ALT1
     // pipe(
@@ -262,67 +265,87 @@ const applyDefinedChanges = (_this: TrainTrip) => ({
   pax,
   startDate,
   travelClass,
-}: StateProposition) =>
-  E.anyTrue<ValidationError | InvalidStateError>(
-    E.map(() => applyIfNotUndefined(startDate, intChangeStartDate(_this))),
-    E.map(() => applyIfNotUndefined(pax, intChangePax(_this))),
-    E.chain(() => E.valueOrUndefined(travelClass, intChangeTravelClass(_this))),
-  )
-
+}: StateProposition) => {
+  let events: Event[] = []
+  let changed = false
+  if (startDate !== undefined) {
+    const r = intChangeStartDate(_this)(startDate)
+    _this = r[0]
+    events = events.concat(r[1])
+    if (r[2]) {
+      changed = true
+    }
+  }
+  if (pax !== undefined) {
+    const r = intChangePax(_this)(pax)
+    _this = r[0]
+    events = events.concat(r[1])
+    if (r[2]) {
+      changed = true
+    }
+  }
+  if (travelClass !== undefined) {
+    const rEither = intChangeTravelClass(_this)(travelClass)
+    if (E.isErr(rEither)) {
+      return rEither
+    }
+    const r = rEither.right
+    _this = r[0]
+    events = events.concat(r[1])
+    if (r[2]) {
+      changed = true
+    }
+  }
+  return E.ok([_this, events, changed] as const)
+}
 export const lock = (_this: TrainTrip) => () => {
   ;(_this as Writeable<TrainTrip>).lockedAt = new Date()
   return [_this, [new TrainTripStateChanged(_this.id)]] as const
 }
 
 const intChangeStartDate = (_this: TrainTrip) => (startDate: FutureDate) => {
+  const events: Event[] = []
   if (startDate.toISOString() === _this.startDate.toISOString()) {
-    return [_this, false] as const
+    return [_this, events, false] as const
   }
   // TODO: return just the boolean, and apply the change at the caller?
-  ;(_this as Writeable<TrainTrip>).startDate = startDate
   // TODO: other business logic
 
-  return [_this, true] as const
+  return [
+    { ...(_this as any), startDate: new Date(startDate) } as TrainTrip,
+    events,
+    true,
+  ] as const
 }
 
 const intChangePax = (_this: TrainTrip) => (pax: PaxDefinition) => {
+  const events: Event[] = []
   if (isEqual(_this.pax, pax)) {
-    return [_this, false] as const
+    return [_this, events, false] as const
   }
 
-  ;(_this as Writeable<TrainTrip>).pax = pax
   // TODO: other business logic
-
-  return [_this, true] as const
+  return [{ ..._this, pax } as TrainTrip, events, true] as const
 }
 
 const intChangeTravelClass = (_this: TrainTrip) => (
   travelClass: TravelClassDefinition,
-): Result<readonly [TrainTrip, boolean], InvalidStateError> => {
+): Result<readonly [TrainTrip, Event[], boolean], InvalidStateError> => {
   const slc = _this.travelClassConfiguration.find(
     x => x.travelClass.name === travelClass,
   )
   if (!slc) {
     return E.err(new InvalidStateError(`${travelClass} not available currently`))
   }
+  const events: Event[] = []
   if (_this.currentTravelClassConfiguration === slc) {
-    return E.ok([_this, false])
+    return E.ok([_this, events, false])
   }
-  ;(_this as Writeable<TrainTrip>).currentTravelClassConfiguration = slc
-  return E.ok([_this, true])
-}
-
-const unwrapResultEither = <This, TE, T, T2, TArgs extends any[]>(
-  t: This,
-  func: (t: This) => (...args: TArgs) => E.Either<TE, readonly [T, T2]>,
-) => (...args: TArgs) => E.either.map(func(t)(...args), ([, r]) => r)
-
-const unwrapResult = <This, T, T2, TArgs extends any[]>(
-  t: This,
-  func: (t: This) => (...args: TArgs) => readonly [T, T2],
-) => (...args: TArgs) => {
-  const [, r] = func(t)(...args)
-  return r
+  return E.ok([
+    { ..._this, currentTravelClassConfiguration: slc } as TrainTrip,
+    events,
+    true,
+  ])
 }
 
 const confirmUserChangeAllowed = (_this: TrainTrip) => (): Result<
@@ -437,4 +460,35 @@ export type TemplateId = ID
 export interface Price {
   amount: number
   currency: string
+}
+
+const captureEventsEither = <TE, TEvent extends Event, TArgs extends any[]>(
+  func: (...args: TArgs) => E.Either<TE, readonly TEvent[]>,
+  registerDomainEvent: (evt: Event) => void,
+) => (...args: TArgs) =>
+  E.either.map(func(...args), evts => evts.forEach(registerDomainEvent))
+
+const captureEvents = <TEvent extends Event, TArgs extends any[]>(
+  func: (...args: TArgs) => readonly TEvent[],
+  registerDomainEvent: (evt: Event) => void,
+) => (...args: TArgs) => func(...args).forEach(registerDomainEvent)
+
+const unwrapResultEither = <This, TE, T, T2, TArgs extends any[]>(
+  t: This,
+  func: (t: This) => (...args: TArgs) => E.Either<TE, readonly [T, T2]>,
+) => (...args: TArgs) =>
+  E.either.map(func(t)(...args), ([newT, r]) => {
+    // this unifies the FP and OO world right now
+    Object.assign(t, newT)
+    return r
+  })
+
+const unwrapResult = <This, T, T2, TArgs extends any[]>(
+  t: This,
+  func: (t: This) => (...args: TArgs) => readonly [T, T2],
+) => (...args: TArgs) => {
+  // this unifies the FP and OO world right now
+  const [newT, r] = func(t)(...args)
+  Object.assign(t, newT)
+  return r
 }
