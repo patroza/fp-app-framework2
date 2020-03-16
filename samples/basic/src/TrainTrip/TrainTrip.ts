@@ -296,24 +296,22 @@ const applyDefinedChanges = (_this: TrainTrip) => ({
   return E.ok([_this, events, changed] as const)
 }
 export const lock = (_this: TrainTrip) => () => {
-  const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
+const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
+export const lock = (_this: TrainTrip) => () => {
   _this = lockedAtL.modify(() => new Date())(_this)
   return [_this, [new TrainTripStateChanged(_this.id)]] as const
 }
 
-const intChangeStartDate = (_this: TrainTrip) => (startDate: FutureDate) => {
+const startDateL = Lens.fromPath<TrainTrip>()(["startDate"])
+const intChangeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">>(
   const events: Event[] = []
   if (startDate.toISOString() === _this.startDate.toISOString()) {
     return [_this, events, false] as const
   }
   // TODO: return just the boolean, and apply the change at the caller?
   // TODO: other business logic
-
-  return [
-    { ...(_this as any), startDate: new Date(startDate) } as TrainTrip,
-    events,
-    true,
-  ] as const
+  _this = startDateL.modify(() => new Date(startDate))(_this)
+  return [_this, events, true] as const
 }
 
 const paxL = Lens.fromPath<TrainTrip>()(["pax"])
