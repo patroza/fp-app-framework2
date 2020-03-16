@@ -1,4 +1,4 @@
-import TrainTrip, { TravelClassConfiguration } from "@/TrainTrip/TrainTrip"
+import TrainTrip, { TravelClassConfiguration, isLocked } from "@/TrainTrip/TrainTrip"
 import { TrainTripContext } from "@/TrainTrip/usecases/types"
 import {
   autoinject,
@@ -57,7 +57,6 @@ const TrainTripToView = (trip: TrainTrip): TrainTripView => {
     createdAt,
     currentTravelClassConfiguration,
     id,
-    isLocked,
     pax,
     startDate,
     travelClassConfiguration,
@@ -65,7 +64,7 @@ const TrainTripToView = (trip: TrainTrip): TrainTripView => {
   return {
     id,
 
-    allowUserModification: !isLocked,
+    allowUserModification: !isLocked(trip),
     createdAt,
 
     pax,
