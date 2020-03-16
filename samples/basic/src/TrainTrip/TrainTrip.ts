@@ -58,9 +58,6 @@ export default class TrainTrip extends Entity {
   readonly createdAt = new Date()
   readonly opportunityId?: string
   readonly lockedAt?: Date
-  get isLocked() {
-    return Boolean(this.lockedAt)
-  }
 
   /** use TrainTrip.create() instead */
   constructor(
@@ -295,7 +292,6 @@ const applyDefinedChanges = (_this: TrainTrip) => ({
   }
   return E.ok([_this, events, changed] as const)
 }
-export const lock = (_this: TrainTrip) => () => {
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 export const lock = (_this: TrainTrip) => () => {
   _this = lockedAtL.modify(() => new Date())(_this)
@@ -346,9 +342,12 @@ const confirmUserChangeAllowed = (_this: TrainTrip) => (): Result<
   void,
   ForbiddenError
 > =>
-  _this.isLocked
+  isLocked(_this)
     ? E.err(new ForbiddenError(`No longer allowed to change TrainTrip ${_this.id}`))
     : E.success()
+
+export const isLocked = <This extends Pick<TrainTrip, "lockedAt">>(_this: This) =>
+  Boolean(_this.lockedAt)
 
 const createChangeEvents = (_this: TrainTrip) =>
   function*(changed: boolean) {
