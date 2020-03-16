@@ -88,112 +88,147 @@ export default class TrainTrip extends Entity {
     Object.assign(this, rest)
   }
 
-  proposeChanges = proposeChanges(this)
+  readonly proposeChanges = captureEventsEither(
+    unwrapResultEither(proposeChanges(this)),
+    this.registerDomainEvent,
+  )
 
-  lock() {
-    this.w.lockedAt = new Date()
+  readonly lock = captureEvents(unwrapResult(lock(this)), this.registerDomainEvent)
 
-    this.registerDomainEvent(new TrainTripStateChanged(this.id))
-  }
+  readonly assignOpportunity = unwrapResult(assignOpportunity(this))
 
-  assignOpportunity(opportunityId: string) {
-    this.w.opportunityId = opportunityId
-  }
-
-  readonly updateTrip = (trip: Trip) => {
-    const travelClass = Lens.fromPath<TravelClassConfiguration>()(["travelClass"])
-
-    // This will clear all configurations upon trip update
-    // TODO: Investigate a resolution mechanism to update existing configurations, depends on business case ;-)
-    // TODO: Here we could use optics for testing?
-    this.w.travelClassConfiguration = trip.travelClasses.map(x => {
-      const existing = this.travelClassConfiguration.find(
-        y => y.travelClass.name === x.name,
-      )
-      return existing
-        ? travelClass.modify(() => x)(existing)
-        : E.unsafeUnwrap(TravelClassConfiguration.create(x))
-    })
-    // E.unsafeUnwrap(TravelClassConfiguration.create(x)
-    // vs:
-    // this.w.travelClassConfiguration = trip.travelClasses.map(x =>
-    //   const existing = this.travelClassConfiguration.find(y => y.travelClass.name === x.name)
-    //   return { ...existing, travelClass: x }
-    // }
-    const currentTravelClassConfiguration = this.travelClassConfiguration.find(
-      x => this.currentTravelClassConfiguration.travelClass.name === x.travelClass.name,
-    )
-    this.w.currentTravelClassConfiguration =
-      currentTravelClassConfiguration || this.travelClassConfiguration[0]!
-  }
+  readonly updateTrip = unwrapResult(updateTrip(this))
 
   // TODO: This seems like cheating, we're missing another Aggregate Root..
-  readonly delete = () => {
-    this.registerDomainEvent(new TrainTripDeleted(this.id))
-  }
+  readonly delete = del(this)
 
   ////////////
   //// Separate sample; not used other than testing
-  changeStartDate = (startDate: FutureDate) =>
-    pipe(
-      this.confirmUserChangeAllowed(),
-      E.mapStatic(startDate),
-      E.map(this.intChangeStartDate),
-      E.map(this.createChangeEvents),
-    )
+  changeStartDate = captureEventsEither(
+    unwrapResultEither(changeStartDate(this)),
+    this.registerDomainEvent,
+  )
 
-  changePax = (pax: PaxDefinition) =>
-    pipe(
-      this.confirmUserChangeAllowed(),
-      E.mapStatic(pax),
-      E.map(this.intChangePax),
-      E.map(this.createChangeEvents),
-    )
+  changeTravelClass = captureEventsEither(
+    unwrapResultEither(changeTravelClass(this)),
+    this.registerDomainEvent,
+  )
 
-  changeTravelClass = trampoline(
+  //private readonly applyDefinedChanges = applyDefinedChanges(this)
+
+  // private readonly intChangeStartDate = unwrapResult(intChangeStartDate(this))
+
+  // //private readonly intChangePax = unwrapResult(intChangePax(this))
+  // private readonly intChangeTravelClass = unwrapResultEither(intChangeTravelClass(this))
+  // private confirmUserChangeAllowed = confirmUserChangeAllowed(this)
+
+  // private readonly createChangeEvents = (changed: boolean) => {
+  //   const events = [...createChangeEvents(this)(changed)]
+  //   for (const event of events) {
+  //     this.registerDomainEvent(event)
+  //   }
+  // }
+}
+
+// changePax = (pax: PaxDefinition) =>
+//   pipe(
+//     this.confirmUserChangeAllowed(),
+//     E.mapStatic(pax),
+//     E.map(this.intChangePax),
+//     E.map(this.createChangeEvents),
+//   )
+
+export const changeStartDate = (_this: TrainTrip) => (startDate: FutureDate) =>
+  pipe(
+    confirmUserChangeAllowed(_this)(),
+    E.mapStatic(startDate),
+    E.map(intChangeStartDate(_this)),
+    E.map(
+      ([_this, changed]) => [_this, [...createChangeEvents(_this)(changed)]] as const,
+    ),
+  )
+
+export const changeTravelClass = (_this: TrainTrip) =>
+  trampoline(
     (_: ToolDeps<ForbiddenError | InvalidStateError>) => (
       travelClass: TravelClassDefinition,
     ) =>
       pipe(
-        this.confirmUserChangeAllowed(),
+        confirmUserChangeAllowed(_this)(),
         E.mapStatic(travelClass),
-        E.chain(pipe(this.intChangeTravelClass, _.RE.liftErr)),
-        E.map(this.createChangeEvents),
+        E.chain(pipe(intChangeTravelClass(_this), _.RE.liftErr)),
+        E.map(
+          ([_this, changed]) =>
+            [_this, [...createChangeEvents(_this)(changed)]] as const,
+        ),
       ),
   )
-  // ALT
-  // changeTravelClass: Tramp<
-  //   TravelClassDefinition,
-  //   void,
-  //   ForbiddenError | InvalidStateError
-  // > = trampolineE(_ => travelClass =>
-  //   pipe(
-  //     this.confirmUserChangeAllowed(),
-  //     E.mapStatic(travelClass),
-  //     E.chain(_.E.liftErr(this.intChangeTravelClass)),
-  //     E.map(this.createChangeEvents),
-  //   ),
-  // )
-  //// End Separate sample; not used other than testing
-  ////////////
+// ALT
+// changeTravelClass: Tramp<
+//   TravelClassDefinition,
+//   void,
+//   ForbiddenError | InvalidStateError
+// > = trampolineE(_ => travelClass =>
+//   pipe(
+//     this.confirmUserChangeAllowed(),
+//     E.mapStatic(travelClass),
+//     E.chain(_.E.liftErr(this.intChangeTravelClass)),
+//     E.map(this.createChangeEvents),
+//   ),
+// )
+//// End Separate sample; not used other than testing
+////////////
 
-  private readonly applyDefinedChanges = applyDefinedChanges(this)
-
-  private readonly intChangeStartDate = unwrapResult(intChangeStartDate(this))
-
-  private readonly intChangePax = unwrapResult(intChangePax(this))
-  private readonly intChangeTravelClass = unwrapResultEither(intChangeTravelClass(this))
-  private confirmUserChangeAllowed = confirmUserChangeAllowed(this)
-
-  private readonly createChangeEvents = (changed: boolean) => {
-    const events = [...createChangeEvents(this)(changed)]
-    for (const event of events) {
-      this.registerDomainEvent(event)
-    }
-    return events
-  }
+export const assignOpportunity = (_this: TrainTrip) => (opportunityId: string) => {
+  ;(_this as Writeable<TrainTrip>).opportunityId = opportunityId
+  return [_this, void 0] as const
 }
 
+const del = (_this: TrainTrip) => () => {
+  return [new TrainTripDeleted(_this.id)] as const
+}
+
+const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
+  const travelClass = Lens.fromPath<TravelClassConfiguration>()(["travelClass"])
+
+  const w: Writeable<TrainTrip> = _this as any
+
+  // This will clear all configurations upon trip update
+  // TODO: Investigate a resolution mechanism to update existing configurations, depends on business case ;-)
+  // TODO: Here we could use optics for testing?
+  w.travelClassConfiguration = trip.travelClasses.map(x => {
+    const existing = _this.travelClassConfiguration.find(
+      y => y.travelClass.name === x.name,
+    )
+    return existing
+      ? travelClass.modify(() => x)(existing)
+      : E.unsafeUnwrap(TravelClassConfiguration.create(x))
+  })
+  // E.unsafeUnwrap(TravelClassConfiguration.create(x)
+  // vs:
+  // w.travelClassConfiguration = trip.travelClasses.map(x =>
+  //   const existing = this.travelClassConfiguration.find(y => y.travelClass.name === x.name)
+  //   return { ...existing, travelClass: x }
+  // }
+  const currentTravelClassConfiguration = _this.travelClassConfiguration.find(
+    x => _this.currentTravelClassConfiguration.travelClass.name === x.travelClass.name,
+  )
+  w.currentTravelClassConfiguration =
+    currentTravelClassConfiguration || _this.travelClassConfiguration[0]!
+
+  return [_this, void 0] as const
+}
+
+const captureEventsEither = <TE, TEvent extends Event, TArgs extends any[]>(
+  func: (...args: TArgs) => E.Either<TE, readonly TEvent[]>,
+  registerDomainEvent: (evt: Event) => void,
+) => (...args: TArgs) =>
+  E.either.map(func(...args), evts => evts.forEach(registerDomainEvent))
+
+const captureEvents = <TEvent extends Event, TArgs extends any[]>(
+  func: (...args: TArgs) => readonly TEvent[],
+  registerDomainEvent: (evt: Event) => void,
+) => (...args: TArgs) => func(...args).forEach(registerDomainEvent)
 export const proposeChanges = (_this: TrainTrip) =>
   trampoline(
     (_: ToolDeps<ValidationError | InvalidStateError | ForbiddenError>) => (
@@ -205,7 +240,7 @@ export const proposeChanges = (_this: TrainTrip) =>
         E.chain(pipe(applyDefinedChanges(_this), _.RE.liftErr)),
         // TODO: push the events out as return
         //E.map(x => [...createChangeEvents(_this)(x)]),
-        E.map(x => [..._this.createChangeEvents(x)]),
+        E.map(x => [_this, [...createChangeEvents(_this)(x)]] as const),
       ),
     // ALT1
     // pipe(
@@ -234,11 +269,16 @@ const applyDefinedChanges = (_this: TrainTrip) => ({
     E.chain(() => E.valueOrUndefined(travelClass, intChangeTravelClass(_this))),
   )
 
+export const lock = (_this: TrainTrip) => () => {
+  ;(_this as Writeable<TrainTrip>).lockedAt = new Date()
+  return [_this, [new TrainTripStateChanged(_this.id)]] as const
+}
+
 const intChangeStartDate = (_this: TrainTrip) => (startDate: FutureDate) => {
   if (startDate.toISOString() === _this.startDate.toISOString()) {
     return [_this, false] as const
   }
-
+  // TODO: return just the boolean, and apply the change at the caller?
   ;(_this as Writeable<TrainTrip>).startDate = startDate
   // TODO: other business logic
 
@@ -274,12 +314,12 @@ const intChangeTravelClass = (_this: TrainTrip) => (
 
 const unwrapResultEither = <TE, T, T2, TArgs extends any[]>(
   func: (...args: TArgs) => E.Either<TE, readonly [T, T2]>,
-) => (...args: TArgs) => E.either.map(func(...args), ([_, r]) => r)
+) => (...args: TArgs) => E.either.map(func(...args), ([, r]) => r)
 
-const unwrapResult = <TT, T2, TArgs extends any[]>(
+const unwrapResult = <T, T2, TArgs extends any[]>(
   func: (...args: TArgs) => readonly [T, T2],
 ) => (...args: TArgs) => {
-  const [_, r] = func(...args)
+  const [, r] = func(...args)
   return r
 }
 

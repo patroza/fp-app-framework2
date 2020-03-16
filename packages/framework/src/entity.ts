@@ -27,7 +27,7 @@ export default abstract class Entity {
     return events
   }
 
-  protected registerDomainEvent(evt: Event) {
+  protected registerDomainEvent = (evt: Event) => {
     this.events.push(evt)
   }
 
