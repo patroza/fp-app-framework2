@@ -38,4 +38,5 @@ export interface RecordContext<T> {
   add: (record: T) => void
   remove: (record: T) => void
   load: RT.ReaderTask<string, O.Option<T>>
+  process: (record: T, events: Event[]) => void
 }

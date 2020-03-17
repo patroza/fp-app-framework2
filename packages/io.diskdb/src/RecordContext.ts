@@ -18,6 +18,8 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
   private cache = new Map<string, CachedRecord<T>>()
   private removals: T[] = []
 
+  private events: Event[] = []
+
   constructor(
     private readonly type: string,
     private readonly serializer: (record: T) => string,
@@ -26,6 +28,17 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
 
   readonly add = (record: T) => {
     this.cache.set(record.id, { version: 0, data: record })
+  }
+
+  // Test with immutable approach.
+  readonly process = (record: T, events: Event[]) => {
+    const original = this.cache.get(record.id)!
+    // Using Object.assign would mean that the object doesn't obey the immutability laws strictly.
+    //Object.assign(original.data, record)
+    // This however makes the cache kind of useless; the same entity could exist between multiple load calls etc
+    // however interestingly in practice that doesn't seem to occur anyway...
+    this.cache.set(record.id, { version: original.version, data: record })
+    this.events = this.events.concat(events)
   }
 
   readonly remove = (record: T) => {
@@ -51,10 +64,9 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
   // Internal
   readonly intGetAndClearEvents = () => {
     const items = [...this.cache.values()].map(x => x.data).concat(this.removals)
-    return items.reduce(
-      (prev, cur) => prev.concat(cur.intGetAndClearEvents()),
-      [] as Event[],
-    )
+    const evts = this.events
+    this.events = []
+    return items.reduce((prev, cur) => prev.concat(cur.intGetAndClearEvents()), evts)
   }
 
   readonly intSave = (
