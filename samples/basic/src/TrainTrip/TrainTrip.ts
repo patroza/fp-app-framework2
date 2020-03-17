@@ -17,6 +17,7 @@ import {
   ToolDeps,
   t,
   decodeErrors,
+  convertCoolLens,
 } from "@fp-app/fp-ts-extensions"
 import isEqual from "lodash/fp/isEqual"
 import FutureDate from "./FutureDate"
@@ -309,10 +310,13 @@ const applyDefinedChanges = (_this: TrainTrip) => ({
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 export const lock = (_this: TrainTrip) => () => {
   _this = lockedAtL.modify(() => new Date())(_this)
-  return [_this, [new TrainTripStateChanged(_this.id)]] as const
+  const events: Event[] = [new TrainTripStateChanged(_this.id)]
+  return [_this, events] as const
 }
 
-const startDateL = Lens.fromPath<TrainTrip>()(["startDate"])
+const startDateL = convertCoolLens(
+  Lens.fromPath<Pick<TrainTrip, "startDate" | "id">>()(["startDate"]),
+)
 const intChangeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">>(
   _this: This,
 ) => (startDate: FutureDate) => {
@@ -322,7 +326,7 @@ const intChangeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">>(
   }
   // TODO: return just the boolean, and apply the change at the caller?
   // TODO: other business logic
-  _this = startDateL.modify(() => new Date(startDate))(_this)
+  _this = startDateL.modify(() => startDate)(_this)
   return [_this, events, true] as const
 }
 
