@@ -8,7 +8,8 @@
 	},
 	"scripts": {
 		"start": "cd samples/basic && yarn start",
-		"testsuite": "lerna run --scope \"@fp-app/*\" --ignore \"@types/*\" testsuite"
+		"testsuite": "lerna exec --parallel --scope \"@fp-app/*\" --ignore \"@types/*\" --ignore \"@fp-app/experiment\" yarn testsuite",
+		"testsuite:local": "lerna exec --concurrency 1 --scope \"@fp-app/*\" --ignore \"@types/*\" --ignore \"@fp-app/experiment\" yarn testsuite"
 	},
 	"resolutions": {
 		"@hapi/joi": "^17.1.0"
