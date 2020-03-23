@@ -14,15 +14,6 @@ const _TravelClass = t.readonly(
   }),
 )
 
-const createTravelClass = ({
-  name,
-  templateId,
-}: {
-  name: string
-  templateId: string
-}): Either<t.Errors, TravelClass> =>
-  _TravelClass.decode({ createdAt: new Date(), name, templateId })
-
 const fromWire = ({
   createdAt,
   name,
@@ -39,7 +30,7 @@ const fromWire = ({
 
 const TravelClass = merge(_TravelClass, {
   create: flow(
-    createTravelClass,
+    _TravelClass.decode,
     mapLeft(x => new ValidationError(decodeErrors(x))),
   ),
   fromWire,

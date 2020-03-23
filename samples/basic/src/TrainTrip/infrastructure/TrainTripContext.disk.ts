@@ -105,9 +105,9 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
     travelClassConfigurations.find(
       x => x.travelClass.name === currentTravelClassConfiguration.travelClass.name,
     )!,
+    unsafeUnwrapDecode(DateFromISOString.decode(createdAt)),
     {
       ...rest,
-      createdAt: unsafeUnwrapDecode(DateFromISOString.decode(createdAt)),
       lockedAt: lockedAt
         ? unsafeUnwrapDecode(DateFromISOString.decode(lockedAt))
         : undefined,

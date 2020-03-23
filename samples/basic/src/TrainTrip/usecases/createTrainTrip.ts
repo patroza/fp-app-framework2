@@ -8,7 +8,7 @@ import {
   ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { Result, pipe, E, reverseApply, NA } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, E, NA } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
@@ -52,7 +52,8 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
       //   map(i => i.templateId),
       //   chain(pipe(getTrip, _.TE.liftErr)),
       // ),
-      map(pipe(TrainTrip.create, reverseApply)),
+      map(([trip, i]) => [{ ...i, currentDate: new Date() }, trip] as const),
+      map(v => TrainTrip.create(...v)),
       exec(db.trainTrips.add),
       map(trainTrip => trainTrip.id),
     ),

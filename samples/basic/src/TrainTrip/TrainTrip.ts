@@ -42,7 +42,11 @@ import {
 export default class TrainTrip extends Entity {
   /** the primary way to create a new TrainTrip */
   static create = (
-    { pax, startDate }: { startDate: FutureDate; pax: PaxDefinition },
+    {
+      currentDate,
+      pax,
+      startDate,
+    }: { currentDate: Date; startDate: FutureDate; pax: PaxDefinition },
     trip: TripWithSelectedTravelClass,
   ) => {
     const travelClassConfiguration = trip.travelClasses.map(x =>
@@ -59,6 +63,7 @@ export default class TrainTrip extends Entity {
       startDate,
       travelClassConfiguration,
       currentTravelClassConfiguration,
+      currentDate,
     )
     // TODO: Consider the creation of a train trip to have another starting point,
     // like currentUser.createTrainTrip(), where the domain event then naturally
@@ -68,7 +73,6 @@ export default class TrainTrip extends Entity {
     return t
   }
 
-  readonly createdAt = new Date()
   readonly opportunityId?: string
   readonly lockedAt?: Date
 
@@ -79,6 +83,7 @@ export default class TrainTrip extends Entity {
     readonly startDate: Date,
     readonly travelClassConfiguration: TravelClassConfiguration[] = [],
     readonly currentTravelClassConfiguration: TravelClassConfiguration,
+    readonly createdAt: Date,
     rest?: Partial<
       Omit<
         { -readonly [key in keyof TrainTrip]: TrainTrip[key] },
@@ -270,6 +275,7 @@ export const proposeChanges = (_this: TrainTrip) =>
   )
 
 // TODO: we have to return the object from each map
+// TODO: convert back from Imperative to Functional.
 const applyDefinedChanges = (_this: TrainTrip) => ({
   pax,
   startDate,
@@ -308,8 +314,8 @@ const applyDefinedChanges = (_this: TrainTrip) => ({
   return ok([_this, events, changed] as const)
 }
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
-export const lock = (_this: TrainTrip) => () => {
-  _this = lockedAtL.modify(() => new Date())(_this)
+export const lock = (_this: TrainTrip) => (currentDate: Date) => {
+  _this = lockedAtL.modify(() => currentDate)(_this)
   const events: Event[] = [new TrainTripStateChanged(_this.id)]
   return [_this, events] as const
 }

@@ -35,7 +35,7 @@ const toTrip = trampoline(
     tpl: Template,
   ) => {
     const getTravelClass = pipe(
-      tplToTravelClass,
+      (tpl: Template) => tplToTravelClass(tpl, new Date()),
       RE.mapLeft(x => new InvalidStateError("TravelClass: " + x)),
       _.RE.liftErr,
     )
@@ -77,8 +77,12 @@ const toTrip = trampoline(
   },
 )
 
-const tplToTravelClass = (tpl: Template) =>
-  TravelClass.create({ templateId: tpl.id, name: getTplLevelName(tpl) })
+const tplToTravelClass = (tpl: Template, currentDate: Date) =>
+  TravelClass.create({
+    createdAt: currentDate,
+    templateId: tpl.id,
+    name: getTplLevelName(tpl),
+  })
 
 const getTplLevelName = (tpl: Template) =>
   typedKeysOf(tpl.travelClasses).find(x => tpl.travelClasses[x]!.id === tpl.id)!

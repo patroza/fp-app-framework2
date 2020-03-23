@@ -16,7 +16,7 @@ const lockTrainTrip = createCommand<Input, void, LockTrainTripError>(
       map(({ trainTripId }) => trainTripId),
       chain(wrap(db.trainTrips.load)),
       // Test with Functional approach.
-      map(trainTrip => lock(trainTrip)()),
+      map(trainTrip => lock(trainTrip)(new Date())),
       map(([a, b]) => db.trainTrips.process(a, b)),
     ),
 )
