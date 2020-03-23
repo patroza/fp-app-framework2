@@ -1,8 +1,9 @@
 import { ValidationError } from "@fp-app/framework"
-import { E, t, decodeErrors, withBla, pipe } from "@fp-app/fp-ts-extensions"
+import { t, decodeErrors, withBla, pipe } from "@fp-app/fp-ts-extensions"
 import TravelClassDefinition from "./TravelClassDefinition"
 import { flow } from "fp-ts/lib/function"
 import { merge } from "@fp-app/fp-ts-extensions/src/Io"
+import { mapLeft, Either, chain } from "@fp-app/fp-ts-extensions/src/Either"
 // TODO: Value or Entity?
 
 const _TravelClass = t.readonly(
@@ -19,7 +20,7 @@ const createTravelClass = ({
 }: {
   name: string
   templateId: string
-}): E.Either<t.Errors, TravelClass> =>
+}): Either<t.Errors, TravelClass> =>
   _TravelClass.decode({ createdAt: new Date(), name, templateId })
 
 const fromWire = ({
@@ -30,16 +31,16 @@ const fromWire = ({
   createdAt: string
   name: string
   templateId: string
-}): E.Either<t.Errors, TravelClass> =>
+}): Either<t.Errors, TravelClass> =>
   pipe(
     t.DateFromISOString.decode(createdAt),
-    E.chain(createdAt => _TravelClass.decode({ createdAt, name, templateId })),
+    chain(createdAt => _TravelClass.decode({ createdAt, name, templateId })),
   )
 
 const TravelClass = merge(_TravelClass, {
   create: flow(
     createTravelClass,
-    E.mapLeft(x => new ValidationError(decodeErrors(x))),
+    mapLeft(x => new ValidationError(decodeErrors(x))),
   ),
   fromWire,
 })
@@ -56,12 +57,12 @@ const _Trip = t.readonly(
   }),
 )
 
-const createTrip = (travelClasses: TravelClass[]): E.Either<t.Errors, Trip> =>
+const createTrip = (travelClasses: TravelClass[]): Either<t.Errors, Trip> =>
   _Trip.decode({ travelClasses })
 const Trip = merge(_Trip, {
   create: flow(
     createTrip,
-    E.mapLeft(x => new ValidationError(decodeErrors(x))),
+    mapLeft(x => new ValidationError(decodeErrors(x))),
   ),
 })
 type TripType = t.TypeOf<typeof Trip>
@@ -113,7 +114,7 @@ const createTripWithSelectedTravelClass = ({
 }: {
   trip: Trip
   travelClassName: string
-}): E.Either<t.Errors, TripWithSelectedTravelClass> => {
+}): Either<t.Errors, TripWithSelectedTravelClass> => {
   const selectedTravelClass = trip.travelClasses.find(x => x.name === travelClassName)
   return _TripWithSelectedTravelClass.decode({
     travelClasses: trip.travelClasses,
@@ -124,7 +125,7 @@ const createTripWithSelectedTravelClass = ({
 const TripWithSelectedTravelClass = merge(_TripWithSelectedTravelClass, {
   create: flow(
     createTripWithSelectedTravelClass,
-    E.mapLeft(x => new ValidationError(decodeErrors(x))),
+    mapLeft(x => new ValidationError(decodeErrors(x))),
   ),
 })
 

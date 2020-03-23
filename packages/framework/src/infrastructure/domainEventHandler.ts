@@ -1,12 +1,4 @@
-import {
-  pipe,
-  AsyncResult,
-  TE,
-  E,
-  trampoline,
-  ToolDeps,
-  O,
-} from "@fp-app/fp-ts-extensions"
+import { AsyncResult, TE, E, O } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { publishType } from "./mediator/publish"
 import { generateKey } from "./SimpleContainer"
@@ -24,18 +16,18 @@ export default class DomainEventHandler {
     private readonly executeIntegrationEvents: typeof executePostCommitHandlersKey,
   ) {}
 
-  // Note: Eventhandlers in this case have unbound errors..
-  commitAndPostEvents = <T, TErr>(
+  commitAndPostEvents = async (
     getAndClearEvents: () => Event[],
-    commit: () => AsyncResult<T, TErr>,
-  ) =>
-    trampoline((_: ToolDeps<Error | TErr>) =>
-      pipe(
-        this.executeEvents(getAndClearEvents),
-        TE.chain(pipe(commit, _.TE.liftErr)),
-        TE.do(this.publishIntegrationEvents),
-      ),
-    )
+    commit: () => Promise<void>,
+  ) => {
+    const execEvents = this.executeEvents(getAndClearEvents)
+    const r = await execEvents()
+    if (E.isErr(r)) {
+      throw new Error("Domain event error: " + r.left)
+    }
+    await commit()
+    this.publishIntegrationEvents()
+  }
 
   private readonly executeEvents = (
     getAndClearEvents: () => Event[],

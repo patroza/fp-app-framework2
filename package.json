@@ -8,9 +8,13 @@
 	},
 	"scripts": {
 		"start": "cd samples/basic && yarn start",
-		"testsuite": "cd packages/framework && yarn testsuite && cd ../../samples/basic && yarn testsuite"
+		"testsuite": "lerna run --scope \"@fp-app/*\" --ignore \"@types/*\" testsuite"
 	},
 	"resolutions": {
 		"@hapi/joi": "^17.1.0"
-	}
+	},
+	"dependencies": {
+		"lerna": "^3.20.2"
+	},
+	"name": "fp-app-framework"
 }

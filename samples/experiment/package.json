@@ -5,7 +5,7 @@
   "license": "MIT",
   "dependencies": {
     "@devexperts/remote-data-ts": "^2.0.3",
-    "@morphic-ts/batteries": "^0.7.0",
+    "@morphic-ts/batteries": "^0.9.1",
     "@nll/datum": "^3.0.3",
     "cross-fetch": "^3.0.4",
     "fetcher-ts": "^1.1.1",
@@ -17,7 +17,7 @@
     "npm-check-updates": "^4.0.4"
   },
   "devDependencies": {
-    "@types/node": "^13.9.1",
+    "@types/node": "~12",
     "fast-check": "^1.23.0",
     "fp-ts-laws": "^0.2.1"
   },

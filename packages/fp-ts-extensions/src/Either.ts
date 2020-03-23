@@ -21,11 +21,6 @@ export type Result<TSuccess, TError> = Either<TError, TSuccess>
 const err = E.left
 const ok = E.right
 
-export const exec = <TErr = any>(func: () => void) => {
-  func()
-  return success<TErr>()
-}
-
 export const fromBool = <T, TInput extends T = T>(
   value: TInput,
   predicate: (value: T) => boolean,
@@ -154,6 +149,9 @@ export const conditional = <TInput, TOutput, TErrorOutput>(
 export const liftLeft = <TE>() => <T, TE2 extends TE>(e: () => Either<TE2, T>) =>
   e as () => Either<TE, T>
 
+export const liftRight = <T>() => <T2 extends T, TE>(e: () => Either<TE, T2>) =>
+  e as () => Either<TE, T>
+
 export const liftErr = liftLeft
 
 // Experiment
@@ -263,7 +261,7 @@ export type RightArg<T> = T extends E.Right<infer U> ? U : never
 const isOk = E.isRight
 const isErr = E.isLeft
 
-export { _do as do, chainTup, ok, err, isOk, isErr, success }
+export { _do as do, _do as exec, chainTup, ok, err, isOk, isErr, success }
 
 export const unsafeUnwrap = <A, E>(e: Result<A, E>) => {
   if (isErr(e)) {

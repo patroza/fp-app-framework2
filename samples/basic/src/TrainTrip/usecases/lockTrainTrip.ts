@@ -1,6 +1,8 @@
 import { createCommandWithDeps, DbError } from "@fp-app/framework"
-import { TE } from "@fp-app/fp-ts-extensions"
 import { DbContextKey, defaultDependencies } from "./types"
+import { wrap } from "../infrastructure/utils"
+import { lock } from "../TrainTrip"
+import { compose, map, chain } from "@fp-app/fp-ts-extensions/src/TaskEither"
 
 const createCommand = createCommandWithDeps({
   db: DbContextKey,
@@ -10,10 +12,12 @@ const createCommand = createCommandWithDeps({
 const lockTrainTrip = createCommand<Input, void, LockTrainTripError>(
   "lockTrainTrip",
   ({ db }) =>
-    TE.compose(
-      TE.map(({ trainTripId }) => trainTripId),
-      TE.chain(db.trainTrips.load),
-      TE.map(trainTrip => trainTrip.lock()),
+    compose(
+      map(({ trainTripId }) => trainTripId),
+      chain(wrap(db.trainTrips.load)),
+      // Test with Functional approach.
+      map(trainTrip => lock(trainTrip)()),
+      map(([a, b]) => db.trainTrips.process(a, b)),
     ),
 )
 

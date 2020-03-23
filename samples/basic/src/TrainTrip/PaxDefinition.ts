@@ -1,9 +1,10 @@
 //import { summon } from "@morphic-ts/batteries/lib/summoner"
 
 import { typedKeysOf, ValidationError } from "@fp-app/framework"
-import { E, t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
+import { t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
 import { PositiveInt, merge } from "@fp-app/fp-ts-extensions/src/Io"
 import { flow } from "fp-ts/lib/function"
+import { map, mapLeft } from "@fp-app/fp-ts-extensions/src/Either"
 
 /* Pax: No domain validation, just primitives. **/
 const Pax = t.type(
@@ -83,11 +84,12 @@ const _PaxDefinition = withBla(
 const PaxDefinition = merge(_PaxDefinition, {
   create: flow(
     _PaxDefinition.decode,
-    E.mapLeft(x => new ValidationError(decodeErrors(x))),
+    map(x => x as PaxDefinition),
+    mapLeft(x => new ValidationError(decodeErrors(x))),
   ),
 })
 
-type PaxDefinitionType = t.TypeOf<typeof PaxDefinition>
+type PaxDefinitionType = t.TypeOf<typeof _PaxDefinition>
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface PaxDefinition extends PaxDefinitionType {}
 

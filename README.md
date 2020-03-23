@@ -49,6 +49,7 @@ see `TrainTrip.router.ts` for paths and methods, and `router-schema.json` for a 
 
 ## Resources
 
+- https://fsharpforfunandprofit.com/posts/against-railway-oriented-programming/
 - https://fsharpforfunandprofit.com/ddd/
 - https://fsharpforfunandprofit.com/rop/
 - https://github.com/gcanti/fp-ts

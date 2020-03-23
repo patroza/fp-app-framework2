@@ -30,7 +30,7 @@ export const toVoid = toValue<void>(void 0)
 /**
  * Execute promise, if success return right, if fail; won't catch thrown Exception.
  */
-export const tryExecute = <T, TE>(func: () => Promise<T>) => TE.rightTask<TE, T>(func)
+export const tryExecute = <T, TE>(func: T.Task<T>) => TE.rightTask<TE, T>(func)
 
 /**
  * Execute promise, if success return right, if fail; won't catch thrown Exception.
@@ -162,4 +162,4 @@ export const err = TE.left
 export const isOk = E.isRight
 export const isErr = E.isLeft
 
-export { _do as do }
+export { _do as do, _do as exec }

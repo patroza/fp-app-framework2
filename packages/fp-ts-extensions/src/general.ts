@@ -1,4 +1,5 @@
 import { flow, flip, tupled } from "fp-ts/lib/function"
+import { Lens } from "monocle-ts"
 
 export type ThenArg<T> = T extends Promise<infer U>
   ? U
@@ -53,3 +54,10 @@ export const applyIfNotUndefined = <T, TOutput>(
 }
 
 export const reverseApply = flow(flip, tupled)
+
+interface CoolLens<TRequired, TValue> extends Lens<TRequired, TValue> {
+  modify(f: (a: TValue) => TValue): <TGiven extends TRequired>(s: TGiven) => TGiven
+}
+
+export const convertCoolLens = <TRequired, TValue>(l: Lens<TRequired, TValue>) =>
+  l as CoolLens<TRequired, TValue>

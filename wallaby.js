@@ -3,14 +3,15 @@ module.exports = function (w) {
   return {
     files: [
       '**/*.ts',
-      { pattern: '**/*.d.ts', ignore: true },
-      { pattern: '**/*.test.ts', ignore: true },
-      { pattern: 'node_modules', ignore: true }
+      '!**/*.d.ts',
+      '!**/*.test.ts',
+      '!**/node_modules',
     ],
 
     tests: [
       '**/*.test.ts',
-      { pattern: 'node_modules', ignore: true }
+      '!samples/experiment/**/*.test.ts',
+      '!**/node_modules',
     ],
     // for node.js tests you need to set env property as well
     // https://wallabyjs.com/docs/integration/node.html

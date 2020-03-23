@@ -1,8 +1,7 @@
-import { TE, AsyncResult, RTE } from "@fp-app/fp-ts-extensions"
+import { O, RT, T } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { Disposable } from "../utils"
 import DomainEventHandler from "./domainEventHandler"
-import { DbError } from "./errors"
 import { autoinject } from "./SimpleContainer"
 
 // tslint:disable-next-line:max-classes-per-file
@@ -12,7 +11,7 @@ export default abstract class ContextBase implements Disposable {
 
   constructor(private readonly eventHandler: DomainEventHandler) {}
 
-  readonly save = (): AsyncResult<void, DbError | Error> => {
+  readonly save = () => {
     if (this.disposed) {
       throw new Error("The context is already disposed")
     }
@@ -28,16 +27,16 @@ export default abstract class ContextBase implements Disposable {
 
   protected abstract getAndClearEvents(): Event[]
 
-  protected abstract saveImpl(): AsyncResult<void, DbError>
+  protected abstract saveImpl(): Promise<void>
 }
 
 export interface UnitOfWork extends Disposable {
-  // TODO: Why Error?
-  save: () => TE.TaskEither<DbError | Error, void>
+  save: T.Task<void>
 }
 
 export interface RecordContext<T> {
   add: (record: T) => void
   remove: (record: T) => void
-  load: RTE.ReaderTaskEither<string, DbError, T>
+  load: RT.ReaderTask<string, O.Option<T>>
+  process: (record: T, events: Event[]) => void
 }
