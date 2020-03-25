@@ -7,16 +7,17 @@
   "dependencies": {
     "@fp-app/fp-ts-extensions": "0.1.0",
     "@hapi/joi": "^17.1.1",
+    "@yeongjet/joi-to-json-schema": "^1.0.2",
     "chalk": "^3.0.0",
     "cls-hooked": "^4.2.2",
     "date-fns": "^2.11.0",
     "fp-ts": "2.5.3",
     "invariant": "^2.2.4",
-    "@yeongjet/joi-to-json-schema": "^1.0.2",
     "lodash": "^4.17.15",
     "reflect-metadata": "^0.1.13",
     "short-uuid": "^3.1.1",
     "tsconfig-paths": "^3.9.0",
+    "typechecker": "^6.3.0",
     "typescript": "~3.8.3",
     "uuid": "^7.0.2"
   },
