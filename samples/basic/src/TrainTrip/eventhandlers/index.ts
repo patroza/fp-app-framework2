@@ -5,11 +5,11 @@ import TrainTrip, {
   UserInputReceived,
 } from "@/TrainTrip/TrainTrip"
 import {
-  DbContextKey,
   defaultDependencies,
   getTripKey,
   TrainTripPublisherKey,
 } from "@/TrainTrip/usecases/types"
+import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import {
   createDomainEventHandlerWithDeps,
   createIntegrationEventHandlerWithDeps,
@@ -18,6 +18,7 @@ import {
   requestKey,
   ApiError,
   InvalidStateError,
+  UnpackKey,
 } from "@fp-app/framework"
 import { pipe, TE } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
@@ -70,7 +71,6 @@ createIntegrationEventHandler<UserInputReceived, void, never>(
     ),
 )
 
-// const createIntegrationCommandEventHandler = createIntegrationEventHandlerWithDeps({ db: DbContextKey, ...defaultDependencies })
 const createIntegrationCommandEventHandler = createIntegrationEventHandlerWithDeps({
   request: requestKey,
   ...defaultDependencies,
@@ -83,17 +83,17 @@ createIntegrationCommandEventHandler<CustomerRequestedChanges, void, DbError>(
 )
 
 const createDomainEventHandler = createDomainEventHandlerWithDeps({
-  db: DbContextKey,
+  trainTrips,
   getTrip: getTripKey,
 })
 
 createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
   /* on */ TrainTripStateChanged,
   "RefreshTripInfo",
-  ({ _, db, getTrip }) =>
+  ({ _, getTrip, trainTrips }) =>
     compose(
       map(x => x.trainTripId),
-      chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
+      chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
       chainTup(pipe(getTripFromTrainTrip(getTrip), _.RTE.liftErr)),
       // ALT1
       // pipe(
@@ -113,8 +113,9 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
     ),
 )
 
-const getTripFromTrainTrip = (getTrip: typeof getTripKey) => (trainTrip: TrainTrip) =>
-  getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId)
+const getTripFromTrainTrip = (getTrip: UnpackKey<typeof getTripKey>) => (
+  trainTrip: TrainTrip,
+) => getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId)
 
 export interface TrainTripPublisher {
   registerIfPending: (trainTripId: TrainTripId) => Promise<void>

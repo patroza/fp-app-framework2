@@ -10,7 +10,7 @@ import {
 import { pipe, E } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition from "../TravelClassDefinition"
-import { DbContextKey, defaultDependencies } from "./types"
+import { defaultDependencies } from "./types"
 import { wrap } from "../infrastructure/utils"
 import {
   compose,
@@ -19,9 +19,10 @@ import {
   chain,
   chainFlatTup,
 } from "@fp-app/fp-ts-extensions/src/TaskEither"
+import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 
 const createCommand = createCommandWithDeps({
-  db: DbContextKey,
+  trainTrips,
   ...defaultDependencies,
 })
 
@@ -29,7 +30,7 @@ export const changeStartDate = createCommand<
   ChangeStartDateInput,
   void,
   ChangeStartDateError
->("changeStartDate", ({ _, db }) =>
+>("changeStartDate", ({ _, trainTrips }) =>
   compose(
     chainTup(
       compose(
@@ -47,11 +48,11 @@ export const changeStartDate = createCommand<
     chainFlatTup(
       compose(
         map(([, i]) => i.trainTripId),
-        chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
+        chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
       ),
       // ALT
       // pipe(
-      //   db.trainTrips.load,
+      //   trainTrips.load,
       //   _.RTE.liftErr,
       //   mapper(([, i]) => i.trainTripId),
       // ),
@@ -77,7 +78,7 @@ export const changeTravelClass = createCommand<
   ChangeTravelClassInput,
   void,
   ChangeTravelClassError
->("changeTravelClass", ({ _, db }) =>
+>("changeTravelClass", ({ _, trainTrips }) =>
   compose(
     chainTup(
       compose(
@@ -97,14 +98,14 @@ export const changeTravelClass = createCommand<
     chainFlatTup(
       compose(
         map(([, i]) => i.trainTripId),
-        chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
+        chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
       ),
     ),
-    // I want to write this as: map([, i] => i.trainTripid), chain(db.trainTrips.load§)
-    // chainFlatTup(_.RTE.liftErr(([, i]) => db.trainTrips.load(i.trainTripId))),
+    // I want to write this as: map([, i] => i.trainTripid), chain(trainTrips.load§)
+    // chainFlatTup(_.RTE.liftErr(([, i]) => trainTrips.load(i.trainTripId))),
     // This means:
     // chain(input => {
-    //   const load = _.RTE.liftErr(db.trainTrips.load)
+    //   const load = _.RTE.liftErr(trainTrips.load)
     //   const f = ([, i]: typeof input) => load(i.trainTripId)
     //   return pipe(
     //     f(input),

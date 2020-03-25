@@ -1,23 +1,24 @@
 import { createCommandWithDeps, DbError } from "@fp-app/framework"
-import { DbContextKey, defaultDependencies } from "./types"
+import { defaultDependencies } from "./types"
 import { wrap } from "../infrastructure/utils"
 import { lock } from "../TrainTrip"
 import { compose, map, chain } from "@fp-app/fp-ts-extensions/src/TaskEither"
+import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 
 const createCommand = createCommandWithDeps({
-  db: DbContextKey,
+  trainTrips,
   ...defaultDependencies,
 })
 
 const lockTrainTrip = createCommand<Input, void, LockTrainTripError>(
   "lockTrainTrip",
-  ({ db }) =>
+  ({ trainTrips }) =>
     compose(
       map(({ trainTripId }) => trainTripId),
-      chain(wrap(db.trainTrips.load)),
+      chain(wrap(trainTrips.load)),
       // Test with Functional approach.
       map(trainTrip => lock(trainTrip)(new Date())),
-      map(([a, b]) => db.trainTrips.process(a, b)),
+      map(([a, b]) => trainTrips.process(a, b)),
     ),
 )
 

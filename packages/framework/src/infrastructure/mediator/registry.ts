@@ -30,23 +30,13 @@ export type EventHandlerWithDependencies<
   TInput,
   TOutput,
   TError
-> = HandlerWithDependencies<
-  TDependencies & { _: ToolDeps<TError> },
-  TInput,
-  TOutput,
-  TError
->
+> = HandlerWithDependencies<TDependencies, TInput, TOutput, TError>
 export type UsecaseWithDependencies<
   TDependencies,
   TInput,
   TOutput,
   TError
-> = HandlerWithDependencies<
-  TDependencies & { _: ToolDeps<TError> },
-  TInput,
-  TOutput,
-  TError
->
+> = HandlerWithDependencies<TDependencies, TInput, TOutput, TError>
 
 // TODO: one with built in trampoline?
 export const configureDependencies = <TDependencies, T>(
@@ -70,7 +60,7 @@ export type resolveEventType = (evt: { type: any; payload: any }) => O.Option<Ev
 export const resolveEventKey = generateKey<resolveEventType>("resolveEvent")
 
 type HandlerWithDependencies<TDependencies, TInput, TOutput, TError> = WithDependencies<
-  TDependencies,
+  TDependencies & { _: () => ToolDeps<TError> },
   RTE.ReaderTaskEither<TInput, TError, TOutput>
 >
 
@@ -127,12 +117,7 @@ const createCommandWithDeps = <TDependencies>(deps: TDependencies) => <
   TErr
 >(
   name: string,
-  handler: UsecaseWithDependencies<
-    TDependencies & { _: ToolDeps<TErr> },
-    TInput,
-    TOutput,
-    TErr
-  >,
+  handler: UsecaseWithDependencies<TDependencies, TInput, TOutput, TErr>,
 ) => {
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler({
@@ -151,12 +136,7 @@ const createQueryWithDeps = <TDependencies>(deps: TDependencies) => <
   TErr
 >(
   name: string,
-  handler: UsecaseWithDependencies<
-    TDependencies & { _: ToolDeps<TErr> },
-    TInput,
-    TOutput,
-    TErr
-  >,
+  handler: UsecaseWithDependencies<TDependencies, TInput, TOutput, TErr>,
 ) => {
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler({

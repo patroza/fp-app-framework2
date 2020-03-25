@@ -7,12 +7,13 @@ import {
   toFieldError,
   ValidationError,
   FieldValidationError,
+  UnpackKey,
 } from "@fp-app/framework"
 import { Result, pipe, E, NA } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
-import { DbContextKey, defaultDependencies, getTripKey } from "./types"
+import { defaultDependencies, getTripKey } from "./types"
 import { sequenceT } from "fp-ts/lib/Apply"
 import {
   compose,
@@ -21,16 +22,17 @@ import {
   exec,
   map,
 } from "@fp-app/fp-ts-extensions/src/TaskEither"
+import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 
 const createCommand = createCommandWithDeps({
-  db: DbContextKey,
   getTrip: getTripKey,
+  trainTrips,
   ...defaultDependencies,
 })
 
 const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
-  ({ _, db, getTrip }) =>
+  ({ _, getTrip, trainTrips }) =>
     compose(
       chainEitherK(pipe(validateCreateTrainTripInfo, _.RE.liftErr)),
       chainTup(pipe(getTripFromTrainTripInfo(getTrip), _.RTE.liftErr)),
@@ -53,13 +55,14 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
       //   chain(pipe(getTrip, _.TE.liftErr)),
       // ),
       map(([trip, preferences]) => TrainTrip.create(trip, preferences, new Date())),
-      exec(db.trainTrips.add),
+      exec(trainTrips.add),
       map(trainTrip => trainTrip.id),
     ),
 )
 
-const getTripFromTrainTripInfo = (getTrip: typeof getTripKey) => (i: ValidatedInput) =>
-  getTrip(i.templateId)
+const getTripFromTrainTripInfo = (getTrip: UnpackKey<typeof getTripKey>) => (
+  i: ValidatedInput,
+) => getTrip(i.templateId)
 
 export default createTrainTrip
 export interface Input {

@@ -435,7 +435,8 @@ export function generateKey<T>(name: string): Key<T> {
   return f as any
 }
 
-export type Key<T> = T & { name: string }
+export type Key<T> = T & { $$$KEY: "$$$KEY"; name: string }
+export type UnpackKey<T> = T extends Key<infer X> ? X : never
 
 /**
  * Registers the specified dependencyConstructors as the dependencies for the targeted class.
@@ -509,7 +510,9 @@ export const factoryOf = <T extends (...args: any[]) => any>(
   return newFactory
 }
 
-export type WithDependencies<TDependencies, T> = (deps: TDependencies) => T
+export type WithDependencies<TDependencies, T> = (
+  deps: Dependencies<TDependencies>,
+) => T
 export interface InjectedDependencies<TDependencies> {
   [injectSymbol]?: TDependencies | (() => TDependencies)
 }

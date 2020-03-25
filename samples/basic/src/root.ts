@@ -4,7 +4,6 @@ import {
   Key,
   logger,
   resolveEventKey,
-  UnitOfWork,
   UOWKey,
   toolDepsKey,
 } from "@fp-app/framework"
@@ -26,7 +25,6 @@ import TrainTripReadContext, {
   trainTripReadContextKey,
 } from "./TrainTrip/infrastructure/TrainTripReadContext.disk"
 import {
-  DbContextKey,
   getTripKey,
   RequestContextKey,
   sendCloudSyncKey,
@@ -49,8 +47,11 @@ const createRoot = () => {
     (trainTrips as any) as Key<ReturnType<typeof trainTrips>>,
     trainTrips,
   )
-  container.registerScopedF2(DbContextKey, DiskDBContext)
-  container.registerPassthrough(UOWKey, (DbContextKey as any) as Key<UnitOfWork>)
+  container.registerScopedF2(
+    (DiskDBContext as any) as Key<ReturnType<typeof DiskDBContext>>,
+    DiskDBContext,
+  )
+  container.registerPassthrough(UOWKey, DiskDBContext as any)
 
   container.registerSingletonC2(TrainTripPublisherKey, TrainTripPublisherInMemory)
   container.registerSingletonC2(trainTripReadContextKey, TrainTripReadContext)

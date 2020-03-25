@@ -42,7 +42,6 @@ export interface TrainTripContext extends ReadonlyTrainTripContext, UnitOfWork {
 export type RequestContext = RequestContextBase & Record<string, any>
 
 export const RequestContextKey = generateKey<RequestContext>("request-context")
-export const DbContextKey = generateKey<ReadonlyTrainTripContext>("db-context")
 export const TrainTripPublisherKey = generateKey<TrainTripPublisher>(
   "trainTripPublisher",
 )

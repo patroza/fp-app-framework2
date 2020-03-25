@@ -9,29 +9,30 @@ import {
   FieldValidationError,
 } from "@fp-app/framework"
 import { pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
+import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
-import { DbContextKey, defaultDependencies } from "./types"
+import { defaultDependencies } from "./types"
 import { sequenceT } from "fp-ts/lib/Apply"
 import { wrap } from "../infrastructure/utils"
 import { flow } from "fp-ts/lib/function"
 import { compose, chain, chainTup, map } from "@fp-app/fp-ts-extensions/src/TaskEither"
 
 const createCommand = createCommandWithDeps({
-  db: DbContextKey,
+  trainTrips,
   ...defaultDependencies,
 })
 
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
-  ({ _, db }) =>
+  ({ _, trainTrips }) =>
     compose(
       chain(pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)),
       chainTup(
         compose(
           map(i => i.trainTripId),
-          chain(pipe(wrap(db.trainTrips.load), _.RTE.liftErr)),
+          chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
         ),
       ),
       chain(([trainTrip, proposal]) =>

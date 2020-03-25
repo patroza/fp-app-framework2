@@ -1,6 +1,6 @@
 import { A } from "ts-toolbelt"
 import { Constructor } from "../utils"
-import { injectSymbol } from "./SimpleContainer"
+import { injectSymbol, Key } from "./SimpleContainer"
 
 /**
  * Configures a function for dependency injection, dependency types are automatically inferred based on
@@ -58,6 +58,8 @@ export interface DependencyDefinitions {
 export type Dependencies<T extends DependencyDefinitions> = {
   [P in keyof T]: T[P] extends Constructor
     ? InstanceType<T[P]>
+    : T[P] extends Key<infer X>
+    ? X
     : T[P] extends SomeFunction
     ? ReturnType<T[P]>
     : T[P]["prototype"]
