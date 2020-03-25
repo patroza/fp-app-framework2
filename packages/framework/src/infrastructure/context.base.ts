@@ -38,7 +38,7 @@ export interface RecordContext<T> {
   add: (record: T) => void
   remove: (record: T) => void
   load: RT.ReaderTask<string, O.Option<T>>
-  process: (record: T, events: Event[]) => void
+  processEvents: (record: T, events: Event[]) => void
 }
 
 export const UOWKey = generateKey<UnitOfWork>("unit-of-work")

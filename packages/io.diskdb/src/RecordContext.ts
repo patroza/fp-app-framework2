@@ -31,7 +31,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
   }
 
   // Test with immutable approach.
-  readonly process = (record: T, events: Event[]) => {
+  readonly processEvents = (record: T, events: Event[]) => {
     const original = this.cache.get(record.id)!
     // Using Object.assign would mean that the object doesn't obey the immutability laws strictly.
     //Object.assign(original.data, record)

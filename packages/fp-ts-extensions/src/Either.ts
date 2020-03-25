@@ -179,14 +179,12 @@ export function chainFlatTup<
   E
 >(
   f: (x: TInput2) => Result<T, E>,
-): (
-  input: Result<readonly [TInput, TInputB], E>,
-) => Result<readonly [T, TInput, TInputB], E>
+): (input: Result<readonly [TInput, TInputB], E>) => Result<[T, TInput, TInputB], E>
 export function chainFlatTup(f: any) {
   return E.chain((input: any) =>
     pipe(
       f(input),
-      E.map(x => [x, ...input] as const),
+      E.map(x => tuple(x, ...input)),
     ),
   )
 }

@@ -78,12 +78,12 @@ export function chainFlatTup<TInput, TInputB, T, E>(
   f: (x: readonly [TInput, TInputB]) => AsyncResult<T, E>,
 ): (
   input: AsyncResult<readonly [TInput, TInputB], E>,
-) => AsyncResult<readonly [T, TInput, TInputB], E>
+) => AsyncResult<[T, TInput, TInputB], E>
 export function chainFlatTup(f: any) {
   return TE.chain((input: any) =>
     pipe(
       f(input),
-      TE.map(x => [x, ...input] as const),
+      TE.map(x => tuple(x, ...input)),
     ),
   )
 }

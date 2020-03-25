@@ -25,7 +25,7 @@ import PaxDefinition from "./PaxDefinition"
 import TravelClassDefinition from "./TravelClassDefinition"
 import Trip, { TravelClass, TripWithSelectedTravelClass } from "./Trip"
 import { merge } from "lodash"
-import { flow } from "fp-ts/lib/function"
+import { flow, tuple } from "fp-ts/lib/function"
 import {
   err,
   unsafeUnwrap,
@@ -152,9 +152,8 @@ export const changeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">
     confirmUserChangeAllowed(_this)(),
     mapStatic(startDate),
     map(intChangeStartDate(_this)),
-    map(
-      ([_this, events, changed]) =>
-        [_this, events.concat([...createChangeEvents(_this)(changed)])] as const,
+    map(([_this, events, changed]) =>
+      tuple(_this, events.concat([...createChangeEvents(_this)(changed)])),
     ),
   )
 
@@ -167,9 +166,8 @@ export const changeTravelClass = (_this: TrainTrip) =>
         confirmUserChangeAllowed(_this)(),
         mapStatic(travelClass),
         chain(pipe(intChangeTravelClass(_this), _.RE.liftErr)),
-        map(
-          ([_this, events, changed]) =>
-            [_this, events.concat([...createChangeEvents(_this)(changed)])] as const,
+        map(([_this, events, changed]) =>
+          tuple(_this, events.concat([...createChangeEvents(_this)(changed)])),
         ),
       ),
   )
@@ -192,11 +190,11 @@ export const changeTravelClass = (_this: TrainTrip) =>
 const opportunityIdL = Lens.fromPath<TrainTrip>()(["opportunityId"])
 export const assignOpportunity = (_this: TrainTrip) => (opportunityId: string) => {
   _this = opportunityIdL.modify(() => opportunityId)(_this)
-  return [_this, void 0 as void] as const
+  return tuple(_this, void 0 as void)
 }
 
 const del = (_this: TrainTrip) => () => {
-  return [new TrainTripDeleted(_this.id)] as const
+  return tuple(new TrainTripDeleted(_this.id))
 }
 
 const travelClassL = Lens.fromPath<TravelClassConfiguration>()(["travelClass"])
@@ -234,7 +232,7 @@ const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
     () => currentTravelClassConfiguration || _this.travelClassConfiguration[0]!,
   )(_this)
 
-  return [_this, void 0] as const
+  return tuple(_this, void 0)
 }
 
 export const proposeChanges = (_this: TrainTrip) =>
@@ -248,9 +246,8 @@ export const proposeChanges = (_this: TrainTrip) =>
         chain(pipe(applyDefinedChanges(_this), _.RE.liftErr)),
         // TODO: push the events out as return
         //E.map(x => [...createChangeEvents(_this)(x)]),
-        map(
-          ([_this, events, changed]) =>
-            [_this, events.concat([...createChangeEvents(_this)(changed)])] as const,
+        map(([_this, events, changed]) =>
+          tuple(_this, events.concat([...createChangeEvents(_this)(changed)])),
         ),
       ),
     // ALT1
@@ -305,13 +302,13 @@ const applyDefinedChanges = (_this: TrainTrip) => ({
       changed = true
     }
   }
-  return ok([_this, events, changed] as const)
+  return ok(tuple(_this, events, changed))
 }
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 export const lock = (_this: TrainTrip) => (currentDate: Date) => {
   _this = lockedAtL.modify(() => currentDate)(_this)
   const events: Event[] = [new TrainTripStateChanged(_this.id)]
-  return [_this, events] as const
+  return tuple(_this, events)
 }
 
 const startDateL = convertCoolLens(
@@ -322,28 +319,28 @@ const intChangeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">>(
 ) => (startDate: FutureDate) => {
   const events: Event[] = []
   if (startDate.toISOString() === _this.startDate.toISOString()) {
-    return [_this, events, false] as const
+    return tuple(_this, events, false)
   }
   // TODO: return just the boolean, and apply the change at the caller?
   // TODO: other business logic
   _this = startDateL.modify(() => startDate)(_this)
-  return [_this, events, true] as const
+  return tuple(_this, events, true)
 }
 
 const paxL = Lens.fromPath<TrainTrip>()(["pax"])
 const intChangePax = (_this: TrainTrip) => (pax: PaxDefinition) => {
   const events: Event[] = []
   if (isEqual(_this.pax, pax)) {
-    return [_this, events, false] as const
+    return tuple(_this, events, false)
   }
   _this = paxL.modify(() => pax)(_this)
   // TODO: other business logic
-  return [_this, events, true] as const
+  return tuple(_this, events, true)
 }
 
 const intChangeTravelClass = (_this: TrainTrip) => (
   travelClass: TravelClassDefinition,
-): Result<readonly [TrainTrip, Event[], boolean], InvalidStateError> => {
+): Result<[TrainTrip, Event[], boolean], InvalidStateError> => {
   const slc = _this.travelClassConfiguration.find(
     x => x.travelClass.name === travelClass,
   )
