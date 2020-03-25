@@ -1,4 +1,5 @@
 export { default as createDependencyNamespace } from "./createDependencyNamespace"
+export * from "./configure"
 export * from "./context.base"
 export { default as ContextBase } from "./context.base"
 export * from "./errors"

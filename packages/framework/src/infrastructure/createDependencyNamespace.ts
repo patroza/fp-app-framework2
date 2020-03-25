@@ -109,11 +109,7 @@ export default function createDependencyNamespace(
   const publishDomainEventHandler = publish(evt =>
     pipe(
       getDomainEventHandlers(evt),
-      O.map(
-        RANE.map(
-          y => (container.getF(y) as any) as RTE.ReaderTaskEither<any, any, void>,
-        ),
-      ),
+      O.map(RANE.map(y => container.getF(y) as RTE.ReaderTaskEither<any, any, void>)),
     ),
   )
   const getIntegrationEventHandlers = (evt: Event) =>
@@ -124,11 +120,7 @@ export default function createDependencyNamespace(
   const publishIntegrationEventHandler = publish(evt =>
     pipe(
       getIntegrationEventHandlers(evt),
-      O.map(
-        RANE.map(
-          y => (container.getF(y) as any) as RTE.ReaderTaskEither<any, any, void>,
-        ),
-      ),
+      O.map(RANE.map(y => container.getF(y) as RTE.ReaderTaskEither<any, any, void>)),
     ),
   )
   container.registerScopedC(
@@ -175,8 +167,8 @@ export default function createDependencyNamespace(
     key: any,
     evt: any,
   ) => () =>
-    setupChildContext<Either<TInput, TOutput>>(
-      () => container.getF(requestKey)(key, evt)() as any,
+    setupChildContext<Either<TInput, TOutput>>(() =>
+      container.getF(requestKey)(key, evt)(),
     )
   container.registerSingletonF(
     requestKey,

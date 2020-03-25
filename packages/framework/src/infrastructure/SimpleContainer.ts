@@ -1,8 +1,9 @@
 // TODO: There's obviously a lot of possibility to improve the API, and Implementation here ;-)
-
 import "reflect-metadata"
 import { Constructor, Disposable, setFunctionName } from "../utils"
 import assert from "../utils/assert"
+import { isClass } from "typechecker/edition-node-12"
+import { DependencyDefinitions, Dependencies } from "./configure"
 
 export default class SimpleContainer {
   private factories = new Map()
@@ -90,7 +91,7 @@ export default class SimpleContainer {
     this.registerFactoryF(key, factory, this.getDependencyScope)
   }
 
-  registerScopedF2<TDependencies, T extends (...args: any[]) => any>(
+  registerScopedF2<TDependencies, T>(
     key: Key<T>,
     impl: WithDependenciesConfig<TDependencies, T>,
   ) {
@@ -99,13 +100,13 @@ export default class SimpleContainer {
     this.registerFactoryF(key, factory, this.getDependencyScope)
   }
 
-  registerSingletonF2<TDependencies, T extends (...args: any[]) => any>(
+  registerSingletonF2<TDependencies, T>(
     key: Key<T>,
     impl: WithDependenciesConfig<TDependencies, T>,
   ) {
     const factory = () => this.createFunctionInstance(impl)
     setFunctionName(factory, impl.name || `f(${key.name}`)
-    this.registerSingletonF(key, factory)
+    this.registerSingletonF(key as any, factory)
   }
 
   registerSingletonConcrete<TDependencies, T>(
@@ -323,10 +324,16 @@ export default class SimpleContainer {
       const pAny = prev as any
       pAny[cur] = this.getF(key)
       return prev
-    }, {} as TDependencies)
+    }, {} as Dependencies<TDependencies>)
 
   private tryCreateInstance = <T>(key: any) => {
     const factory = this.factories.get(key)
+    if (!factory) {
+      if (!isClass(key)) {
+        return this.createFunctionInstance(key)
+      }
+      return new key()
+    }
     const instance = factory() as T
     // if (!(instance as any).name) { setFunctionName(instance, key.name) }
     return instance
@@ -478,8 +485,14 @@ export const autoinject = (target: any) => {
 
 const getDependencyKeys = (constructor: any) =>
   (constructor[injectSymbol] as any[]) || []
-const getDependencyObjectKeys = <TDependencies>(constructor: any): TDependencies =>
-  constructor[injectSymbol] || {}
+const getDependencyObjectKeys = <TDependencies>(constructor: any): TDependencies => {
+  let deps = constructor[injectSymbol]
+  if (typeof deps === "function") {
+    deps = deps()
+    constructor[injectSymbol] = deps
+  }
+  return deps || {}
+}
 
 const generateKeyFromFn = <T>(fun: (...args: any[]) => T) => generateKey<T>(fun.name)
 const generateKeyFromC = <T>(C: Constructor<T>) => generateKey<T>(C.name)
@@ -497,9 +510,11 @@ export const factoryOf = <T extends (...args: any[]) => any>(
 
 export type WithDependencies<TDependencies, T> = (deps: TDependencies) => T
 export interface InjectedDependencies<TDependencies> {
-  [injectSymbol]: TDependencies
+  [injectSymbol]?: TDependencies | (() => TDependencies)
 }
-export type WithDependenciesConfig<TDependencies, T> = ((deps: TDependencies) => T) &
+export type WithDependenciesConfig<TDependencies extends DependencyDefinitions, T> = ((
+  deps: Dependencies<TDependencies>,
+) => T) &
   InjectedDependencies<TDependencies>
 
 export { generateKeyFromC, generateKeyFromFn }
