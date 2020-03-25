@@ -42,12 +42,9 @@ import {
 export default class TrainTrip extends Entity {
   /** the primary way to create a new TrainTrip */
   static create = (
-    {
-      currentDate,
-      pax,
-      startDate,
-    }: { currentDate: Date; startDate: FutureDate; pax: PaxDefinition },
     trip: TripWithSelectedTravelClass,
+    { pax, startDate }: { startDate: FutureDate; pax: PaxDefinition },
+    currentDate: Date,
   ) => {
     const travelClassConfiguration = trip.travelClasses.map(x =>
       unsafeUnwrap(TravelClassConfiguration.create(x)),
@@ -65,9 +62,6 @@ export default class TrainTrip extends Entity {
       currentTravelClassConfiguration,
       currentDate,
     )
-    // TODO: Consider the creation of a train trip to have another starting point,
-    // like currentUser.createTrainTrip(), where the domain event then naturally
-    // occurs inside the currentUser instead :/
     t.registerDomainEvent(new TrainTripCreated(t.id))
 
     return t
@@ -92,7 +86,7 @@ export default class TrainTrip extends Entity {
         | "startDate"
         | "travelClassConfiguration"
         | "currentTravelClassConfiguration"
-        | "trip"
+        | "createdAt"
       >
     >,
     // rest?: Partial<{ -readonly [key in keyof TrainTrip]: TrainTrip[key] }>,

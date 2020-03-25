@@ -1,4 +1,8 @@
-import TrainTrip, { TravelClassConfiguration, isLocked } from "@/TrainTrip/TrainTrip"
+import TrainTrip, {
+  isLocked,
+  Price,
+  TravelClassConfiguration,
+} from "@/TrainTrip/TrainTrip"
 import { TrainTripContext } from "@/TrainTrip/usecases/types"
 import {
   autoinject,
@@ -8,14 +12,11 @@ import {
   RecordContext,
 } from "@fp-app/framework"
 import { DiskRecordContext } from "@fp-app/io.diskdb"
-import { unsafeUnwrapDecode } from "@fp-app/fp-ts-extensions"
 import { parse, stringify } from "flatted"
-import PaxDefinition from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { TravelClass } from "../Trip"
 import { TrainTripView } from "../usecases/getTrainTrip"
 import TrainTripReadContext from "./TrainTripReadContext.disk"
-import { DateFromISOString } from "@fp-app/fp-ts-extensions/src/Io"
 
 // Since we assume that saving a valid object, means restoring a valid object
 // we can assume data correctness and can skip normal validation and constructing.
@@ -99,18 +100,16 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
   const trainTrip = new TrainTrip(
     id,
     pax,
-    unsafeUnwrapDecode(DateFromISOString.decode(startDate)),
+    new Date(startDate),
     travelClassConfigurations,
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     travelClassConfigurations.find(
       x => x.travelClass.name === currentTravelClassConfiguration.travelClass.name,
     )!,
-    unsafeUnwrapDecode(DateFromISOString.decode(createdAt)),
+    new Date(createdAt),
     {
       ...rest,
-      lockedAt: lockedAt
-        ? unsafeUnwrapDecode(DateFromISOString.decode(lockedAt))
-        : undefined,
+      lockedAt: lockedAt ? new Date(lockedAt) : undefined,
     },
   )
 
@@ -120,35 +119,30 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
 const mapTravelClassConfigurationDTO = ({
   travelClass,
   ...slRest
-}: {
-  travelClass: TravelClassDTO
-}) => {
-  const slc = TravelClassConfiguration.decode({
+}: TravelClassConfigurationDTO) =>
+  ({
     ...slRest,
-    // TODO: The travelClass should actually be a reference to an existing / shared object.
     travelClass: mapTravelClassDTO(travelClass),
-  })
-  return unsafeUnwrapDecode(slc)
-}
+  } as TravelClassConfiguration)
 
-const mapTravelClassDTO = (dto: TravelClassDTO): TravelClass =>
-  unsafeUnwrapDecode(TravelClass.fromWire(dto))
+const mapTravelClassDTO = (dto: TravelClassDTO) =>
+  ({
+    ...dto,
+    createdAt: new Date(dto.createdAt),
+  } as TravelClass)
 
 interface TrainTripDTO {
   createdAt: string
   currentTravelClassConfiguration: TravelClassConfigurationDTO
   id: string
-  trip: TripDTO
   startDate: string
   lockedAt?: string
-  pax: PaxDefinition
+  pax: Pax
   travelClassConfiguration: TravelClassConfigurationDTO[]
 }
 interface TravelClassConfigurationDTO {
   travelClass: TravelClassDTO
-}
-interface TripDTO {
-  travelClasses: TravelClassDTO[]
+  price: Price
 }
 interface TravelClassDTO {
   createdAt: string
