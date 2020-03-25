@@ -4,54 +4,57 @@ import TrainTrip, {
   TravelClassConfiguration,
 } from "@/TrainTrip/TrainTrip"
 import { TrainTripContext } from "@/TrainTrip/usecases/types"
-import {
-  autoinject,
-  ContextBase,
-  DomainEventHandler,
-  Event,
-  RecordContext,
-} from "@fp-app/framework"
+import { DomainEventHandler, Event, configure } from "@fp-app/framework"
 import { DiskRecordContext } from "@fp-app/io.diskdb"
 import { parse, stringify } from "flatted"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { TravelClass } from "../Trip"
 import { TrainTripView } from "../usecases/getTrainTrip"
 import TrainTripReadContext from "./TrainTripReadContext.disk"
+import PaxDefinition, { Pax } from "../PaxDefinition"
 
 // Since we assume that saving a valid object, means restoring a valid object
 // we can assume data correctness and can skip normal validation and constructing.
 // until proven otherwise.
-// tslint:disable-next-line:max-classes-per-file
-@autoinject
-export default class DiskDBContext extends ContextBase implements TrainTripContext {
-  get trainTrips() {
-    return this.trainTripsi as RecordContext<TrainTrip>
-  }
+const DiskDBContext = configure(
+  function({ eventHandler, readContext, trainTrips }) {
+    let disposed = false
+    const getAndClearEvents = (): Event[] => {
+      return trainTrips.intGetAndClearEvents()
+    }
+    const save = () =>
+      trainTrips.intSave(
+        i => readContext.create(i.id, TrainTripToView(i)),
+        i => readContext.delete(i.id),
+      )
+    const dispose = () => (disposed = true)
+    return {
+      getAndClearEvents,
+      save: () => {
+        if (disposed) {
+          throw new Error("The context is already disposed")
+        }
+        return eventHandler.commitAndPostEvents(getAndClearEvents, save)
+      },
+      trainTrips,
+      dispose,
+    } as TrainTripContext
+  },
+  () => ({
+    eventHandler: DomainEventHandler,
+    readContext: TrainTripReadContext,
+    trainTrips,
+  }),
+)
 
-  private readonly trainTripsi = new DiskRecordContext<TrainTrip>(
+export const trainTrips = () =>
+  new DiskRecordContext<TrainTrip>(
     "trainTrip",
     serializeTrainTrip,
     deserializeDbTrainTrip,
   )
-  constructor(
-    private readonly readContext: TrainTripReadContext,
-    eventHandler: DomainEventHandler,
-    // test sample
-    // @paramInject(sendCloudSyncKey) sendCloudSync: typeof sendCloudSyncKey,
-  ) {
-    super(eventHandler)
-  }
 
-  protected getAndClearEvents(): Event[] {
-    return this.trainTripsi.intGetAndClearEvents()
-  }
-  protected saveImpl(): Promise<void> {
-    return this.trainTripsi.intSave(
-      i => this.readContext.create(i.id, TrainTripToView(i)),
-      i => this.readContext.delete(i.id),
-    )
-  }
-}
+export default DiskDBContext
 
 const TrainTripToView = (trip: TrainTrip): TrainTripView => {
   const {
@@ -99,7 +102,7 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
   )
   const trainTrip = new TrainTrip(
     id,
-    pax,
+    pax as PaxDefinition,
     new Date(startDate),
     travelClassConfigurations,
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

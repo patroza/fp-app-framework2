@@ -18,7 +18,9 @@ import {
   getTrip,
   sendCloudSyncFake,
 } from "./TrainTrip/infrastructure/api"
-import DiskDBContext from "./TrainTrip/infrastructure/TrainTripContext.disk"
+import DiskDBContext, {
+  trainTrips,
+} from "./TrainTrip/infrastructure/TrainTripContext.disk"
 import TrainTripPublisherInMemory from "./TrainTrip/infrastructure/trainTripPublisher.inMemory"
 import TrainTripReadContext, {
   trainTripReadContextKey,
@@ -43,7 +45,11 @@ const createRoot = () => {
     setupRequestContext,
   } = createDependencyNamespace(namespace, RequestContextKey)
 
-  container.registerScopedC2(DbContextKey, DiskDBContext)
+  container.registerScopedF2(
+    (trainTrips as any) as Key<ReturnType<typeof trainTrips>>,
+    trainTrips,
+  )
+  container.registerScopedF2(DbContextKey, DiskDBContext)
   container.registerPassthrough(UOWKey, (DbContextKey as any) as Key<UnitOfWork>)
 
   container.registerSingletonC2(TrainTripPublisherKey, TrainTripPublisherInMemory)
