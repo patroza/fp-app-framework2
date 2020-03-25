@@ -4,11 +4,8 @@ import TrainTrip, {
   TrainTripStateChanged,
   UserInputReceived,
 } from "@/TrainTrip/TrainTrip"
-import {
-  defaultDependencies,
-  getTripKey,
-  TrainTripPublisherKey,
-} from "@/TrainTrip/usecases/types"
+import { defaultDependencies, TrainTripPublisherKey } from "@/TrainTrip/usecases/types"
+import { getTrip } from "@/TrainTrip/infrastructure/api"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import {
   createDomainEventHandlerWithDeps,
@@ -18,7 +15,7 @@ import {
   requestKey,
   ApiError,
   InvalidStateError,
-  UnpackKey,
+  configure,
 } from "@fp-app/framework"
 import { pipe, TE } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
@@ -36,10 +33,10 @@ import { compose, map, chain, chainTup } from "@fp-app/fp-ts-extensions/src/Task
 // So that we may ensure the events will be processed.
 // Other options can be to have a compensating action running regularly that checks and fixes things. A sort of eventual consistency.
 
-const createIntegrationEventHandler = createIntegrationEventHandlerWithDeps({
+const createIntegrationEventHandler = createIntegrationEventHandlerWithDeps(() => ({
   trainTripPublisher: TrainTripPublisherKey,
   ...defaultDependencies,
-})
+}))
 
 createIntegrationEventHandler<TrainTripCreated, void, never>(
   /* on */ TrainTripCreated,
@@ -71,10 +68,12 @@ createIntegrationEventHandler<UserInputReceived, void, never>(
     ),
 )
 
-const createIntegrationCommandEventHandler = createIntegrationEventHandlerWithDeps({
-  request: requestKey,
-  ...defaultDependencies,
-})
+const createIntegrationCommandEventHandler = createIntegrationEventHandlerWithDeps(
+  () => ({
+    request: requestKey,
+    ...defaultDependencies,
+  }),
+)
 
 createIntegrationCommandEventHandler<CustomerRequestedChanges, void, DbError>(
   /* on */ CustomerRequestedChanges,
@@ -82,19 +81,19 @@ createIntegrationCommandEventHandler<CustomerRequestedChanges, void, DbError>(
   curryRequest(lockTrainTrip),
 )
 
-const createDomainEventHandler = createDomainEventHandlerWithDeps({
+const createDomainEventHandler = createDomainEventHandlerWithDeps(() => ({
   trainTrips,
-  getTrip: getTripKey,
-})
+  getTripFromTrainTrip,
+}))
 
 createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
   /* on */ TrainTripStateChanged,
   "RefreshTripInfo",
-  ({ _, getTrip, trainTrips }) =>
+  ({ _, getTripFromTrainTrip, trainTrips }) =>
     compose(
       map(x => x.trainTripId),
       chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
-      chainTup(pipe(getTripFromTrainTrip(getTrip), _.RTE.liftErr)),
+      chainTup(pipe(getTripFromTrainTrip, _.RTE.liftErr)),
       // ALT1
       // pipe(
       //   (trainTrip: TrainTrip) =>
@@ -113,9 +112,13 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
     ),
 )
 
-const getTripFromTrainTrip = (getTrip: UnpackKey<typeof getTripKey>) => (
-  trainTrip: TrainTrip,
-) => getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId)
+const getTripFromTrainTrip = configure(
+  function({ getTrip }) {
+    return (trainTrip: TrainTrip) =>
+      getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId)
+  },
+  () => ({ getTrip }),
+)
 
 export interface TrainTripPublisher {
   registerIfPending: (trainTripId: TrainTripId) => Promise<void>

@@ -19,10 +19,10 @@ import { wrap } from "../infrastructure/utils"
 import { flow } from "fp-ts/lib/function"
 import { compose, chain, chainTup, map } from "@fp-app/fp-ts-extensions/src/TaskEither"
 
-const createCommand = createCommandWithDeps({
+const createCommand = createCommandWithDeps(() => ({
   trainTrips,
   ...defaultDependencies,
-})
+}))
 
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",

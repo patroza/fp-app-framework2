@@ -1,6 +1,9 @@
 import assert from "./assert"
 
 export type Constructor<T = any> = new (...args: any[]) => T
+export type ConstructorFunction<T = any> = (...args: any[]) => T
+export type Constructable<T = any> = Constructor<T> & ConstructorFunction<T>
+export type AnyConstructable<T = any> = Constructor<T> | ConstructorFunction<T>
 
 const asWritable = <T>(obj: T) => obj as Writeable<T>
 export type Writeable<T> = { -readonly [P in keyof T]-?: T[P] }

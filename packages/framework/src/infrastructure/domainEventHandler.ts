@@ -1,7 +1,7 @@
 import { AsyncResult, TE, E, O } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { publishType } from "./mediator/publish"
-import { generateKey } from "./SimpleContainer"
+import { generateKey, UnpackKey } from "./SimpleContainer"
 import { TaskEither } from "fp-ts/lib/TaskEither"
 import { eventsMapType, HandlerList } from "./executePostCommitHandlers"
 
@@ -13,7 +13,9 @@ export default class DomainEventHandler {
   constructor(
     private readonly publish: publishType,
     private readonly getIntegrationHandlers: (evt: Event) => O.Option<HandlerList>,
-    private readonly executeIntegrationEvents: typeof executePostCommitHandlersKey,
+    private readonly executeIntegrationEvents: UnpackKey<
+      typeof executePostCommitHandlersKey
+    >,
   ) {}
 
   commitAndPostEvents = async (

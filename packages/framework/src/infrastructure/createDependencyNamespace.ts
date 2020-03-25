@@ -27,7 +27,6 @@ import {
 } from "./mediator"
 import { processReceivedEvent } from "./pubsub"
 import SimpleContainer, { DependencyScope, factoryOf, Key } from "./SimpleContainer"
-import { Either } from "fp-ts/lib/Either"
 import { O, pipe, RANE, RTE } from "@fp-app/fp-ts-extensions"
 
 const logger = getLogger("registry")
@@ -163,13 +162,8 @@ export default function createDependencyNamespace(
       return process(evt)()
     })
 
-  const requestInNewContext: requestInNewScopeType = <TInput, TOutput>(
-    key: any,
-    evt: any,
-  ) => () =>
-    setupChildContext<Either<TInput, TOutput>>(() =>
-      container.getF(requestKey)(key, evt)(),
-    )
+  const requestInNewContext: requestInNewScopeType = (key, evt) => () =>
+    setupChildContext(() => container.getF(requestKey)(key, evt)())
   container.registerSingletonF(
     requestKey,
     factoryOf(request, i => i(key => container.getConcrete(key))),

@@ -5,11 +5,11 @@ import { wrap } from "../infrastructure/utils"
 import { compose, map, chain, chainTup } from "@fp-app/fp-ts-extensions/src/TaskEither"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 
-const createCommand = createCommandWithDeps({
+const createCommand = createCommandWithDeps(() => ({
   trainTrips,
   sendCloudSync: sendCloudSyncKey,
   ...defaultDependencies,
-})
+}))
 
 const registerCloud = createCommand<Input, void, DbError>(
   "registerCloud",

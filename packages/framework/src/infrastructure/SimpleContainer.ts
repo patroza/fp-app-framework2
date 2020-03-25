@@ -1,7 +1,13 @@
 // TODO: Get rid of the "keys" as required concept.
 // TODO: There's obviously a lot of possibility to improve the API, and Implementation here ;-)
 import "reflect-metadata"
-import { Constructor, Disposable, setFunctionName } from "../utils"
+import {
+  Constructor,
+  Disposable,
+  setFunctionName,
+  ConstructorFunction,
+  Constructable,
+} from "../utils"
 import assert from "../utils/assert"
 import { isClass } from "typechecker/edition-node-12"
 import { DependencyDefinitions, Dependencies } from "./configure"
@@ -27,7 +33,7 @@ export default class SimpleContainer {
   }
 
   // tslint:disable-next-line:ban-types
-  getF<T extends Function>(key: T) {
+  getF<T extends Function>(key: ConstructorFunction<T>): T {
     const f = this.tryCreateInstance<T>(key)
     if (!f) {
       throw new Error(`could not resolve ${key}`)
@@ -35,7 +41,7 @@ export default class SimpleContainer {
     return f
   }
 
-  getConcrete<TDependencies, T>(key: (deps: TDependencies) => T) {
+  getConcrete<TDependencies, T>(key: (deps: TDependencies) => T): T {
     const f = this.tryCreateInstance<T>(key)
     if (!f) {
       throw new Error(`could not resolve ${key}`)
@@ -43,7 +49,7 @@ export default class SimpleContainer {
     return f
   }
 
-  getO<T>(key: Key<T>) {
+  getO<T>(key: Key<T>): T {
     const f = this.tryCreateInstance<T>(key)
     if (!f) {
       throw new Error(`could not resolve ${key}`)
@@ -75,7 +81,7 @@ export default class SimpleContainer {
     this.registerFactoryC(key, () => instance, this.getSingletonScope)
   }
 
-  registerTransientF<T extends (...args: any[]) => any>(key: T, factory: () => T) {
+  registerTransientF<T>(key: ConstructorFunction<T>, factory: () => T) {
     this.registerFactoryF(key, factory)
   }
 
@@ -84,16 +90,16 @@ export default class SimpleContainer {
   }
 
   registerScopedO<T>(key: Key<T>, factory?: () => T) {
-    const fact = factory || (() => this.createNewInstance(key as any))
+    const fact = factory || (() => this.createNewInstance(key))
     this.registerFactoryO(key, fact, this.getDependencyScope)
   }
 
-  registerScopedF<T extends (...args: any[]) => any>(key: T, factory: () => T) {
+  registerScopedF<T>(key: ConstructorFunction<T>, factory: () => T) {
     this.registerFactoryF(key, factory, this.getDependencyScope)
   }
 
   registerScopedF2<TDependencies, T>(
-    key: Key<T>,
+    key: ConstructorFunction<T>,
     impl: WithDependenciesConfig<TDependencies, T>,
   ) {
     const factory = () => this.createFunctionInstance(impl)
@@ -102,12 +108,12 @@ export default class SimpleContainer {
   }
 
   registerSingletonF2<TDependencies, T>(
-    key: Key<T>,
+    key: ConstructorFunction<T>,
     impl: WithDependenciesConfig<TDependencies, T>,
   ) {
     const factory = () => this.createFunctionInstance(impl)
     setFunctionName(factory, impl.name || `f(${key.name}`)
-    this.registerSingletonF(key as any, factory)
+    this.registerSingletonF(key, factory)
   }
 
   registerSingletonConcrete<TDependencies, T>(
@@ -145,19 +151,19 @@ export default class SimpleContainer {
     this.decorators.set(forKey, current)
   }
 
-  registerSingletonF<T extends (...args: any[]) => any>(key: T, factory: () => T) {
+  registerSingletonF<T>(key: ConstructorFunction<T>, factory: () => T) {
     this.registerFactoryF(key, factory, this.getSingletonScope)
   }
 
   registerSingletonO<T>(key: Key<T>, factory?: () => T) {
-    const fact = factory || (() => this.createNewInstance(key as any))
+    const fact = factory || (() => this.createNewInstance(key))
     // this.factories.set(key, () => this.singletonScope.getOrCreate(key, fact))
     this.registerFactoryO(key, fact, this.getSingletonScope)
   }
 
   registerSingletonC2<T>(key: Key<T>, impl: Constructor<T>) {
     const factory = () => this.createNewInstance(impl)
-    this.registerSingletonC(key as any, factory)
+    this.registerSingletonC(key, factory)
 
     // Also register the concrete implementation
     this.factories.set(impl, this.factories.get(key))
@@ -165,7 +171,7 @@ export default class SimpleContainer {
 
   registerScopedC2<T>(key: Key<T>, impl: Constructor<T>) {
     const factory = () => this.createNewInstance(impl)
-    this.registerScopedC(key as any, factory)
+    this.registerScopedC(key, factory)
     // Also register the concrete implementation
     this.factories.set(impl, this.factories.get(key))
   }
@@ -175,13 +181,13 @@ export default class SimpleContainer {
   //   this.registerSingletonO(key, factory)
   // }
 
-  registerInstanceF<T extends (...args: any[]) => any>(key: T, instance: T) {
+  registerInstanceF<T>(key: ConstructorFunction<T>, instance: T) {
     this.registerFactoryF(key, () => instance)
   }
 
-  registerInitializerF<T extends (...args: any[]) => any>(
-    key: Key<T> | "global",
-    ...initializers: ((f: T, key: Key<T>) => void)[]
+  registerInitializerF<T = any>(
+    key: ConstructorFunction<T> | "global",
+    ...initializers: ((f: T, key: ConstructorFunction<T>) => void)[]
   ) {
     this.registerInitializer(this.initializersF, key, initializers)
   }
@@ -193,7 +199,7 @@ export default class SimpleContainer {
     this.registerInitializer(this.initializersC, key, initializers)
   }
 
-  registerInitializerO<T>(
+  registerInitializerO<T = any>(
     key: Key<T> | "global",
     ...initializers: ((instance: T, key: Key<T>) => void)[]
   ) {
@@ -435,7 +441,7 @@ export function generateKey<T>(name: string): Key<T> {
   return f as any
 }
 
-export type Key<T> = T & { $$$KEY: "$$$KEY"; name: string }
+export type Key<T> = Constructable<T> & { $$$KEY: "$$$KEY"; name: string }
 export type UnpackKey<T> = T extends Key<infer X> ? X : never
 
 /**

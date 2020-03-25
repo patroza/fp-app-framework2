@@ -7,13 +7,14 @@ import {
   toFieldError,
   ValidationError,
   FieldValidationError,
-  UnpackKey,
+  configure,
 } from "@fp-app/framework"
 import { Result, pipe, E, NA } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
-import { defaultDependencies, getTripKey } from "./types"
+import { getTrip } from "@/TrainTrip/infrastructure/api"
+import { defaultDependencies } from "./types"
 import { sequenceT } from "fp-ts/lib/Apply"
 import {
   compose,
@@ -24,18 +25,18 @@ import {
 } from "@fp-app/fp-ts-extensions/src/TaskEither"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 
-const createCommand = createCommandWithDeps({
-  getTrip: getTripKey,
+const createCommand = createCommandWithDeps(() => ({
+  getTripFromTrainTripInfo,
   trainTrips,
   ...defaultDependencies,
-})
+}))
 
 const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
-  ({ _, getTrip, trainTrips }) =>
+  ({ _, getTripFromTrainTripInfo, trainTrips }) =>
     compose(
       chainEitherK(pipe(validateCreateTrainTripInfo, _.RE.liftErr)),
-      chainTup(pipe(getTripFromTrainTripInfo(getTrip), _.RTE.liftErr)),
+      chainTup(pipe(getTripFromTrainTripInfo, _.RTE.liftErr)),
       // pipe(
       //   getTrip,
       //   mapper((i: { templateId: string }) => i.templateId),
@@ -45,10 +46,6 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
       //i => pipe(getTrip, _.TE.liftErr)(i.templateId),
       // ALT1
       //pipe(mapper((i: { templateId: string }) => i.templateId)(getTrip), _.TE.liftErr),
-      // ALT2
-      // const getTripFromTrainTripInfo = (getTrip: typeof getTripKey) => (i: {
-      //   templateId: string
-      // }) => getTrip(i.templateId)
       // ALT3
       // compose(
       //   map(i => i.templateId),
@@ -60,9 +57,12 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
     ),
 )
 
-const getTripFromTrainTripInfo = (getTrip: UnpackKey<typeof getTripKey>) => (
-  i: ValidatedInput,
-) => getTrip(i.templateId)
+const getTripFromTrainTripInfo = configure(
+  function({ getTrip }) {
+    return (i: ValidatedInput) => getTrip(i.templateId)
+  },
+  () => ({ getTrip }),
+)
 
 export default createTrainTrip
 export interface Input {

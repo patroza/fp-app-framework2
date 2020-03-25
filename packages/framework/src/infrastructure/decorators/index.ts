@@ -21,7 +21,7 @@ const loggingDecorator = (): RequestDecorator => request => (key, input) => {
 }
 
 const uowDecorator = configureDependencies(
-  { unitOfWork: UOWKey },
+  () => ({ unitOfWork: UOWKey }),
   "uowDecorator",
   ({ unitOfWork }) => <TInput, TOutput, TError>(
     request: TRequest<TInput, TOutput, TError>,
@@ -47,10 +47,6 @@ export { loggingDecorator, uowDecorator }
 type RequestDecorator = <TInput, TOutput, TError>(
   request: TRequest<TInput, TOutput, TError>,
 ) => TRequest<TInput, TOutput, TError>
-
-// type RequestDecoratorT<TInput, TOutput, TError> = (
-//   request: TRequest<TInput, TOutput, TError>,
-// ) => TRequest<TInput, TOutput, TError>
 
 type TRequest<TInput, TOutput, TError> = (
   key: NamedRequestHandler<TInput, TOutput, TError>,

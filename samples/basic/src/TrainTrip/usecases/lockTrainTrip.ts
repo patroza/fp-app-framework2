@@ -5,10 +5,10 @@ import { lock } from "../TrainTrip"
 import { compose, map, chain } from "@fp-app/fp-ts-extensions/src/TaskEither"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 
-const createCommand = createCommandWithDeps({
+const createCommand = createCommandWithDeps(() => ({
   trainTrips,
   ...defaultDependencies,
-})
+}))
 
 const lockTrainTrip = createCommand<Input, void, LockTrainTripError>(
   "lockTrainTrip",

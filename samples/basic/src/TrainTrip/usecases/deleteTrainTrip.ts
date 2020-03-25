@@ -5,10 +5,10 @@ import { wrap } from "../infrastructure/utils"
 import { compose, map, chain } from "@fp-app/fp-ts-extensions/src/TaskEither"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 
-const createCommand = createCommandWithDeps({
+const createCommand = createCommandWithDeps(() => ({
   trainTrips,
   ...defaultDependencies,
-})
+}))
 
 const deleteTrainTrip = createCommand<Input, void, DeleteTrainTripError>(
   "deleteTrainTrip",

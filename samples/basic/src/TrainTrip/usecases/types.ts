@@ -2,17 +2,15 @@ import TrainTrip, { Price } from "@/TrainTrip/TrainTrip"
 import {
   ApiError,
   generateKey,
-  generateKeyFromFn,
   RecordContext,
   RequestContextBase,
   UnitOfWork,
 } from "@fp-app/framework"
 import { AsyncResult, RTE } from "@fp-app/fp-ts-extensions"
 import { TrainTripPublisher } from "../eventhandlers"
-import { getTrip, sendCloudSyncFake, Template, TravelPlan } from "../infrastructure/api"
+import { sendCloudSyncFake, Template, TravelPlan } from "../infrastructure/api"
 import PaxDefinition from "../PaxDefinition"
 
-export const getTripKey = generateKeyFromFn(getTrip)
 export const sendCloudSyncKey = generateKey<ReturnType<typeof sendCloudSyncFake>>(
   "sendCloudSync",
 )

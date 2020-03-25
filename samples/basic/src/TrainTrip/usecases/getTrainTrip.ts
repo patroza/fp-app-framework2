@@ -4,10 +4,10 @@ import { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { defaultDependencies } from "./types"
 
-const createQuery = createQueryWithDeps({
+const createQuery = createQueryWithDeps(() => ({
   readCtx: trainTripReadContextKey,
   ...defaultDependencies,
-})
+}))
 
 const getTrainTrip = createQuery<Input, TrainTripView, DbError>(
   "getTrainTrip",

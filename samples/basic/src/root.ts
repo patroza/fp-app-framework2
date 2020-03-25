@@ -25,7 +25,6 @@ import TrainTripReadContext, {
   trainTripReadContextKey,
 } from "./TrainTrip/infrastructure/TrainTripReadContext.disk"
 import {
-  getTripKey,
   RequestContextKey,
   sendCloudSyncKey,
   TrainTripPublisherKey,
@@ -44,7 +43,7 @@ const createRoot = () => {
   } = createDependencyNamespace(namespace, RequestContextKey)
 
   container.registerScopedF2(
-    (trainTrips as any) as Key<ReturnType<typeof trainTrips>>,
+    trainTrips as Key<ReturnType<typeof trainTrips>>,
     trainTrips,
   )
   container.registerScopedF2(
@@ -56,7 +55,7 @@ const createRoot = () => {
   container.registerSingletonC2(TrainTripPublisherKey, TrainTripPublisherInMemory)
   container.registerSingletonC2(trainTripReadContextKey, TrainTripReadContext)
   container.registerSingletonF(sendCloudSyncKey, factoryOf(sendCloudSyncFake))
-  container.registerSingletonF(getTripKey, () => {
+  container.registerSingletonF(getTrip, () => {
     const { getTrip: getTripF } = createInventoryClient({
       templateApiUrl: "http://localhost:8110",
     })
