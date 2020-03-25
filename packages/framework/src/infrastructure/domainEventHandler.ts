@@ -1,9 +1,8 @@
 import { AsyncResult, TE, E, O } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { publishType } from "./mediator/publish"
-import { generateKey, UnpackKey } from "./SimpleContainer"
 import { TaskEither } from "fp-ts/lib/TaskEither"
-import { eventsMapType, HandlerList } from "./executePostCommitHandlers"
+import executePostCommitHandlers, { HandlerList } from "./executePostCommitHandlers"
 
 // tslint:disable-next-line:max-classes-per-file
 export default class DomainEventHandler {
@@ -13,8 +12,8 @@ export default class DomainEventHandler {
   constructor(
     private readonly publish: publishType,
     private readonly getIntegrationHandlers: (evt: Event) => O.Option<HandlerList>,
-    private readonly executeIntegrationEvents: UnpackKey<
-      typeof executePostCommitHandlersKey
+    private readonly executeIntegrationEvents: ReturnType<
+      typeof executePostCommitHandlers
     >,
   ) {}
 
@@ -79,7 +78,3 @@ export default class DomainEventHandler {
     this.processedEvents = []
   }
 }
-
-export const executePostCommitHandlersKey = generateKey<
-  (eventMap: eventsMapType) => void
->("executePostCommitHandlers")

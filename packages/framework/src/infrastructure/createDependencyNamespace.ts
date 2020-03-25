@@ -11,7 +11,7 @@ import {
   using,
 } from "../utils"
 import { loggingDecorator, uowDecorator } from "./decorators"
-import DomainEventHandler, { executePostCommitHandlersKey } from "./domainEventHandler"
+import DomainEventHandler from "./domainEventHandler"
 import executePostCommitHandlers from "./executePostCommitHandlers"
 import {
   getRegisteredRequestAndEventHandlers,
@@ -26,7 +26,7 @@ import {
   NamedHandlerWithDependencies,
 } from "./mediator"
 import { processReceivedEvent } from "./pubsub"
-import SimpleContainer, { DependencyScope, factoryOf, Key } from "./SimpleContainer"
+import SimpleContainer, { DependencyScope, Key } from "./SimpleContainer"
 import { O, pipe, RANE, RTE } from "@fp-app/fp-ts-extensions"
 
 const logger = getLogger("registry")
@@ -59,7 +59,7 @@ export default function createDependencyNamespace(
   }
 
   const bindLogger = (fnc: (...args2: any[]) => void) => (...args: any[]) => {
-    const context = hasDependencyScope() && container.getO(requestScopeKey)
+    const context = hasDependencyScope() && container.get(requestScopeKey)
     const datetime = new Date()
     const timestamp = format(datetime, "yyyy-MM-dd HH:mm:ss")
     const scope = getLoggingScope()
@@ -78,10 +78,10 @@ export default function createDependencyNamespace(
 
   const setupChildContext = <T>(cb: () => Promise<T>) =>
     ns.runPromise(() => {
-      const currentContext = container.getO(requestScopeKey)
+      const currentContext = container.get(requestScopeKey)
       const { correllationId, id } = currentContext
       return using(container.createScope(), () => {
-        const context = container.getO(requestScopeKey)
+        const context = container.get(requestScopeKey)
         Object.assign(context, { correllationId: correllationId || id })
         logger.debug(chalk.magenta("Created child context"))
         return cb()
@@ -98,7 +98,7 @@ export default function createDependencyNamespace(
       using(container.createScope(), () => {
         getNamespace(namespace).set(loggingScopeKey, { items: [] })
         logger.debug(chalk.magenta("Created request context"))
-        return cb(container.getO(requestScopeKey), (emitter: EventEmitter) =>
+        return cb(container.get(requestScopeKey), (emitter: EventEmitter) =>
           ns.bindEmitter(emitter),
         )
       }),
@@ -122,16 +122,16 @@ export default function createDependencyNamespace(
       O.map(RANE.map(y => container.getF(y) as RTE.ReaderTaskEither<any, any, void>)),
     ),
   )
-  container.registerScopedC(
+  container.registerScopedF(
     DomainEventHandler,
     () =>
       new DomainEventHandler(
         publishDomainEventHandler,
         getIntegrationEventHandlers,
-        container.getF(executePostCommitHandlersKey),
+        container.getF(executePostCommitHandlers),
       ),
   )
-  container.registerScopedO(requestScopeKey, () => {
+  container.registerScopedF(requestScopeKey, () => {
     const id = generateShortUuid()
     return { id, correllationId: id }
   })
@@ -143,12 +143,7 @@ export default function createDependencyNamespace(
   container.registerSingletonConcrete(loggingDecorator)
   container.registerDecorator(requestKey, uowDecorator, loggingDecorator)
 
-  container.registerSingletonF(
-    executePostCommitHandlersKey,
-    factoryOf(executePostCommitHandlers, i =>
-      i({ executeIntegrationEvent: container.getF(requestInNewScopeKey) }),
-    ),
-  )
+  container.registerSingletonF(executePostCommitHandlers, executePostCommitHandlers)
 
   const publishInNewContext = (evt: string, requestId: string) =>
     setupRequestContext(context => {
@@ -164,9 +159,8 @@ export default function createDependencyNamespace(
 
   const requestInNewContext: requestInNewScopeType = (key, evt) => () =>
     setupChildContext(() => container.getF(requestKey)(key, evt)())
-  container.registerSingletonF(
-    requestKey,
-    factoryOf(request, i => i(key => container.getConcrete(key))),
+  container.registerSingletonF(requestKey, () =>
+    request(key => container.getConcrete(key)),
   )
   container.registerInstanceF(requestInNewScopeKey, requestInNewContext)
 

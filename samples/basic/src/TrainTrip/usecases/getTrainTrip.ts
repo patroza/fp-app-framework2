@@ -1,11 +1,11 @@
 import { createQueryWithDeps, DbError } from "@fp-app/framework"
-import { trainTripReadContextKey } from "../infrastructure/TrainTripReadContext.disk"
+import TrainTripReadContext from "../infrastructure/TrainTripReadContext.disk"
 import { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { defaultDependencies } from "./types"
 
 const createQuery = createQueryWithDeps(() => ({
-  readCtx: trainTripReadContextKey,
+  readCtx: TrainTripReadContext,
   ...defaultDependencies,
 }))
 

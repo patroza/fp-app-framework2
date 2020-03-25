@@ -2,7 +2,7 @@ import { O, RT, T } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { Disposable } from "../utils"
 import DomainEventHandler from "./domainEventHandler"
-import { autoinject } from "./SimpleContainer"
+import { autoinject, generateKey } from "./SimpleContainer"
 
 // tslint:disable-next-line:max-classes-per-file
 @autoinject
@@ -40,3 +40,5 @@ export interface RecordContext<T> {
   load: RT.ReaderTask<string, O.Option<T>>
   process: (record: T, events: Event[]) => void
 }
+
+export const UOWKey = generateKey<UnitOfWork>("unit-of-work")

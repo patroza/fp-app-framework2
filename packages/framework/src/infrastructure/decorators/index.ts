@@ -1,8 +1,10 @@
 import { AsyncResult, TE, pipe } from "@fp-app/fp-ts-extensions"
 import { benchLog, logger, using } from "../../utils"
 import { DbError } from "../errors"
-import { configureDependencies, NamedRequestHandler, UOWKey } from "../mediator"
+import { NamedRequestHandler } from "../mediator"
 import { requestTypeSymbol } from "../SimpleContainer"
+import { configure } from "../configure"
+import { UOWKey } from "../context.base"
 
 const loggingDecorator = (): RequestDecorator => request => (key, input) => {
   const prefix = `${key.name} ${key[requestTypeSymbol]}`
@@ -20,26 +22,27 @@ const loggingDecorator = (): RequestDecorator => request => (key, input) => {
     )
 }
 
-const uowDecorator = configureDependencies(
-  () => ({ unitOfWork: UOWKey }),
-  "uowDecorator",
-  ({ unitOfWork }) => <TInput, TOutput, TError>(
-    request: TRequest<TInput, TOutput, TError>,
-  ): TDecoratedRequest<TInput, TOutput, TError, TError | DbError | Error> => (
-    key,
-    input,
-  ) => {
-    if (
-      key[requestTypeSymbol] !== "COMMAND" &&
-      key[requestTypeSymbol] !== "INTEGRATIONEVENT"
-    ) {
-      return request(key, input)
+const uowDecorator = configure(
+  function uowDecroator({ unitOfWork }) {
+    return <TInput, TOutput, TError>(
+      request: TRequest<TInput, TOutput, TError>,
+    ): TDecoratedRequest<TInput, TOutput, TError, TError | DbError | Error> => (
+      key,
+      input,
+    ) => {
+      if (
+        key[requestTypeSymbol] !== "COMMAND" &&
+        key[requestTypeSymbol] !== "INTEGRATIONEVENT"
+      ) {
+        return request(key, input)
+      }
+      return pipe(
+        request(key, input),
+        TE.chainTee(pipe(TE.tryExecuteFW(unitOfWork.save))),
+      )
     }
-    return pipe(
-      request(key, input),
-      TE.chainTee(pipe(TE.tryExecuteFW(unitOfWork.save))),
-    )
   },
+  () => ({ unitOfWork: UOWKey }),
 )
 
 export { loggingDecorator, uowDecorator }

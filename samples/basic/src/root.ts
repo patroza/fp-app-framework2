@@ -1,11 +1,9 @@
 import {
   createDependencyNamespace,
-  factoryOf,
   Key,
   logger,
   resolveEventKey,
   UOWKey,
-  toolDepsKey,
 } from "@fp-app/framework"
 import { exists, mkdir } from "@fp-app/io.diskdb"
 import chalk from "chalk"
@@ -21,9 +19,7 @@ import DiskDBContext, {
   trainTrips,
 } from "./TrainTrip/infrastructure/TrainTripContext.disk"
 import TrainTripPublisherInMemory from "./TrainTrip/infrastructure/trainTripPublisher.inMemory"
-import TrainTripReadContext, {
-  trainTripReadContextKey,
-} from "./TrainTrip/infrastructure/TrainTripReadContext.disk"
+import TrainTripReadContext from "./TrainTrip/infrastructure/TrainTripReadContext.disk"
 import {
   RequestContextKey,
   sendCloudSyncKey,
@@ -42,19 +38,19 @@ const createRoot = () => {
     setupRequestContext,
   } = createDependencyNamespace(namespace, RequestContextKey)
 
-  container.registerScopedF2(
+  container.registerScopedF(
     trainTrips as Key<ReturnType<typeof trainTrips>>,
     trainTrips,
   )
-  container.registerScopedF2(
+  container.registerScopedF(
     (DiskDBContext as any) as Key<ReturnType<typeof DiskDBContext>>,
     DiskDBContext,
   )
   container.registerPassthrough(UOWKey, DiskDBContext as any)
 
-  container.registerSingletonC2(TrainTripPublisherKey, TrainTripPublisherInMemory)
-  container.registerSingletonC2(trainTripReadContextKey, TrainTripReadContext)
-  container.registerSingletonF(sendCloudSyncKey, factoryOf(sendCloudSyncFake))
+  container.registerSingletonC(TrainTripPublisherKey, TrainTripPublisherInMemory)
+  container.registerSingletonC(TrainTripReadContext, TrainTripReadContext)
+  container.registerSingletonF(sendCloudSyncKey, sendCloudSyncFake)
   container.registerSingletonF(getTrip, () => {
     const { getTrip: getTripF } = createInventoryClient({
       templateApiUrl: "http://localhost:8110",
@@ -62,26 +58,15 @@ const createRoot = () => {
     return getTripF
   })
 
-  container.registerSingletonO(toolDepsKey, toolDeps)
-
-  container.registerSingletonF(resolveEventKey, () => resolveEvent())
+  container.registerSingletonF(toolDeps, toolDeps)
+  container.registerSingletonF(resolveEventKey, resolveEvent)
 
   // Prevent stack-overflow; as logger depends on requestcontext
   // tslint:disable-next-line:no-console
   const consoleOrLogger = (key: any) => (key !== RequestContextKey ? logger : console)
-  container.registerInitializerF("global", (i, key) =>
+  container.registerInitializer("global", (i, key) =>
     consoleOrLogger(key).debug(
-      chalk.magenta(`Created function of ${key.name} (${i.name})`),
-    ),
-  )
-  container.registerInitializerC("global", (i, key) =>
-    consoleOrLogger(key).debug(
-      chalk.magenta(`Created instance of ${key.name} (${i.constructor.name})`),
-    ),
-  )
-  container.registerInitializerO("global", (i, key) =>
-    consoleOrLogger(key).debug(
-      chalk.magenta(`Created object of ${key.name} (${i.constructor.name})`),
+      chalk.magenta(`Created ${key.name} (${i.name}) (${i.constructor.name})`),
     ),
   )
 

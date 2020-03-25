@@ -3,7 +3,6 @@ import chalk from "chalk"
 import Event from "../../event"
 import { Constructor, getLogger, setFunctionName, typedKeysOf } from "../../utils"
 import assert from "../../utils/assert"
-import { UnitOfWork } from "../context.base"
 import {
   registerDomainEventHandler,
   registerIntegrationEventHandler,
@@ -15,8 +14,6 @@ import {
   requestTypeSymbol,
   WithDependencies,
   WithDependenciesConfig,
-  generateKeyFromFn,
-  Key,
 } from "../SimpleContainer"
 
 const logger = getLogger("registry")
@@ -50,8 +47,6 @@ export const configureDependencies = <TDependencies, T>(
   anyF[injectSymbol] = deps
   return anyF
 }
-
-export const UOWKey = generateKey<UnitOfWork>("unit-of-work")
 
 export type resolveEventType = (evt: { type: any; payload: any }) => O.Option<Event>
 export const resolveEventKey = generateKey<resolveEventType>("resolveEvent")
@@ -119,7 +114,7 @@ const createCommandWithDeps = <TDependencies>(deps: () => TDependencies) => <
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler(() => ({
     ...deps(),
-    _: toolDepsKey as Key<ToolDeps<TErr>>,
+    _: toolDeps,
   }))
   const newHandler = setupWithDeps(name + "Command", "COMMAND")(handler)
   logger.debug(chalk.magenta(`Created Command handler ${name}`))
@@ -138,7 +133,7 @@ const createQueryWithDeps = <TDependencies>(deps: () => TDependencies) => <
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler(() => ({
     ...deps(),
-    _: toolDepsKey as Key<ToolDeps<TErr>>,
+    _: toolDeps,
   }))
   const newHandler = setupWithDeps(name + "Query", "QUERY")(handler)
   logger.debug(chalk.magenta(`Created Query handler ${name}`))
@@ -158,14 +153,12 @@ const createDomainEventHandlerWithDeps = <TDependencies>(deps: () => TDependenci
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler(() => ({
     ...deps(),
-    _: toolDepsKey as Key<ToolDeps<TErr>>,
+    _: toolDeps,
   }))
   const newHandler = setupWithDeps(`on${event.name}${name}`, "DOMAINEVENT")(handler)
   registerDomainEventHandler(event, handler)
   return newHandler
 }
-
-export const toolDepsKey = generateKeyFromFn(toolDeps)
 
 // tslint:disable-next-line:max-line-length
 const createIntegrationEventHandlerWithDeps = <TDependencies>(
@@ -178,7 +171,7 @@ const createIntegrationEventHandlerWithDeps = <TDependencies>(
   handler = wrapHandler(handler)
   const setupWithDeps = registerUsecaseHandler(() => ({
     ...deps(),
-    _: toolDepsKey as Key<ToolDeps<TErr>>,
+    _: toolDeps,
   }))
   const newHandler = setupWithDeps(
     `on${event.name}${name}`,

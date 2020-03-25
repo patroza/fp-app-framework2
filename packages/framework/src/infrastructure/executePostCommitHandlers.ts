@@ -1,20 +1,24 @@
 import { benchLog, getLogger } from "../utils"
-import { NamedHandlerWithDependencies, requestInNewScopeType } from "./mediator"
+import {
+  NamedHandlerWithDependencies,
+  requestInNewScopeType,
+  requestInNewScopeKey,
+} from "./mediator"
 import { pipe, TE, ReadonlyNonEmptyArray } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
+import { configure } from "./configure"
 
 const logger = getLogger("executePostCommitHandlers")
 
-const executePostCommitHandlers = ({
-  executeIntegrationEvent,
-}: {
-  executeIntegrationEvent: requestInNewScopeType
-}) => (eventsMap: eventsMapType) =>
-  process.nextTick(() =>
-    tryProcessEvents(executeIntegrationEvent, eventsMap).catch(err =>
-      logger.error("Unexpected error during applying IntegrationEvents", err),
+const executePostCommitHandlers = configure(
+  ({ executeIntegrationEvent }) => (eventsMap: eventsMapType) =>
+    process.nextTick(() =>
+      tryProcessEvents(executeIntegrationEvent, eventsMap).catch(err =>
+        logger.error("Unexpected error during applying IntegrationEvents", err),
+      ),
     ),
-  )
+  () => ({ executeIntegrationEvent: requestInNewScopeKey }),
+)
 
 async function tryProcessEvents(
   executeIntegrationEvent: requestInNewScopeType,

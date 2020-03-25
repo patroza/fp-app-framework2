@@ -17,7 +17,7 @@ import PaxDefinition, { Pax } from "../PaxDefinition"
 // we can assume data correctness and can skip normal validation and constructing.
 // until proven otherwise.
 const DiskDBContext = configure(
-  function({ eventHandler, readContext, trainTrips }) {
+  function TrainTripContext({ eventHandler, readContext, trainTrips }) {
     let disposed = false
     const getAndClearEvents = (): Event[] => {
       return trainTrips.intGetAndClearEvents()
@@ -47,12 +47,13 @@ const DiskDBContext = configure(
   }),
 )
 
-export const trainTrips = () =>
-  new DiskRecordContext<TrainTrip>(
+export function trainTrips() {
+  return new DiskRecordContext<TrainTrip>(
     "trainTrip",
     serializeTrainTrip,
     deserializeDbTrainTrip,
   )
+}
 
 export default DiskDBContext
 
