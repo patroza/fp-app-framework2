@@ -14,7 +14,8 @@ import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { defaultDependencies } from "./types"
-import { sequenceT } from "fp-ts/lib/Apply"
+import { Do } from "fp-ts-contrib/lib/Do"
+import { getMonoid } from "fp-ts/lib/Array"
 import { wrap } from "../infrastructure/utils"
 import { flow } from "fp-ts/lib/function"
 import { compose, chain, chainTup, map } from "@fp-app/fp-ts-extensions/src/TaskEither"
@@ -72,36 +73,31 @@ const validateStateProposition = ({
   travelClass,
 }: Input) =>
   pipe(
-    sequenceT(E.getValidation(NA.getSemigroup<FieldValidationError>()))(
-      pipe(
-        validateId(trainTripId),
-        E.mapLeft(toFieldError("trainTripId")),
-        E.mapLeft(NA.of),
-      ),
-      pipe(
-        E.valueOrUndefined(travelClass, TravelClassDefinition.create),
-        E.mapLeft(toFieldError("travelClass")),
-        E.mapLeft(NA.of),
-      ),
-      pipe(
-        E.valueOrUndefined(startDate, FutureDate.create),
-        E.mapLeft(toFieldError("startDate")),
-        E.mapLeft(NA.of),
-      ),
-      pipe(
-        E.valueOrUndefined(pax, PaxDefinition.create),
-        E.mapLeft(toFieldError("pax")),
-        E.mapLeft(NA.of),
-      ),
-      // E.ok(rest),
-    ),
+    Do(E.getValidation(getMonoid<FieldValidationError>()))
+      .sequenceS({
+        trainTripId: pipe(
+          validateId(trainTripId),
+          E.mapLeft(toFieldError("trainTripId")),
+          E.mapLeft(NA.of),
+        ),
+        travelClass: pipe(
+          E.valueOrUndefined(travelClass, TravelClassDefinition.create),
+          E.mapLeft(toFieldError("travelClass")),
+          E.mapLeft(NA.of),
+        ),
+        startDate: pipe(
+          E.valueOrUndefined(startDate, FutureDate.create),
+          E.mapLeft(toFieldError("startDate")),
+          E.mapLeft(NA.of),
+        ),
+        pax: pipe(
+          E.valueOrUndefined(pax, PaxDefinition.create),
+          E.mapLeft(toFieldError("pax")),
+          E.mapLeft(NA.of),
+        ),
+      })
+      .done(),
     E.mapLeft(combineValidationErrors),
-    E.map(([trainTripId, travelClass, startDate, pax]) => ({
-      trainTripId,
-      pax,
-      startDate,
-      travelClass,
-    })),
   )
 
 const validateId = (id: string) =>
