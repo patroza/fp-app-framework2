@@ -71,8 +71,15 @@ export function writeRouterSchema(
       schema: s2,
     }))
     return prev
-  }, {} as Record<string, { method: METHODS; subPath: string; fullPath: string; schema: string }[]>)
+  }, {} as Record<string, MethodSchema[]>)
   fs.writeFileSync("./router-schema.json", JSON.stringify(schema, undefined, 2))
+}
+
+type MethodSchema = {
+  method: METHODS
+  subPath: string
+  fullPath: string
+  schema: string
 }
 
 export type ErrorHandlerType<TContext, TError> = <TErr extends ErrorBase>(
