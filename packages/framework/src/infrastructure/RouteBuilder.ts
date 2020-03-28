@@ -60,8 +60,8 @@ export type ResponseTransform<TContext, TOutput = any> = (
 ) => // eslint-disable-next-line @typescript-eslint/no-explicit-any
 any
 
-export function writeRouterSchema(
-  routerMap: Map<string, RouteBuilder<unknown, unknown>>,
+export function writeRouterSchema<TContext, TRouter>(
+  routerMap: Map<string, RouteBuilder<TContext, TRouter>>,
 ) {
   const schema = [...routerMap.entries()].reduce((prev, [path, r]) => {
     prev[path] = r.getJsonSchema().map(([method, p, s2]) => ({

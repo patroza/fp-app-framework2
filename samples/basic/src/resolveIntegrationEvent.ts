@@ -3,7 +3,7 @@ import { CustomerRequestedChanges } from "./TrainTrip/eventhandlers/integration.
 import { O, t, E, pipe } from "@fp-app/fp-ts-extensions"
 
 const resolveEvent = (): resolveEventType => unknownEvent => {
-  logger.log("Received integration event", unknownEvent.type, unknownEvent.payload)
+  logger.log("Received integration event", unknownEvent)
   const parsedEvent = SupportedIntegrationEvents.decode(unknownEvent)
   return pipe(
     parsedEvent,
