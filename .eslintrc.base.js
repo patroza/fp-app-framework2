@@ -18,7 +18,6 @@ module.exports =  {
         "alwaysTryTypes": true
       }, // this loads <rootdir>/tsconfig.json to eslint
     },
-
   },
   extends: [
     "eslint:recommended",
