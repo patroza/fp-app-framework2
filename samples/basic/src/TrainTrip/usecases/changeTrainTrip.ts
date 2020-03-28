@@ -74,10 +74,7 @@ const validateStateProposition = ({
   pipe(
     sequenceT(E.getValidation(NA.getSemigroup<FieldValidationError>()))(
       pipe(
-        flow(
-          t.NonEmptyString.decode,
-          E.mapLeft(err => new ValidationError(err.map(x => x.message).join(","))),
-        )(trainTripId),
+        validateId(trainTripId),
         E.mapLeft(toFieldError("trainTripId")),
         E.mapLeft(NA.of),
       ),
@@ -106,6 +103,12 @@ const validateStateProposition = ({
       travelClass,
     })),
   )
+
+const validateId = (id: string) =>
+  flow(
+    t.NonEmptyString.decode,
+    E.mapLeft(err => new ValidationError(err.map(x => x.message).join(","))),
+  )(id)
 
 type ChangeTrainTripError =
   | ForbiddenError
