@@ -19,7 +19,7 @@ const setFunctionName = (fnc: Function, name: string) =>
 export const typedKeysOf = <T>(obj: T) => Object.keys(obj) as (keyof T)[]
 
 export interface Disposable {
-  dispose(): void
+  dispose: () => void
 }
 
 const using = async <T>(disposable: Disposable, fnc: () => Promise<T> | T) => {

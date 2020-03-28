@@ -1,8 +1,8 @@
 import invariant from "invariant"
 
 interface Assert {
-  (testValue: boolean, format: string, ...extra: any[]): void
-  isNotNull: (object: any) => void
+  (testValue: boolean, format: string, ...extra: unknown[]): void
+  isNotNull: (object: Record<string, unknown>) => void
 }
 
 /**
@@ -18,7 +18,7 @@ const assert = ((testValue: boolean, format: string, ...extra) =>
  * Asserts that any of the specified properties are not null
  * @param {Object} properties
  */
-const propertiesAreNotNull = (properties: Record<string, any>) => {
+const propertiesAreNotNull = (properties: Record<string, unknown>) => {
   for (const prop of Object.keys(properties)) {
     isNotNull(properties[prop], prop)
   }
@@ -29,7 +29,7 @@ const propertiesAreNotNull = (properties: Record<string, any>) => {
  * @param {*} value
  * @param {string} name
  */
-const isNotNull = (value: any, name: string) =>
+const isNotNull = (value: unknown, name: string) =>
   invariant(value != null, `${name} must not be null`)
 
 assert.isNotNull = propertiesAreNotNull
@@ -38,7 +38,7 @@ export default assert
 
 export function assertIsNotNullish<T>(
   input: T | null | undefined,
-  name?: string | { [key: string]: any },
+  name?: string | Record<string, unknown>,
 ): asserts input is T {
   if (input == null) {
     throw new TypeError(
@@ -49,7 +49,7 @@ export function assertIsNotNullish<T>(
 
 export function assertIsNotNull<T>(
   input: T | null,
-  name?: string | { [key: string]: any },
+  name?: string | Record<string, unknown>,
 ): asserts input is T {
   if (input === null) {
     throw new TypeError(
@@ -60,7 +60,7 @@ export function assertIsNotNull<T>(
 
 export function assertIsNotUndefined<T>(
   input: T | undefined,
-  name?: string | { [key: string]: any },
+  name?: string | Record<string, unknown>,
 ): asserts input is T {
   if (input === undefined) {
     throw new TypeError(

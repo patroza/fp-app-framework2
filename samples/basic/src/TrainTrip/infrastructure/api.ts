@@ -58,6 +58,7 @@ const toTrip = trampoline(
         [_.TE.startWith(curTC)].concat(
           typedKeysOf(tpl.travelClasses)
             .filter(x => x !== curTC.name)
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             .map(slKey => tpl.travelClasses[slKey]!)
             .map(sl =>
               pipe(getTemplate(sl.id), TE.chain(pipe(getTravelClass, E.toTaskEither))),
@@ -85,6 +86,7 @@ const tplToTravelClass = (tpl: Template, currentDate: Date) =>
   })
 
 const getTplLevelName = (tpl: Template) =>
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   typedKeysOf(tpl.travelClasses).find(x => tpl.travelClasses[x]!.id === tpl.id)!
 
 // Typescript support for partial application is not really great, so we try currying instead for now

@@ -83,6 +83,7 @@ const _PaxDefinition = withBla(
 
 const PaxDefinition = merge(_PaxDefinition, {
   create: flow(
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     _PaxDefinition.decode,
     map(x => x as PaxDefinition),
     mapLeft(x => new ValidationError(decodeErrors(x))),

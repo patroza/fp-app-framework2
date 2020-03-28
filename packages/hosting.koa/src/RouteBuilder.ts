@@ -4,7 +4,7 @@ import KoaRouter from "koa-router"
 import generateKoaHandler from "./generateKoaHandler"
 import { authMiddleware } from "./middleware"
 
-export default class KoaRouteBuilder extends RouteBuilder<Koa.Context> {
+export default class KoaRouteBuilder extends RouteBuilder<Koa.Context, KoaRouter> {
   build(request: requestType) {
     const router = new KoaRouter()
     if (this.basicAuthEnabled) {
@@ -43,7 +43,7 @@ export default class KoaRouteBuilder extends RouteBuilder<Koa.Context> {
 }
 
 export function createRouterFromMap(
-  routerMap: Map<string, RouteBuilder<Koa.Context>>,
+  routerMap: Map<string, RouteBuilder<Koa.Context, KoaRouter>>,
   request: requestType,
 ) {
   return [...routerMap.entries()].reduce((prev, cur) => {
@@ -52,7 +52,9 @@ export function createRouterFromMap(
   }, new KoaRouter())
 }
 
-export const extendWithHalLinks = (config: HALConfig) => <TOutput>(
+export const extendWithHalLinks = (config: HALConfig) => <
+  TOutput extends Record<string, string>
+>(
   output: TOutput,
   ctx: Koa.Context,
 ) => ({
@@ -61,7 +63,11 @@ export const extendWithHalLinks = (config: HALConfig) => <TOutput>(
 })
 
 // TODO: Perhaps a transformer would be more flexible.
-export const generateHalLinks = (ctx: Koa.Context, halConfig: HALConfig, data: any) => {
+export const generateHalLinks = (
+  ctx: Koa.Context,
+  halConfig: HALConfig,
+  data: Record<string, string>,
+) => {
   const halLinks = typedKeysOf(halConfig).reduce((prev, cur) => {
     let href = halConfig[cur]
     if (href.startsWith(".")) {
@@ -70,6 +76,6 @@ export const generateHalLinks = (ctx: Koa.Context, halConfig: HALConfig, data: a
     Object.keys(data).forEach(x => (href = href.replace(`:${x}`, data[x])))
     prev[cur] = { href }
     return prev
-  }, {} as any)
+  }, {} as Record<string, { href: string }>)
   return halLinks
 }

@@ -4,6 +4,7 @@ import {
   logger,
   resolveEventKey,
   UOWKey,
+  AnyConstructable,
 } from "@fp-app/framework"
 import { exists, mkdir } from "@fp-app/io.diskdb"
 import chalk from "chalk"
@@ -43,9 +44,10 @@ const createRoot = () => {
     trainTrips,
   )
   container.registerScopedF(
-    (DiskDBContext as any) as Key<ReturnType<typeof DiskDBContext>>,
+    (DiskDBContext as unknown) as Key<ReturnType<typeof DiskDBContext>>,
     DiskDBContext,
   )
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   container.registerPassthrough(UOWKey, DiskDBContext as any)
 
   container.registerSingletonC(TrainTripPublisherKey, TrainTripPublisherInMemory)
@@ -63,7 +65,8 @@ const createRoot = () => {
 
   // Prevent stack-overflow; as logger depends on requestcontext
   // tslint:disable-next-line:no-console
-  const consoleOrLogger = (key: any) => (key !== RequestContextKey ? logger : console)
+  const consoleOrLogger = (key: AnyConstructable) =>
+    key !== RequestContextKey ? logger : console
   container.registerInitializer("global", (i, key) =>
     consoleOrLogger(key).debug(
       chalk.magenta(`Created ${key.name} (${i.name}) (${i.constructor.name})`),

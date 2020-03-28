@@ -102,6 +102,7 @@ const validateStateProposition = ({
 
 const validateId = (id: string) =>
   flow(
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     t.NonEmptyString.decode,
     E.mapLeft(err => new ValidationError(err.map(x => x.message).join(","))),
   )(id)

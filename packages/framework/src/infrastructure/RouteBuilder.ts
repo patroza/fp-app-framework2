@@ -5,10 +5,10 @@ import { DbError } from "./errors"
 import { NamedHandlerWithDependencies, requestType } from "./mediator"
 import { tuple } from "fp-ts/lib/function"
 
-export default abstract class RouteBuilder<TContext> {
-  private static register = <TContext>(
+export default abstract class RouteBuilder<TContext, TRouter> {
+  private static register = <TContext, TRouter>(
     method: METHODS,
-    obj: RouteBuilder<TContext>,
+    obj: RouteBuilder<TContext, TRouter>,
   ) => <TDependencies, TInput, TOutput, TError, TValidationError>(
     path: string,
     requestHandler: NamedHandlerWithDependencies<
@@ -27,16 +27,16 @@ export default abstract class RouteBuilder<TContext> {
     return obj
   }
 
-  readonly post = RouteBuilder.register<TContext>("POST", this)
-  readonly get = RouteBuilder.register<TContext>("GET", this)
-  readonly delete = RouteBuilder.register<TContext>("DELETE", this)
-  readonly patch = RouteBuilder.register<TContext>("PATCH", this)
+  readonly post = RouteBuilder.register<TContext, TRouter>("POST", this)
+  readonly get = RouteBuilder.register<TContext, TRouter>("GET", this)
+  readonly delete = RouteBuilder.register<TContext, TRouter>("DELETE", this)
+  readonly patch = RouteBuilder.register<TContext, TRouter>("PATCH", this)
 
   protected userPass?: string
   protected setup: RegisteredRoute<TContext>[] = []
   protected basicAuthEnabled = false
 
-  abstract build(request: requestType): any
+  abstract build(request: requestType): TRouter
 
   getJsonSchema() {
     return this.setup.map(({ method, path, validator }) =>
@@ -53,12 +53,16 @@ export default abstract class RouteBuilder<TContext> {
 
 export type HALConfig = Record<string, string>
 
-export type ResponseTransform<TContext, TOutput> = (
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ResponseTransform<TContext, TOutput = any> = (
   output: TOutput,
   ctx: TContext,
-) => any
+) => // eslint-disable-next-line @typescript-eslint/no-explicit-any
+any
 
-export function writeRouterSchema(routerMap: Map<string, RouteBuilder<any>>) {
+export function writeRouterSchema(
+  routerMap: Map<string, RouteBuilder<unknown, unknown>>,
+) {
   const schema = [...routerMap.entries()].reduce((prev, [path, r]) => {
     prev[path] = r.getJsonSchema().map(([method, p, s2]) => ({
       method,
@@ -67,7 +71,7 @@ export function writeRouterSchema(routerMap: Map<string, RouteBuilder<any>>) {
       schema: s2,
     }))
     return prev
-  }, {} as any)
+  }, {} as Record<string, { method: METHODS; subPath: string; fullPath: string; schema: string }[]>)
   fs.writeFileSync("./router-schema.json", JSON.stringify(schema, undefined, 2))
 }
 
@@ -75,14 +79,17 @@ export type ErrorHandlerType<TContext, TError> = <TErr extends ErrorBase>(
   ctx: TContext,
 ) => (err: TError) => TErr | TError | void
 
-export const defaultErrorPassthrough = () => (err: any) => err
+export const defaultErrorPassthrough = <TErr>() => (err: TErr) => err
 
 interface RegisteredRoute<TContext> {
   method: METHODS
   path: string
-  requestHandler: NamedHandlerWithDependencies<any, any, any, any>
+  requestHandler: NamedHandlerWithDependencies
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   validator: ValidatorType<any, any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errorHandler?: ErrorHandlerType<TContext, DbError | any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   responseTransform?: ResponseTransform<TContext, any>
 }
 

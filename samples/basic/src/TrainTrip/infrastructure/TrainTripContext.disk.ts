@@ -3,7 +3,7 @@ import TrainTrip, {
   Price,
   TravelClassConfiguration,
 } from "@/TrainTrip/TrainTrip"
-import { TrainTripContext } from "@/TrainTrip/usecases/types"
+import { TrainTripContext as TrainTripContextType } from "@/TrainTrip/usecases/types"
 import { DomainEventHandler, Event, configure } from "@fp-app/framework"
 import { DiskRecordContext } from "@fp-app/io.diskdb"
 import { parse, stringify } from "flatted"
@@ -38,7 +38,7 @@ const DiskDBContext = configure(
       },
       trainTrips,
       dispose,
-    } as TrainTripContext
+    } as TrainTripContextType
   },
   () => ({
     eventHandler: DomainEventHandler,
@@ -81,7 +81,9 @@ const TrainTripToView = (trip: TrainTrip): TrainTripView => {
   }
 }
 
-const serializeTrainTrip = ({ events, ...rest }: any) => stringify(rest)
+// Need access to private events here..
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const serializeTrainTrip = ({ events: _, ...rest }: any) => stringify(rest)
 
 function deserializeDbTrainTrip(serializedTrainTrip: string) {
   const {

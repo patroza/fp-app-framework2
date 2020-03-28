@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // TODO: Get rid of the "keys" as required concept.
 // TODO: There's obviously a lot of possibility to improve the API, and Implementation here ;-)
 import "reflect-metadata"
@@ -114,9 +115,10 @@ export default class SimpleContainer {
     this.registerFactoryF(key, factory, this.getDependencyScope)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   registerDecorator<T extends (...args: any[]) => any>(
     forKey: T,
-    ...decorators: any[]
+    ...decorators: unknown[]
   ) {
     decorators.forEach(x => assert(x !== null, "decorator must not be null"))
     const current = this.decorators.get(forKey) || []
@@ -174,14 +176,14 @@ export default class SimpleContainer {
   private readonly getSingletonScope = () => this.singletonScope
 
   private registerFactoryC<T>(
-    key: any,
+    key: unknown,
     factory: () => T,
     getScope?: () => DependencyScope,
   ) {
     this.registerFactory(key, factory, getScope)
   }
   private registerFactoryF<T>(
-    key: any,
+    key: unknown,
     factory: () => T,
     getScope?: () => DependencyScope,
   ) {

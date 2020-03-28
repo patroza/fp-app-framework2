@@ -52,10 +52,7 @@ export const configureDependencies = <TDependencies, T>(
   return withConfig
 }
 
-export type resolveEventType = (evt: {
-  type: unknown
-  payload: unknown
-}) => O.Option<Event>
+export type resolveEventType = (evt: unknown) => O.Option<Event>
 export const resolveEventKey = generateKey<resolveEventType>("resolveEvent")
 
 type HandlerWithDependencies<TDependencies, TInput, TOutput, TError> = WithDependencies<
