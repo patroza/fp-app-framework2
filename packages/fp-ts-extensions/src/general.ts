@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { flow, flip, tupled } from "fp-ts/lib/function"
 import { Lens } from "monocle-ts"
 

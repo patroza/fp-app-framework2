@@ -30,6 +30,7 @@ const fromWire = ({
 
 const TravelClass = merge(_TravelClass, {
   create: flow(
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     _TravelClass.decode,
     mapLeft(x => new ValidationError(decodeErrors(x))),
   ),

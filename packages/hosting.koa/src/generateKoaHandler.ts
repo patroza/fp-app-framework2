@@ -137,8 +137,8 @@ const handleDefaultError = (ctx: Koa.Context) => (err: ErrorBase) => {
   }
 }
 
-const combineErrors = (ers: any[]) =>
-  ers.reduce((prev: any, cur) => {
+const combineErrors = (ers: unknown[]) =>
+  ers.reduce((prev: ErrType, cur) => {
     if (cur instanceof FieldValidationError) {
       if (cur.error instanceof CombinedValidationError) {
         prev[cur.fieldName] = combineErrors(cur.error.errors)
@@ -147,4 +147,6 @@ const combineErrors = (ers: any[]) =>
       }
     }
     return prev
-  }, {})
+  }, {} as ErrType)
+
+type ErrType = Record<string, Record<string, unknown> | string>

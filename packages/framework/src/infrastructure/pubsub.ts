@@ -1,4 +1,3 @@
-import Event from "../event"
 import { publishType, resolveEventType } from "./mediator"
 import { O, TE, RTE } from "@fp-app/fp-ts-extensions"
 
@@ -9,8 +8,7 @@ const processReceivedEvent = ({
   resolveEvent: resolveEventType
   publish: publishType
 }): RTE.ReaderTaskEither<string, Error, void> => body => {
-  const { payload, type } = JSON.parse(body) as EventDTO
-  const event = resolveEvent({ type, payload })
+  const event = resolveEvent(JSON.parse(body))
   if (O.isNone(event)) {
     return TE.ok(void 0)
   }
@@ -19,14 +17,4 @@ const processReceivedEvent = ({
   return publishTask
 }
 
-export interface EventDTO {
-  type: string
-  payload: any
-}
-
-const createEventDTO = (evt: Event): EventDTO => ({
-  payload: evt,
-  type: evt.constructor.name,
-})
-
-export { createEventDTO, processReceivedEvent }
+export { processReceivedEvent }

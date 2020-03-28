@@ -23,11 +23,12 @@ import {
   requestKey,
   requestType,
   resolveEventKey,
+  UsecaseWithDependencies,
   NamedHandlerWithDependencies,
 } from "./mediator"
 import { processReceivedEvent } from "./pubsub"
 import SimpleContainer, { DependencyScope, Key } from "./SimpleContainer"
-import { O, pipe, RANE, RTE } from "@fp-app/fp-ts-extensions"
+import { O, pipe, RANE } from "@fp-app/fp-ts-extensions"
 
 const logger = getLogger("registry")
 
@@ -51,20 +52,24 @@ export default function createDependencyNamespace(
   const getLoggingScope = (): LoggingScope =>
     getNamespace(namespace).get(loggingScopeKey)
 
-  const addToLoggingContext = (item: Record<string, any>) => {
+  const addToLoggingContext = (item: Record<string, unknown>) => {
     getLoggingScope().items.push(item)
     return {
       dispose: () => removeElement(getLoggingScope().items, item),
     }
   }
 
-  const bindLogger = (fnc: (...args2: any[]) => void) => (...args: any[]) => {
+  const bindLogger = (fnc: (...args2: unknown[]) => void) => (...args: unknown[]) => {
     const context = hasDependencyScope() && container.get(requestScopeKey)
     const datetime = new Date()
     const timestamp = format(datetime, "yyyy-MM-dd HH:mm:ss")
     const scope = getLoggingScope()
     const items =
-      scope && scope.items.reduce((prev, cur) => ({ ...prev, ...cur }), {} as any)
+      scope &&
+      scope.items.reduce(
+        (prev, cur) => ({ ...prev, ...cur }),
+        {} as Record<string, unknown>,
+      )
     const id = context
       ? context.correllationId === context.id
         ? context.id
@@ -106,10 +111,7 @@ export default function createDependencyNamespace(
   const getDomainEventHandlers = (evt: Event) =>
     pipe(O.fromNullable(domainHandlerMap.get(evt.constructor)), O.chain(RANE.fromArray))
   const publishDomainEventHandler = publish(evt =>
-    pipe(
-      getDomainEventHandlers(evt),
-      O.map(RANE.map(y => container.getF(y) as RTE.ReaderTaskEither<any, any, void>)),
-    ),
+    pipe(getDomainEventHandlers(evt), O.map(RANE.map(y => container.getF(y)))),
   )
   const getIntegrationEventHandlers = (evt: Event) =>
     pipe(
@@ -117,10 +119,7 @@ export default function createDependencyNamespace(
       O.chain(RANE.fromArray),
     )
   const publishIntegrationEventHandler = publish(evt =>
-    pipe(
-      getIntegrationEventHandlers(evt),
-      O.map(RANE.map(y => container.getF(y) as RTE.ReaderTaskEither<any, any, void>)),
-    ),
+    pipe(getIntegrationEventHandlers(evt), O.map(RANE.map(y => container.getF(y)))),
   )
   container.registerScopedF(
     DomainEventHandler,
@@ -184,14 +183,20 @@ export default function createDependencyNamespace(
 const dependencyScopeKey = "dependencyScope"
 const loggingScopeKey = "loggingScope"
 
-const registerDomainEventHandler = (event: Constructor<any>, handler: any) => {
+const registerDomainEventHandler = (
+  event: Constructor<unknown>,
+  handler: UsecaseWithDependencies,
+) => {
   logger.debug(chalk.magenta(`Registered Domain event handler for ${event.name}`))
   const current = domainHandlerMap.get(event) || []
   current.push(handler)
   domainHandlerMap.set(event, current)
 }
 
-const registerIntegrationEventHandler = (event: Constructor<any>, handler: any) => {
+const registerIntegrationEventHandler = (
+  event: Constructor<unknown>,
+  handler: NamedHandlerWithDependencies,
+) => {
   logger.debug(chalk.magenta(`Registered Integration event handler for ${event.name}`))
   const current = integrationHandlerMap.get(event) || []
   current.push(handler)
@@ -199,13 +204,7 @@ const registerIntegrationEventHandler = (event: Constructor<any>, handler: any) 
 }
 
 // tslint:disable-next-line:ban-types
-const domainHandlerMap = new Map<
-  any,
-  NamedHandlerWithDependencies<any, any, any, any>[]
->() // Array<readonly [Function, Function, {}]>
-const integrationHandlerMap = new Map<
-  any,
-  NamedHandlerWithDependencies<any, any, any, any>[]
->() // Array<readonly [Function, Function, {}]>
+const domainHandlerMap = new Map<unknown, UsecaseWithDependencies[]>() // Array<readonly [Function, Function, {}]>
+const integrationHandlerMap = new Map<unknown, NamedHandlerWithDependencies[]>() // Array<readonly [Function, Function, {}]>
 
 export { registerDomainEventHandler, registerIntegrationEventHandler }

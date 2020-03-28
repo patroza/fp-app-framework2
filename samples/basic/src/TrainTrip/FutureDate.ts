@@ -27,6 +27,7 @@ export const _FutureDate = withBla(
 
 const FutureDate = merge(_FutureDate, {
   create: flow(
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     _FutureDate.decode,
     map(x => x as FutureDate),
     mapLeft(x => new ValidationError(decodeErrors(x))),

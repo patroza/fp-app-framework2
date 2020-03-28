@@ -27,7 +27,7 @@ function configureDepsFirst<
   ) => TFunction,
   TFunction
 >(deps: () => TDependencies, func: TFunctionConstructor) {
-  const injectedFunc = (func as any) as ConfiguredFunction<
+  const injectedFunc = func as ConfiguredFunction<
     TDependencies,
     TFunctionConstructor,
     TFunction
@@ -52,7 +52,8 @@ export function createGroupOfDependencies<TDependencies extends DependencyDefini
 // }
 
 export interface DependencyDefinitions {
-  [key: string]: Constructor | ConfiguredFunction<any, any, any> | any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: Constructor | ConfiguredFunction<any, any, unknown> | unknown
 }
 
 export type Dependencies<T extends DependencyDefinitions> = {
@@ -65,6 +66,7 @@ export type Dependencies<T extends DependencyDefinitions> = {
     : T[P]["prototype"]
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SomeFunction = (...args: any[]) => any
 
 export type ConfiguredFunction<
@@ -79,6 +81,6 @@ export type ConfiguredFunction<
 
 // Workaround for container register* signature not setup to support functions yet.
 export const adaptFunctionForRegistration = <TFunction>(func: {
-  (...args: any[]): TFunction
+  (...args: unknown[]): TFunction
   [injectSymbol]: DependencyDefinitions
-}) => (func as any) as Constructor<TFunction>
+}) => (func as unknown) as Constructor<TFunction>

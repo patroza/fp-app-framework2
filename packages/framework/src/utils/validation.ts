@@ -20,9 +20,9 @@ const createValidator = <TOut, TIn = JsonValue>(
   return validator
 }
 
-export type JsonValue = number | boolean | string | any[] | Record<string, any>
+export type JsonValue = number | boolean | string | unknown[] | Record<string, unknown>
 
-const mapValidationResult = <TOut = any>(result: ValidationResult) =>
+const mapValidationResult = <TOut = unknown>(result: ValidationResult) =>
   pipe(
     E.fromErrorish(result),
     E.do(x => x.warning && logger.warn("Warning during validation: " + x.warning)),

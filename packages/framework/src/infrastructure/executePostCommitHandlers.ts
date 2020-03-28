@@ -1,8 +1,8 @@
 import { benchLog, getLogger } from "../utils"
 import {
-  NamedHandlerWithDependencies,
   requestInNewScopeType,
   requestInNewScopeKey,
+  NamedHandlerWithDependencies,
 } from "./mediator"
 import { pipe, TE, ReadonlyNonEmptyArray } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
@@ -41,8 +41,6 @@ async function tryProcessEvents(
 
 export type eventsMapType = Map<Event, HandlerList>
 
-export type HandlerList = ReadonlyNonEmptyArray<
-  NamedHandlerWithDependencies<any, any, any, any>
->
+export type HandlerList = ReadonlyNonEmptyArray<NamedHandlerWithDependencies>
 
 export default executePostCommitHandlers

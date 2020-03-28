@@ -228,8 +228,9 @@ const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
   const currentTravelClassConfiguration = _this.travelClassConfiguration.find(
     x => _this.currentTravelClassConfiguration.travelClass.name === x.travelClass.name,
   )
+  // TODO: use NonEmptyArray?
   _this = currentTravelClassConfigurationL.modify(
-    () => currentTravelClassConfiguration || _this.travelClassConfiguration[0]!,
+    () => currentTravelClassConfiguration || _this.travelClassConfiguration[0],
   )(_this)
 
   return tuple(_this, void 0)
@@ -471,18 +472,18 @@ export interface Price {
   currency: string
 }
 
-const captureEventsEither = <TE, TEvent extends Event, TArgs extends any[]>(
+const captureEventsEither = <TE, TEvent extends Event, TArgs extends unknown[]>(
   func: (...args: TArgs) => Either<TE, readonly TEvent[]>,
   registerDomainEvent: (evt: Event) => void,
 ) => (...args: TArgs) =>
   either.map(func(...args), evts => evts.forEach(registerDomainEvent))
 
-const captureEvents = <TEvent extends Event, TArgs extends any[]>(
+const captureEvents = <TEvent extends Event, TArgs extends unknown[]>(
   func: (...args: TArgs) => readonly TEvent[],
   registerDomainEvent: (evt: Event) => void,
 ) => (...args: TArgs) => func(...args).forEach(registerDomainEvent)
 
-const unwrapResultEither = <This, TE, T, T2, TArgs extends any[]>(
+const unwrapResultEither = <This, TE, T, T2, TArgs extends unknown[]>(
   t: This,
   func: (t: This) => (...args: TArgs) => Either<TE, readonly [T, T2]>,
 ) => (...args: TArgs) =>
@@ -492,7 +493,7 @@ const unwrapResultEither = <This, TE, T, T2, TArgs extends any[]>(
     return r
   })
 
-const unwrapResult = <This, T, T2, TArgs extends any[]>(
+const unwrapResult = <This, T, T2, TArgs extends unknown[]>(
   t: This,
   func: (t: This) => (...args: TArgs) => readonly [T, T2],
 ) => (...args: TArgs) => {

@@ -1,9 +1,11 @@
 import assert from "./assert"
 
-export type Constructor<T = any> = new (...args: any[]) => T
-export type ConstructorFunction<T = any> = (...args: any[]) => T
-export type Constructable<T = any> = Constructor<T> & ConstructorFunction<T>
-export type AnyConstructable<T = any> = Constructor<T> | ConstructorFunction<T>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Constructor<T = unknown> = new (...args: any[]) => T
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ConstructorFunction<T = unknown> = (...args: any[]) => T
+export type Constructable<T = unknown> = Constructor<T> & ConstructorFunction<T>
+export type AnyConstructable<T = unknown> = Constructor<T> | ConstructorFunction<T>
 
 const asWritable = <T>(obj: T) => obj as Writeable<T>
 export type Writeable<T> = { -readonly [P in keyof T]-?: T[P] }
@@ -11,13 +13,13 @@ export type Writeable<T> = { -readonly [P in keyof T]-?: T[P] }
 const isTruthyFilter = <T>(item: T | null | undefined | void): item is T =>
   Boolean(item)
 
-const setFunctionName = (fnc: any, name: string) =>
+const setFunctionName = (fnc: Function, name: string) =>
   Object.defineProperty(fnc, "name", { value: name })
 
 export const typedKeysOf = <T>(obj: T) => Object.keys(obj) as (keyof T)[]
 
 export interface Disposable {
-  dispose(): void
+  dispose: () => void
 }
 
 const using = async <T>(disposable: Disposable, fnc: () => Promise<T> | T) => {

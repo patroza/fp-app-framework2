@@ -32,7 +32,8 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
 
   // Test with immutable approach.
   readonly processEvents = (record: T, events: Event[]) => {
-    const original = this.cache.get(record.id)!
+    const original = this.cache.get(record.id)
+    assertIsNotUndefined(original)
     // Using Object.assign would mean that the object doesn't obey the immutability laws strictly.
     //Object.assign(original.data, record)
     // This however makes the cache kind of useless; the same entity could exist between multiple load calls etc
@@ -157,7 +158,7 @@ const runSequentially = async <T>(...taskCreators: Array<T.Task<T>>): Promise<T[
   }
 }
 
-const terminate = async (promise: Promise<any>) => {
+const terminate = async (promise: Promise<unknown>) => {
   await promise
 }
 

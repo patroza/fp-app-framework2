@@ -3,7 +3,7 @@ import { Disposable, noop, typedKeysOf } from "./misc"
 
 type logLevels = Pick<typeof console, "log" | "error" | "warn" | "debug">
 interface AddLogging {
-  addToLoggingContext: (item: Record<string, any>) => Disposable
+  addToLoggingContext: (item: Record<string, unknown>) => Disposable
 }
 type logger = logLevels & AddLogging
 
@@ -26,7 +26,7 @@ const getLogger = (name: string) => {
 
   // const levels = tuple("info", "log", "debug", "error", "warn")
   const l = typedKeysOf(logLevels).reduce((prev, current) => {
-    prev[current] = (...args: any[]) =>
+    prev[current] = (...args: unknown[]) =>
       logger[current](chalk.yellow(`[${name}]`), ...args)
     return prev
   }, {} as typeof logger)

@@ -30,10 +30,14 @@ export type EventHandlerWithDependencies<
   TError
 > = HandlerWithDependencies<TDependencies, TInput, TOutput, TError>
 export type UsecaseWithDependencies<
-  TDependencies,
-  TInput,
-  TOutput,
-  TError
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TDependencies = any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TInput = any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TOutput = any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TError = any
 > = HandlerWithDependencies<TDependencies, TInput, TOutput, TError>
 
 // TODO: one with built in trampoline?
@@ -43,12 +47,12 @@ export const configureDependencies = <TDependencies, T>(
   f: WithDependencies<TDependencies, T>,
 ): WithDependenciesConfig<TDependencies, T> => {
   setFunctionName(f, name)
-  const anyF: any = f
-  anyF[injectSymbol] = deps
-  return anyF
+  const withConfig: WithDependenciesConfig<TDependencies, T> = f
+  withConfig[injectSymbol] = deps
+  return withConfig
 }
 
-export type resolveEventType = (evt: { type: any; payload: any }) => O.Option<Event>
+export type resolveEventType = (evt: unknown) => O.Option<Event>
 export const resolveEventKey = generateKey<resolveEventType>("resolveEvent")
 
 type HandlerWithDependencies<TDependencies, TInput, TOutput, TError> = WithDependencies<
@@ -58,10 +62,14 @@ type HandlerWithDependencies<TDependencies, TInput, TOutput, TError> = WithDepen
 
 // tslint:disable-next-line:max-line-length
 export type NamedHandlerWithDependencies<
-  TDependencies,
-  TInput,
-  TOutput,
-  TError
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TDependencies = any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TInput = any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TOutput = any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TError = any
 > = WithDependencies<TDependencies, NamedRequestHandler<TInput, TOutput, TError>> &
   HandlerInfo<TDependencies>
 
@@ -177,13 +185,15 @@ const createIntegrationEventHandlerWithDeps = <TDependencies>(
     `on${event.name}${name}`,
     "INTEGRATIONEVENT",
   )(handler)
-  registerIntegrationEventHandler(event, handler)
+  registerIntegrationEventHandler(event, newHandler)
   return newHandler
 }
 
-const wrapHandler = (handler: any) => (...args: any[]) => handler(...args)
+const wrapHandler = <TArgs extends unknown[], TOut>(
+  handler: (...args: TArgs) => TOut,
+) => (...args: TArgs) => handler(...args)
 
-const requestAndEventHandlers: NamedHandlerWithDependencies<any, any, any, any>[] = []
+const requestAndEventHandlers: NamedHandlerWithDependencies[] = []
 
 const getRegisteredRequestAndEventHandlers = () => [...requestAndEventHandlers]
 
@@ -201,6 +211,7 @@ export {
 }
 
 export type requestType = <TInput, TOutput, TError>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   requestHandler: NamedHandlerWithDependencies<any, TInput, TOutput, TError>,
   input: TInput,
 ) => AsyncResult<TOutput, TError>
@@ -212,6 +223,7 @@ export type NamedRequestHandler<TInput, TOutput, TErr> = RTE.ReaderTaskEither<
   TErr,
   TOutput
 > &
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   HandlerInfo<any>
 
 export const requestKey = generateKey<requestType>("request")
