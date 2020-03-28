@@ -1,21 +1,23 @@
 {
-	"private": true,
-	"workspaces": {
-		"packages": [
-			"packages/*",
-			"samples/*"
-		]
-	},
-	"scripts": {
-		"start": "cd samples/basic && yarn start",
-		"testsuite": "lerna exec --parallel --scope \"@fp-app/*\" --ignore \"@types/*\" --ignore \"@fp-app/experiment\" yarn testsuite",
-		"testsuite:local": "lerna exec --concurrency 1 --scope \"@fp-app/*\" --ignore \"@types/*\" --ignore \"@fp-app/experiment\" yarn testsuite"
-	},
-	"resolutions": {
-		"@hapi/joi": "^17.1.0"
-	},
-	"dependencies": {
-		"lerna": "^3.20.2"
-	},
-	"name": "fp-app-framework"
+    "private": true,
+    "workspaces": {
+        "packages": [
+            "packages/*",
+            "samples/*"
+        ]
+    },
+    "scripts": {
+        "start": "cd samples/basic && yarn start",
+        "testsuite": "yarn lerna:parallel yarn testsuite",
+        "testsuite:local": "yarn lerna:serial yarn testsuite",
+        "lerna:parallel": "lerna exec --parallel --scope \"@fp-app/*\" --ignore \"@types/*\" --ignore \"@fp-app/experiment\"",
+        "lerna:serial": "lerna exec --concurrency 1 --scope \"@fp-app/*\" --ignore \"@types/*\" --ignore \"@fp-app/experiment\""
+    },
+    "resolutions": {
+        "@hapi/joi": "^17.1.0"
+    },
+    "dependencies": {
+        "lerna": "^3.20.2"
+    },
+    "name": "fp-app-framework"
 }
