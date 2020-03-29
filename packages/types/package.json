@@ -1,18 +1,19 @@
 {
-  "name": "@types/fp-app-global",
-  "version": "0.1.0",
-  "main": "index.js",
-  "author": "Patrick Roza <contact@patrickroza.com>",
-  "license": "MIT",
-  "types": "index",
-  "dependencies": {},
-  "devDependencies": {
-    "@types/node": "12"
-  },
-  "scripts": {
-    "test": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling jest",
-    "test:compile": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.ts\"",
-    "testsuite": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling yarn test:compile && yarn lint && yarn test"
-  }
+    "name": "@types/fp-app-global",
+    "version": "0.1.0",
+    "main": "index.js",
+    "author": "Patrick Roza <contact@patrickroza.com>",
+    "license": "MIT",
+    "types": "index",
+    "dependencies": {},
+    "devDependencies": {
+        "@types/node": "12"
+    },
+    "scripts": {
+        "test": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling jest",
+        "test:compile": "tsc --noEmit",
+        "lint": "eslint \"src/**/*.ts\"",
+        "testsuite": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling yarn test:compile && yarn lint && yarn test",
+        "autofix": "yarn lint --fix && yarn prettier --write"
+    }
 }
