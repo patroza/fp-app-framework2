@@ -50,7 +50,7 @@ export default class TrainTripPublisherInMemory implements TrainTripPublisher {
       // Talk to the Cloud Service to sync with Cloud
       await pipe(
         this.request(registerCloud, { trainTripId }),
-        TE.mapLeft(err => this.logger.error(err)),
+        TE.mapLeft((err) => this.logger.error(err)),
       )()
     } catch (err) {
       // TODO: really handle error

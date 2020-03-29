@@ -24,8 +24,8 @@ const DiskDBContext = configure(
     }
     const save = () =>
       trainTrips.intSave(
-        i => readContext.create(i.id, TrainTripToView(i)),
-        i => readContext.delete(i.id),
+        (i) => readContext.create(i.id, TrainTripToView(i)),
+        (i) => readContext.delete(i.id),
       )
     const dispose = () => (disposed = true)
     return {
@@ -110,7 +110,7 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
     travelClassConfigurations,
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     travelClassConfigurations.find(
-      x => x.travelClass.name === currentTravelClassConfiguration.travelClass.name,
+      (x) => x.travelClass.name === currentTravelClassConfiguration.travelClass.name,
     )!,
     new Date(createdAt),
     {

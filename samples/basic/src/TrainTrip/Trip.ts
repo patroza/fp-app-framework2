@@ -25,14 +25,14 @@ const fromWire = ({
 }): Either<t.Errors, TravelClass> =>
   pipe(
     t.DateFromISOString.decode(createdAt),
-    chain(createdAt => _TravelClass.decode({ createdAt, name, templateId })),
+    chain((createdAt) => _TravelClass.decode({ createdAt, name, templateId })),
   )
 
 const TravelClass = merge(_TravelClass, {
   create: flow(
     // eslint-disable-next-line @typescript-eslint/unbound-method
     _TravelClass.decode,
-    mapLeft(x => new ValidationError(decodeErrors(x))),
+    mapLeft((x) => new ValidationError(decodeErrors(x))),
   ),
   fromWire,
 })
@@ -54,7 +54,7 @@ const createTrip = (travelClasses: TravelClass[]): Either<t.Errors, Trip> =>
 const Trip = merge(_Trip, {
   create: flow(
     createTrip,
-    mapLeft(x => new ValidationError(decodeErrors(x))),
+    mapLeft((x) => new ValidationError(decodeErrors(x))),
   ),
 })
 type TripType = t.TypeOf<typeof Trip>
@@ -89,10 +89,10 @@ const _TripWithSelectedTravelClass = withBla(
       TripWithSelectedTravelClassBrand
     > =>
       // TODO: instead of ref equal we should compare by value
-      p.travelClasses.some(x => x === p.currentTravelClass), // a custom type guard using the build-in helper `Branded`
+      p.travelClasses.some((x) => x === p.currentTravelClass), // a custom type guard using the build-in helper `Branded`
     "TripWithSelectedTravelClass", // the name must match the readonly field in the brand
   ),
-  value => {
+  (value) => {
     if (!TripWithSelectedTravelClassFields.is(value)) {
       return "Invalid input"
     }
@@ -107,7 +107,7 @@ const createTripWithSelectedTravelClass = ({
   trip: Trip
   travelClassName: string
 }): Either<t.Errors, TripWithSelectedTravelClass> => {
-  const selectedTravelClass = trip.travelClasses.find(x => x.name === travelClassName)
+  const selectedTravelClass = trip.travelClasses.find((x) => x.name === travelClassName)
   return _TripWithSelectedTravelClass.decode({
     travelClasses: trip.travelClasses,
     currentTravelClass: selectedTravelClass,
@@ -117,7 +117,7 @@ const createTripWithSelectedTravelClass = ({
 const TripWithSelectedTravelClass = merge(_TripWithSelectedTravelClass, {
   create: flow(
     createTripWithSelectedTravelClass,
-    mapLeft(x => new ValidationError(decodeErrors(x))),
+    mapLeft((x) => new ValidationError(decodeErrors(x))),
   ),
 })
 

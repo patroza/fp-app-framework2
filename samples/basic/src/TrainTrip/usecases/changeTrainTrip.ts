@@ -32,12 +32,14 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
       chain(pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)),
       chainTup(
         compose(
-          map(i => i.trainTripId),
+          map((i) => i.trainTripId),
           chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
         ),
       ),
       chain(([trainTrip, proposal]) =>
-        pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither, f => f(proposal)),
+        pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither, (f) =>
+          f(proposal),
+        ),
       ),
       // ALT1
       // compose(
@@ -104,7 +106,7 @@ const validateId = (id: string) =>
   flow(
     // eslint-disable-next-line @typescript-eslint/unbound-method
     t.NonEmptyString.decode,
-    E.mapLeft(err => new ValidationError(err.map(x => x.message).join(","))),
+    E.mapLeft((err) => new ValidationError(err.map((x) => x.message).join(","))),
   )(id)
 
 type ChangeTrainTripError =

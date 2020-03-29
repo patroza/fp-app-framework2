@@ -23,10 +23,10 @@ export function readonlyNonEmptyArray<C extends t.Mixed>(
     name,
     (u): u is ReadonlyNonEmptyArray<t.TypeOf<C>> => arr.is(u) && isNonEmpty(u),
     (u, c) =>
-      either.chain(arr.validate(u, c), as => {
+      either.chain(arr.validate(u, c), (as) => {
         const onea = fromArray(as)
         return isNone(onea) ? t.failure(u, c) : t.success(onea.value)
       }),
-    nea => narr.encode(nea) as any, // TODO
+    (nea) => narr.encode(nea) as any, // TODO
   )
 }

@@ -46,12 +46,12 @@ export default class TrainTrip extends Entity {
     { pax, startDate }: { startDate: FutureDate; pax: PaxDefinition },
     currentDate: Date,
   ) => {
-    const travelClassConfiguration = trip.travelClasses.map(x =>
+    const travelClassConfiguration = trip.travelClasses.map((x) =>
       unsafeUnwrap(TravelClassConfiguration.create(x)),
     )
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const currentTravelClassConfiguration = travelClassConfiguration.find(
-      x => x.travelClass.name === trip.currentTravelClass.name,
+      (x) => x.travelClass.name === trip.currentTravelClass.name,
     )!
 
     const t = new TrainTrip(
@@ -210,9 +210,9 @@ const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
   // This will clear all configurations upon trip update
   // TODO: Investigate a resolution mechanism to update existing configurations, depends on business case ;-)
   _this = travelClassConfigurationL.modify(() =>
-    trip.travelClasses.map(x => {
+    trip.travelClasses.map((x) => {
       const existing = _this.travelClassConfiguration.find(
-        y => y.travelClass.name === x.name,
+        (y) => y.travelClass.name === x.name,
       )
       return existing
         ? travelClassL.modify(() => x)(existing)
@@ -226,7 +226,8 @@ const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
   //   return { ...existing, travelClass: x }
   // }
   const currentTravelClassConfiguration = _this.travelClassConfiguration.find(
-    x => _this.currentTravelClassConfiguration.travelClass.name === x.travelClass.name,
+    (x) =>
+      _this.currentTravelClassConfiguration.travelClass.name === x.travelClass.name,
   )
   // TODO: use NonEmptyArray?
   _this = currentTravelClassConfigurationL.modify(
@@ -343,7 +344,7 @@ const intChangeTravelClass = (_this: TrainTrip) => (
   travelClass: TravelClassDefinition,
 ): Result<[TrainTrip, Event[], boolean], InvalidStateError> => {
   const slc = _this.travelClassConfiguration.find(
-    x => x.travelClass.name === travelClass,
+    (x) => x.travelClass.name === travelClass,
   )
   if (!slc) {
     return err(new InvalidStateError(`${travelClass} not available currently`))
@@ -367,7 +368,7 @@ export const isLocked = <This extends Pick<TrainTrip, "lockedAt">>(_this: This) 
   Boolean(_this.lockedAt)
 
 const createChangeEvents = <This extends Pick<TrainTrip, "id">>(_this: This) =>
-  function*(changed: boolean) {
+  function* (changed: boolean) {
     yield new UserInputReceived(_this.id)
     if (changed) {
       yield new TrainTripStateChanged(_this.id)
@@ -412,7 +413,7 @@ const createTravelClassConfiguration = (travelClass: TravelClass) => {
 const TravelClassConfiguration = merge(_TravelClassConfiguration, {
   create: flow(
     createTravelClassConfiguration,
-    mapLeft(x => new ValidationError(decodeErrors(x))),
+    mapLeft((x) => new ValidationError(decodeErrors(x))),
   ),
 })
 type TravelClassConfigurationType = t.TypeOf<typeof TravelClassConfiguration>
@@ -476,7 +477,7 @@ const captureEventsEither = <TE, TEvent extends Event, TArgs extends unknown[]>(
   func: (...args: TArgs) => Either<TE, readonly TEvent[]>,
   registerDomainEvent: (evt: Event) => void,
 ) => (...args: TArgs) =>
-  either.map(func(...args), evts => evts.forEach(registerDomainEvent))
+  either.map(func(...args), (evts) => evts.forEach(registerDomainEvent))
 
 const captureEvents = <TEvent extends Event, TArgs extends unknown[]>(
   func: (...args: TArgs) => readonly TEvent[],

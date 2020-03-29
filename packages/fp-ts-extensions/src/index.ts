@@ -81,8 +81,8 @@ export function withBla<T, TI>(
   codec: T & { validate: any },
   message: (i: TI) => string,
 ) {
-  return t.withValidate(codec as any, function(i: any, c: any) {
-    return E.mapLeft(function(errors: any[]) {
+  return t.withValidate(codec as any, function (i: any, c: any) {
+    return E.mapLeft(function (errors: any[]) {
       // When children have errors, report them
       // otherwise if parent has errors, report that
       if (c.length === 1 && errors[0].value != i) {
@@ -115,7 +115,7 @@ export function decodeErrors(x: t.Errors) {
           message ? message : getErrorMessage(current, value)
         }`
       return rest.length
-        ? processCtx(rest[rest.length - 1], rest.map(x => x.key).join("."))
+        ? processCtx(rest[rest.length - 1], rest.map((x) => x.key).join("."))
         : processCtx(root)
     })
     .join("\n")

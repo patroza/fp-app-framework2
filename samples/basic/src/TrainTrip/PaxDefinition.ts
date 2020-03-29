@@ -33,7 +33,7 @@ const PaxNumber = withBla(
     (n): n is t.Branded<PositiveInt, PaxNumberBrand> => n >= 0 && n <= 6, // a custom type guard using the build-in helper `Branded`
     "PaxNumber", // the name must match the readonly field in the brand
   ),
-  value => {
+  (value) => {
     if (!PositiveInt.is(value)) {
       return "Invalid input"
     }
@@ -66,11 +66,11 @@ const _PaxDefinition = withBla(
   t.brand(
     PaxFields, // a codec representing the type to be refined
     (p): p is t.Branded<PaxFields, PaxDefinitionBrand> =>
-      typedKeysOf(p).some(k => p[k] > 0) &&
+      typedKeysOf(p).some((k) => p[k] > 0) &&
       typedKeysOf(p).reduce((prev, cur) => (prev += p[cur]), 0) <= 6, // a custom type guard using the build-in helper `Branded`
     "PaxDefinition", // the name must match the readonly field in the brand
   ),
-  value => {
+  (value) => {
     if (!PaxFields.is(value)) {
       return "Invalid input"
     }
@@ -85,8 +85,8 @@ const PaxDefinition = merge(_PaxDefinition, {
   create: flow(
     // eslint-disable-next-line @typescript-eslint/unbound-method
     _PaxDefinition.decode,
-    map(x => x as PaxDefinition),
-    mapLeft(x => new ValidationError(decodeErrors(x))),
+    map((x) => x as PaxDefinition),
+    mapLeft((x) => new ValidationError(decodeErrors(x))),
   ),
 })
 

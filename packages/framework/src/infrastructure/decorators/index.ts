@@ -6,7 +6,7 @@ import { requestTypeSymbol } from "../SimpleContainer"
 import { configure } from "../configure"
 import { UOWKey } from "../context.base"
 
-const loggingDecorator = (): RequestDecorator => request => (key, input) => {
+const loggingDecorator = (): RequestDecorator => (request) => (key, input) => {
   const prefix = `${key.name} ${key[requestTypeSymbol]}`
   return () =>
     benchLog(

@@ -11,7 +11,7 @@ const createQuery = createQueryWithDeps(() => ({
 
 const getTrainTrip = createQuery<Input, TrainTripView, DbError>(
   "getTrainTrip",
-  ({ readCtx }) => input => readCtx.read(input.trainTripId),
+  ({ readCtx }) => (input) => readCtx.read(input.trainTripId),
 )
 
 export default getTrainTrip

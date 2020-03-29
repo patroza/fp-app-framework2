@@ -120,7 +120,7 @@ export default class SimpleContainer {
     forKey: T,
     ...decorators: unknown[]
   ) {
-    decorators.forEach(x => assert(x !== null, "decorator must not be null"))
+    decorators.forEach((x) => assert(x !== null, "decorator must not be null"))
     const current = this.decorators.get(forKey) || []
     current.push(...decorators)
     this.decorators.set(forKey, current)
@@ -157,7 +157,7 @@ export default class SimpleContainer {
     const keys = getDependencyKeys(constructor)
     let instance
     if (keys) {
-      instance = new constructor(...keys.map(x => this.get(x)))
+      instance = new constructor(...keys.map((x) => this.get(x)))
     } else {
       instance = new constructor()
     }
@@ -335,7 +335,7 @@ export type UnpackKey<T> = T extends Key<infer X> ? X : never
  * @param {Array<Function>} dependencyConstructors
  */
 export const inject = (...dependencyConstructors: any[]): ClassDecorator => {
-  dependencyConstructors.forEach(dependencyConstructor =>
+  dependencyConstructors.forEach((dependencyConstructor) =>
     assert.isNotNull({ dependencyConstructor }),
   )
   // NOTE: Must have a {..} scope here or the Decorators exhibit weird behaviors..
@@ -356,7 +356,9 @@ export const paramInject = (dependencyConstructor: any): ParameterDecorator => {
 
 export const autoinject = (target: any) => {
   const metadata = Reflect.getMetadata("design:paramtypes", target) as any[]
-  metadata.forEach(dependencyConstructor => assert.isNotNull({ dependencyConstructor }))
+  metadata.forEach((dependencyConstructor) =>
+    assert.isNotNull({ dependencyConstructor }),
+  )
 
   // merge existing (ie placed by paraminject)
   if (Object.getOwnPropertySymbols(target).includes(injectSymbol)) {

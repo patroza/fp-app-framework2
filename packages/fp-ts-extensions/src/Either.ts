@@ -71,7 +71,7 @@ function chainTup<TInput, T, E>(f: (x: TInput) => Either<E, T>) {
   return E.chain((input: TInput) =>
     pipe(
       f(input),
-      E.map(x => tuple(x, input)),
+      E.map((x) => tuple(x, input)),
     ),
   )
 }
@@ -108,11 +108,11 @@ export const sequence = <T, E>(results: Result<T, E>[]): Result<T[], E> =>
 
 // keeps all errors
 export const resultAll = <T, E>(results: Result<T, E>[]): Result<T[], E[]> => {
-  const errors = results.filter(isErr).map(x => x.left)
+  const errors = results.filter(isErr).map((x) => x.left)
   if (errors.length) {
     return err(errors)
   }
-  const successes = results.filter(isOk).map(x => x.right)
+  const successes = results.filter(isOk).map((x) => x.right)
   return ok(successes)
 }
 
@@ -161,7 +161,7 @@ export const liftErr = liftLeft
 export const anyTrue = <TErr = any>(...mappers: any[]): Result<boolean, TErr> => {
   let hasChanged = false
 
-  const mapHasChanged = E.map(a => (a ? (hasChanged = true) : null)) as any
+  const mapHasChanged = E.map((a) => (a ? (hasChanged = true) : null)) as any
   const items = mappers.map(() => mapHasChanged)
   const execution = flatten(zip(mappers, items))
 
@@ -184,7 +184,7 @@ export function chainFlatTup(f: any) {
   return E.chain((input: any) =>
     pipe(
       f(input),
-      E.map(x => tuple(x, ...input)),
+      E.map((x) => tuple(x, ...input)),
     ),
   )
 }
@@ -250,7 +250,7 @@ export function compose(...a: any[]) {
 export function chainTasks<TErr, T = void>(
   tasks: (() => Either<TErr, T>)[],
 ): Either<TErr, T> {
-  const exec = _pipe(...tasks.map(t => E.chain(t)))
+  const exec = _pipe(...tasks.map((t) => E.chain(t)))
   return exec(ok(void 0))
 }
 

@@ -57,9 +57,7 @@ beforeEach(() =>
       pax: E.unsafeUnwrap(
         Pax.decode({ adults: 2, children: 0, babies: 0, infants: 0, teenagers: 0 }),
       ),
-      startDate: moment()
-        .add(1, "year")
-        .toDate(),
+      startDate: moment().add(1, "year").toDate(),
       templateId,
     })()
 

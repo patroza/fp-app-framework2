@@ -50,8 +50,8 @@ export default function generateKoaHandler<
         TE.chain(pipe(validate, E.toTaskEither)),
         TE.chain(pipe(handleRequest, _.RTE.liftErr)),
         TE.bimap(
-          err => (shouldHandleError(err) ? handleError(err) : undefined),
-          result => {
+          (err) => (shouldHandleError(err) ? handleError(err) : undefined),
+          (result) => {
             if (responseTransform) {
               ctx.body = responseTransform(result, ctx)
             } else {

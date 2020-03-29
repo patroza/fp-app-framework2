@@ -40,16 +40,12 @@ const createTrainTripRouter = () =>
       validator: createValidator(routeWithTrainTripId),
     })
 
-const trainTripIdValidator = Joi.string()
-  .guid()
-  .required()
+const trainTripIdValidator = Joi.string().guid().required()
 const routeWithTrainTripId = Joi.object({
   trainTripId: trainTripIdValidator,
 }).required()
 
-const paxEntrySchema = Joi.number()
-  .integer()
-  .required()
+const paxEntrySchema = Joi.number().integer().required()
 
 const paxSchema = Joi.object<Pax>({
   adults: paxEntrySchema,

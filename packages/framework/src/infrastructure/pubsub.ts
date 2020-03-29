@@ -7,7 +7,7 @@ const processReceivedEvent = ({
 }: {
   resolveEvent: resolveEventType
   publish: publishType
-}): RTE.ReaderTaskEither<string, Error, void> => body => {
+}): RTE.ReaderTaskEither<string, Error, void> => (body) => {
   const event = resolveEvent(JSON.parse(body))
   if (O.isNone(event)) {
     return TE.ok(void 0)

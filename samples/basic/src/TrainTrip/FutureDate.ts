@@ -17,7 +17,7 @@ export const _FutureDate = withBla(
     (n): n is t.Branded<Date, FutureDate2Brand> => isInFuture(n), // a custom type guard using the build-in helper `Branded`
     "FutureDate", // the name must match the readonly field in the brand
   ),
-  value => {
+  (value) => {
     if (!t.date.is(value)) {
       return "invalid value"
     }
@@ -29,8 +29,8 @@ const FutureDate = merge(_FutureDate, {
   create: flow(
     // eslint-disable-next-line @typescript-eslint/unbound-method
     _FutureDate.decode,
-    map(x => x as FutureDate),
-    mapLeft(x => new ValidationError(decodeErrors(x))),
+    map((x) => x as FutureDate),
+    mapLeft((x) => new ValidationError(decodeErrors(x))),
   ),
 })
 

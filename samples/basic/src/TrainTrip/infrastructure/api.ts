@@ -36,7 +36,7 @@ const toTrip = trampoline(
   ) => {
     const getTravelClass = pipe(
       (tpl: Template) => tplToTravelClass(tpl, new Date()),
-      RE.mapLeft(x => new InvalidStateError("TravelClass: " + x)),
+      RE.mapLeft((x) => new InvalidStateError("TravelClass: " + x)),
       _.RE.liftErr,
     )
     // TODO: cleanup imperative.
@@ -50,17 +50,17 @@ const toTrip = trampoline(
     const createTripWithSelectedTravelClass = (trip: Trip) =>
       pipe(
         TripWithSelectedTravelClass.create({ trip, travelClassName: curTC.name }),
-        E.mapLeft(x => new InvalidStateError("TravelClass: " + x)),
+        E.mapLeft((x) => new InvalidStateError("TravelClass: " + x)),
       )
 
     return pipe(
       TE.traverse(
         [_.TE.startWith(curTC)].concat(
           typedKeysOf(tpl.travelClasses)
-            .filter(x => x !== curTC.name)
+            .filter((x) => x !== curTC.name)
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            .map(slKey => tpl.travelClasses[slKey]!)
-            .map(sl =>
+            .map((slKey) => tpl.travelClasses[slKey]!)
+            .map((sl) =>
               pipe(getTemplate(sl.id), TE.chain(pipe(getTravelClass, E.toTaskEither))),
             ),
         ),
@@ -68,7 +68,7 @@ const toTrip = trampoline(
       TE.chain(
         pipe(
           Trip.create,
-          RE.mapLeft(x => new InvalidStateError(x.message)),
+          RE.mapLeft((x) => new InvalidStateError(x.message)),
           _.RE.liftErr,
           E.toTaskEither,
         ),
@@ -87,12 +87,12 @@ const tplToTravelClass = (tpl: Template, currentDate: Date) =>
 
 const getTplLevelName = (tpl: Template) =>
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  typedKeysOf(tpl.travelClasses).find(x => tpl.travelClasses[x]!.id === tpl.id)!
+  typedKeysOf(tpl.travelClasses).find((x) => tpl.travelClasses[x]!.id === tpl.id)!
 
 // Typescript support for partial application is not really great, so we try currying instead for now
 // https://stackoverflow.com/questions/50400120/using-typescript-for-partial-application
 // eslint-disable-next-line @typescript-eslint/require-await
-const getTemplateFake = (): getTemplateType => templateId => async () => {
+const getTemplateFake = (): getTemplateType => (templateId) => async () => {
   const tpl = mockedTemplates()[templateId] as Template | undefined
   if (!tpl) {
     return E.err(new RecordNotFound("Template", templateId))
@@ -128,7 +128,7 @@ const createTravelPlanFake = (): createTravelPlanType => () => async () =>
 const sendCloudSyncFake = (): RTE.ReaderTaskEither<TrainTrip, ApiError, string> => () =>
   TE.right<ApiError, string>(v4())
 
-const getTravelPlanFake = (): getTravelPlanType => travelPlanId =>
+const getTravelPlanFake = (): getTravelPlanType => (travelPlanId) =>
   TE.right({ id: travelPlanId } as TravelPlan)
 
 export {

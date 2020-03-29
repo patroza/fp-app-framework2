@@ -7,7 +7,7 @@ export const wrap = <T>(
 ): RTE.ReaderTaskEither<string, RecordNotFound, T> => (id: string) =>
   pipe(
     f(id),
-    T.map(x => {
+    T.map((x) => {
       if (O.isSome(x)) {
         return E.ok(x.value)
       }

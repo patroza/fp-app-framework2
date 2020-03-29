@@ -39,7 +39,7 @@ function configureDepsFirst<
 export function createGroupOfDependencies<TDependencies extends DependencyDefinitions>(
   deps: () => TDependencies,
 ) {
-  return configure(function(resolvedDependencies) {
+  return configure(function (resolvedDependencies) {
     return resolvedDependencies
   }, deps)
 }

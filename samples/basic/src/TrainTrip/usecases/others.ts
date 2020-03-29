@@ -34,7 +34,7 @@ export const changeStartDate = createCommand<
   compose(
     chainTup(
       compose(
-        map(i => i.startDate),
+        map((i) => i.startDate),
         chain(pipe(FutureDate.create, _.RE.liftErr, E.toTaskEither)),
       ),
       // ALT
@@ -59,7 +59,7 @@ export const changeStartDate = createCommand<
     ),
     chain(
       ([trainTrip, startDate]) =>
-        pipe(trainTrip.changeStartDate, _.RE.liftErr, E.toTaskEither, f =>
+        pipe(trainTrip.changeStartDate, _.RE.liftErr, E.toTaskEither, (f) =>
           f(startDate),
         ),
       // ALT

@@ -55,14 +55,14 @@ export function chainTup<TInput, T, E>(f: (x: TInput) => TaskEither<E, T>) {
   return TE.chain((input: TInput) =>
     pipe(
       f(input),
-      TE.map(x => tuple(x, input)),
+      TE.map((x) => tuple(x, input)),
     ),
   )
 }
 
 export const traverse = <T, E>(results: AsyncResult<T, E>[]): AsyncResult<T[], E> => {
   const traverseM = array.traverse(TE.taskEither)
-  return traverseM(results, x => x)
+  return traverseM(results, (x) => x)
 }
 
 export const liftLeft = <TE>() => <T, TE2 extends TE>(e: () => TaskEither<TE2, T>) =>
@@ -83,7 +83,7 @@ export function chainFlatTup(f: any) {
   return TE.chain((input: any) =>
     pipe(
       f(input),
-      TE.map(x => tuple(x, ...input)),
+      TE.map((x) => tuple(x, ...input)),
     ),
   )
 }
@@ -150,7 +150,7 @@ export const asyncCreateResult = <TErrorOutput = string, TInput = any, TOutput =
 export function chainTasks<TErr, T = void>(
   tasks: TE.TaskEither<TErr, T>[],
 ): TE.TaskEither<TErr, T> {
-  const exec = _pipe(...tasks.map(t => TE.chain(() => t)))
+  const exec = _pipe(...tasks.map((t) => TE.chain(() => t)))
   return exec(ok(void 0))
 }
 

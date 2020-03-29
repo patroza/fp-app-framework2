@@ -46,14 +46,14 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
     this.removals.push(record)
   }
 
-  readonly load: RT.ReaderTask<string, O.Option<T>> = id => {
+  readonly load: RT.ReaderTask<string, O.Option<T>> = (id) => {
     const cachedRecord = this.cache.get(id)
     if (cachedRecord) {
       return TO.some(cachedRecord.data)
     }
     return pipe(
       tryReadFromDb(this.type, id),
-      TO.map(serializedStr => JSON.parse(serializedStr) as SerializedDBRecord),
+      TO.map((serializedStr) => JSON.parse(serializedStr) as SerializedDBRecord),
       TO.map(({ data, version }) => ({ data: this.deserializer(data), version })),
       TO.map(({ data, version }) => {
         this.cache.set(id, { version, data })
@@ -64,7 +64,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
 
   // Internal
   readonly intGetAndClearEvents = () => {
-    const items = [...this.cache.values()].map(x => x.data).concat(this.removals)
+    const items = [...this.cache.values()].map((x) => x.data).concat(this.removals)
     const evts = this.events
     this.events = []
     return items.reduce((prev, cur) => prev.concat(cur.intGetAndClearEvents()), evts)
@@ -83,7 +83,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
   ): Promise<void> =>
     tRunSequentially(
       ...this.removals
-        .map(e =>
+        .map((e) =>
           [
             () => this.deleteRecord(e),
             forEachDelete && (() => forEachDelete(e)),
@@ -119,7 +119,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
       record.id,
       pipe(
         tryReadFromDb(this.type, record.id),
-        TO.map(s => JSON.parse(s) as SerializedDBRecord),
+        TO.map((s) => JSON.parse(s) as SerializedDBRecord),
         TO.do(({ version }) => {
           if (version !== cachedRecord.version) {
             throw new OptimisticLockException(this.type, record.id)

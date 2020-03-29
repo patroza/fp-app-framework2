@@ -92,7 +92,7 @@ const registerUsecaseHandler = <TDependencies>(deps: () => TDependencies) => (
 ) => <TInput, TOutput, TError>(
   handler: UsecaseWithDependencies<TDependencies, TInput, TOutput, TError>,
 ) => {
-  assert(!typedKeysOf(deps).some(x => !deps[x]), "Dependencies must not be null")
+  assert(!typedKeysOf(deps).some((x) => !deps[x]), "Dependencies must not be null")
 
   const newHandler = handler as NamedHandlerWithDependencies<
     TDependencies,

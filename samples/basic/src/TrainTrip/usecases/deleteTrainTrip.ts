@@ -17,7 +17,7 @@ const deleteTrainTrip = createCommand<Input, void, DeleteTrainTripError>(
       map(({ trainTripId }) => trainTripId),
       chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
       // TODO: this should normally be on a different object.
-      map(x => {
+      map((x) => {
         x.delete()
         trainTrips.remove(x)
       }),

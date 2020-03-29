@@ -25,8 +25,8 @@ export type JsonValue = number | boolean | string | unknown[] | Record<string, u
 const mapValidationResult = <TOut = unknown>(result: ValidationResult) =>
   pipe(
     E.fromErrorish(result),
-    E.do(x => x.warning && logger.warn("Warning during validation: " + x.warning)),
-    E.map(x => x.value as TOut),
+    E.do((x) => x.warning && logger.warn("Warning during validation: " + x.warning)),
+    E.map((x) => x.value as TOut),
     E.mapLeft(joiValidationErrorToCombinedValidationError),
   )
 // Alternative:
@@ -50,7 +50,7 @@ export type ValidatorType<TOut, TErr, TIn = JsonValue> = ((
 
 const joiValidationErrorToCombinedValidationError = (x: Joi.ValidationError) =>
   new CombinedValidationError(
-    x.details.map(x => new FieldValidationError(x.path.join("."), x)),
+    x.details.map((x) => new FieldValidationError(x.path.join("."), x)),
   )
 
 const predicate = <T, E extends ValidationError>(

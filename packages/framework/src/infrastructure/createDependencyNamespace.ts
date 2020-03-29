@@ -110,16 +110,16 @@ export default function createDependencyNamespace(
     )
   const getDomainEventHandlers = (evt: Event) =>
     pipe(O.fromNullable(domainHandlerMap.get(evt.constructor)), O.chain(RANE.fromArray))
-  const publishDomainEventHandler = publish(evt =>
-    pipe(getDomainEventHandlers(evt), O.map(RANE.map(y => container.getF(y)))),
+  const publishDomainEventHandler = publish((evt) =>
+    pipe(getDomainEventHandlers(evt), O.map(RANE.map((y) => container.getF(y)))),
   )
   const getIntegrationEventHandlers = (evt: Event) =>
     pipe(
       O.fromNullable(integrationHandlerMap.get(evt.constructor)),
       O.chain(RANE.fromArray),
     )
-  const publishIntegrationEventHandler = publish(evt =>
-    pipe(getIntegrationEventHandlers(evt), O.map(RANE.map(y => container.getF(y)))),
+  const publishIntegrationEventHandler = publish((evt) =>
+    pipe(getIntegrationEventHandlers(evt), O.map(RANE.map((y) => container.getF(y)))),
   )
   container.registerScopedF(
     DomainEventHandler,
@@ -134,7 +134,7 @@ export default function createDependencyNamespace(
     const id = generateShortUuid()
     return { id, correllationId: id }
   })
-  getRegisteredRequestAndEventHandlers().forEach(h =>
+  getRegisteredRequestAndEventHandlers().forEach((h) =>
     container.registerScopedConcrete(h),
   )
 
@@ -145,7 +145,7 @@ export default function createDependencyNamespace(
   container.registerSingletonF(executePostCommitHandlers, executePostCommitHandlers)
 
   const publishInNewContext = (evt: string, requestId: string) =>
-    setupRequestContext(context => {
+    setupRequestContext((context) => {
       const correllationId = requestId || context.id
       Object.assign(context, { correllationId })
 
@@ -159,7 +159,7 @@ export default function createDependencyNamespace(
   const requestInNewContext: requestInNewScopeType = (key, evt) => () =>
     setupChildContext(() => container.getF(requestKey)(key, evt)())
   container.registerSingletonF(requestKey, () =>
-    request(key => container.getConcrete(key)),
+    request((key) => container.getConcrete(key)),
   )
   container.registerInstanceF(requestInNewScopeKey, requestInNewContext)
 

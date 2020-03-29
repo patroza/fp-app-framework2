@@ -60,7 +60,7 @@ export default class DomainEventHandler {
   }
 
   private readonly publishEvents = (events: Event[]): AsyncResult<void, Error> =>
-    TE.chainTasks(events.map(e => this.publish(e)))
+    TE.chainTasks(events.map((e) => this.publish(e)))
 
   private readonly publishIntegrationEvents = () => {
     this.events = []

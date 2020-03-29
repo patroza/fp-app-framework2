@@ -53,12 +53,12 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
       // ),
       map(([trip, preferences]) => TrainTrip.create(trip, preferences, new Date())),
       exec(trainTrips.add),
-      map(trainTrip => trainTrip.id),
+      map((trainTrip) => trainTrip.id),
     ),
 )
 
 const getTripFromTrainTripInfo = configure(
-  function({ getTrip }) {
+  function ({ getTrip }) {
     return (i: ValidatedInput) => getTrip(i.templateId)
   },
   () => ({ getTrip }),

@@ -13,7 +13,7 @@ const logger = getLogger("executePostCommitHandlers")
 const executePostCommitHandlers = configure(
   ({ executeIntegrationEvent }) => (eventsMap: eventsMapType) =>
     process.nextTick(() =>
-      tryProcessEvents(executeIntegrationEvent, eventsMap).catch(err =>
+      tryProcessEvents(executeIntegrationEvent, eventsMap).catch((err) =>
         logger.error("Unexpected error during applying IntegrationEvents", err),
       ),
     ),
@@ -29,7 +29,7 @@ async function tryProcessEvents(
       await benchLog(
         pipe(
           executeIntegrationEvent(pch, evt),
-          TE.mapLeft(err =>
+          TE.mapLeft((err) =>
             logger.warn(`Error during applying IntegrationEvents`, err),
           ),
         ),

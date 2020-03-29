@@ -73,7 +73,7 @@ export const generateHalLinks = (
     if (href.startsWith(".")) {
       href = href.replace(".", ctx.URL.pathname)
     }
-    Object.keys(data).forEach(x => (href = href.replace(`:${x}`, data[x])))
+    Object.keys(data).forEach((x) => (href = href.replace(`:${x}`, data[x])))
     prev[cur] = { href }
     return prev
   }, {} as Record<string, { href: string }>)

@@ -43,7 +43,7 @@ createIntegrationEventHandler<TrainTripCreated, void, never>(
   "ScheduleCloudSync",
   ({ trainTripPublisher }) =>
     compose(
-      map(x => x.trainTripId),
+      map((x) => x.trainTripId),
       chain(TE.tryExecuteFW(trainTripPublisher.register)),
     ),
 )
@@ -53,7 +53,7 @@ createIntegrationEventHandler<TrainTripStateChanged, void, never>(
   "EitherDebounceOrScheduleCloudSync",
   ({ trainTripPublisher }) =>
     compose(
-      map(x => x.trainTripId),
+      map((x) => x.trainTripId),
       chain(TE.tryExecuteFW(trainTripPublisher.register)),
     ),
 )
@@ -63,7 +63,7 @@ createIntegrationEventHandler<UserInputReceived, void, never>(
   "DebouncePendingCloudSync",
   ({ trainTripPublisher }) =>
     compose(
-      map(x => x.trainTripId),
+      map((x) => x.trainTripId),
       chain(TE.tryExecuteFW(trainTripPublisher.registerIfPending)),
     ),
 )
@@ -91,7 +91,7 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
   "RefreshTripInfo",
   ({ _, getTripFromTrainTrip, trainTrips }) =>
     compose(
-      map(x => x.trainTripId),
+      map((x) => x.trainTripId),
       chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
       chainTup(pipe(getTripFromTrainTrip, _.RTE.liftErr)),
       // ALT1
@@ -113,7 +113,7 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
 )
 
 const getTripFromTrainTrip = configure(
-  function({ getTrip }) {
+  function ({ getTrip }) {
     return (trainTrip: TrainTrip) =>
       getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId)
   },
