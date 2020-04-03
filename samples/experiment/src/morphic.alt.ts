@@ -1,7 +1,7 @@
-import { summon, AsOpaque } from "@morphic-ts/batteries/lib/summoner"
+import { summon, AsOpaque } from "@morphic-ts/batteries/lib/summoner-BASTJ"
 import { AType, EType } from "@morphic-ts/batteries/lib/usage/utils"
 
-const Car_ = summon(F =>
+const Car_ = summon((F) =>
   F.interface(
     {
       type: F.stringLiteral("Car"),

@@ -6,12 +6,12 @@
     "license": "MIT",
     "dependencies": {
         "@hapi/joi": "^17.1.1",
+        "@yeongjet/joi-to-json-schema": "^1.0.2",
         "chalk": "^3.0.0",
         "cls-hooked": "^4.2.2",
         "flatted": "^2.0.2",
         "fp-ts": "2.5.3",
         "invariant": "^2.2.4",
-        "@yeongjet/joi-to-json-schema": "^1.0.2",
         "koa": "^2.11.0",
         "koa-basic-auth": "^4.0.0",
         "koa-bodyparser": "^4.3.0",
