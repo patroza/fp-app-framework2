@@ -3,18 +3,18 @@ import { iotsConfig } from "@morphic-ts/io-ts-interpreters/lib"
 
 import { typedKeysOf, ValidationError } from "@fp-app/framework"
 import { t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
-import { PositiveInt, merge } from "@fp-app/fp-ts-extensions/src/Io"
+import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 import { flow } from "fp-ts/lib/function"
 import { map, mapLeft, either } from "@fp-app/fp-ts-extensions/src/Either"
 
 /* Pax: No domain validation, just primitives. **/
 const Pax = t.type(
   {
-    adults: t.Int,
-    babies: t.Int,
-    children: t.Int,
-    infants: t.Int,
-    teenagers: t.Int,
+    adults: t.number,
+    babies: t.number,
+    children: t.number,
+    infants: t.number,
+    teenagers: t.number,
   },
   "Pax",
 )
@@ -31,7 +31,7 @@ export interface PaxNumberBrand {
 const PaxNumber = summon((F) =>
   F.refined(
     F.number(),
-    (n): n is t.Branded<PositiveInt, PaxNumberBrand> => n >= 0 && n <= 6,
+    (n): n is t.Branded<number, PaxNumberBrand> => n >= 0 && n <= 6,
     "PaxNumber",
     iotsConfig((x) =>
       withBla(x, (value) => {
