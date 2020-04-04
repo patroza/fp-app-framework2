@@ -28,40 +28,23 @@ export interface PaxNumberBrand {
   readonly PaxNumber: unique symbol // use `unique symbol` here to ensure uniqueness across modules / packages
 }
 
-// TODO: I dont want a new type, I just want a refined, with ioTsConfig adjustment :/
 const PaxNumber = summon((F) =>
   F.refined(
     F.number(),
     (n): n is t.Branded<PositiveInt, PaxNumberBrand> => n >= 0 && n <= 6,
     "PaxNumber",
+    iotsConfig((x) =>
+      withBla(x, (value) => {
+        return `requires a number between 0 and max 6, but ${value} was specified.`
+      }),
+    ),
   ),
 )
 
 type PaxNumber = t.TypeOf<typeof PaxNumber.type>
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 
-// Workaround, but only applies to direct use of PaxNumber.type, not when used inside another type.
-const t2 = PaxNumber.type
-PaxNumber.type = withBla(t2, (value) => {
-  return `requires a number between 0 and max 6, but ${value} was specified.`
-})
-
-// const _PaxFields = summon((F) => {
-//   const PaxFields = F.interface(
-//     {
-//       adults: PaxNumber(F),
-//       babies: PaxNumber(F),
-//       children: PaxNumber(F),
-//       infants: PaxNumber(F),
-//       teenagers: PaxNumber(F),
-//     },
-//     "PaxFields",
-//   )
-//   return PaxFields
-// })
-
 const _PaxDefinition = summon((F) => {
-  // We can  get this if we introduce PaxFields again and refine it after?
   type T = {
     adults: PaxNumber
     babies: PaxNumber
@@ -122,12 +105,12 @@ interface PaxDefinition extends PaxDefinitionType {}
 
 export default PaxDefinition
 
-// console.log(_PaxDefinition.type.decode({ adults: 1 }))
+// console.log(PaxDefinition.type.decode({ adults: 1 }))
 
 // console.log(PaxNumber.type.decode(9))
 
 // console.log(
-//   _PaxDefinition.type.decode({
+//   PaxDefinition.type.decode({
 //     adults: 7,
 //     babies: 1,
 //     children: 1,
@@ -137,7 +120,17 @@ export default PaxDefinition
 // )
 
 // console.log(
-//   _PaxDefinition.type.decode({
+//   PaxDefinition.type.decode({
+//     adults: 3,
+//     children: 3,
+//     babies: 0,
+//     teenagers: 0,
+//     infants: 0,
+//   }),
+// )
+
+// console.log(
+//   PaxDefinition.type.decode({
 //     adults: 5,
 //     children: 5,
 //     babies: 0,
@@ -145,22 +138,3 @@ export default PaxDefinition
 //     infants: 0,
 //   }),
 // )
-
-// const PaxNumberTemp = summon((F) =>
-//   F.refined(
-//     F.number(),
-//     (n): n is t.Branded<PositiveInt, PaxNumberBrand> => n >= 0 && n <= 6,
-//     "PaxNumber",
-//     iotsConfig((x) =>
-//       withBla(x, (value) => {
-//         if (!PositiveInt.is(value)) {
-//           return "Invalid input"
-//         }
-//         return `requires between 0 and max 6, but ${value} was specified.`
-//       }),
-//     ),
-//   ),
-// )
-
-// console.log(PaxNumberTemp.type.decode(5))
-// console.log(PaxNumberTemp.type.decode(10))
