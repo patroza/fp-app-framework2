@@ -8,6 +8,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "emitDecoratorMetadata": true,
+    "preserveSymlinks": true,
+    "skipLibCheck": true,
     "lib": [
       "es2020"
     ],
