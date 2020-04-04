@@ -33,9 +33,9 @@ type PaxNumberISO = Newtype<{ readonly PaxNumber: unique symbol }, number>
 
 const PaxNumberIso = iso<PaxNumberISO>()
 
-const _PaxDefinition = summon((F) => {
-  // TODO: I dont want a new type, I just want a refined, with ioTsConfig adjustment :/
-  const PaxNumber = F.newtype<PaxNumberISO>("PaxNumber")(
+// TODO: I dont want a new type, I just want a refined, with ioTsConfig adjustment :/
+const PaxNumber = summon((F) =>
+  F.newtype<PaxNumberISO>("PaxNumber")(
     F.refined(
       F.number(),
       (n): n is t.Branded<PositiveInt, PaxNumberBrand> => n >= 0 && n <= 6,
@@ -46,28 +46,43 @@ const _PaxDefinition = summon((F) => {
         return `requires a number between 0 and max 6, but ${value} was specified.`
       }),
     ),
+  ),
+)
+
+type PaxNumberType = t.TypeOf<typeof PaxNumber.type>
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface PaxNumber extends PaxNumberType {}
+
+const _PaxDefinition = summon((F) => {
+  const PaxFields = F.interface(
+    {
+      adults: PaxNumber(F),
+      babies: PaxNumber(F),
+      children: PaxNumber(F),
+      infants: PaxNumber(F),
+      teenagers: PaxNumber(F),
+    },
+    "PaxFields",
   )
-
-  // yea.. no..
+  // We can  get this if we introduce PaxFields again and refine it after?
   type T = {
-    adults: PaxNumberISO
-    babies: PaxNumberISO
-    children: PaxNumberISO
-    infants: PaxNumberISO
-    teenagers: PaxNumberISO
+    adults: PaxNumber
+    babies: PaxNumber
+    children: PaxNumber
+    infants: PaxNumber
+    teenagers: PaxNumber
   }
-
   const validatePax = (p: T) =>
     typedKeysOf(p).some((k) => PaxNumberIso.unwrap(p[k]) > 0) &&
     typedKeysOf(p).reduce((prev, cur) => (prev += PaxNumberIso.unwrap(p[cur])), 0) <= 6
 
   return F.interface(
     {
-      adults: PaxNumber,
-      babies: PaxNumber,
-      children: PaxNumber,
-      infants: PaxNumber,
-      teenagers: PaxNumber,
+      adults: PaxNumber(F),
+      babies: PaxNumber(F),
+      children: PaxNumber(F),
+      infants: PaxNumber(F),
+      teenagers: PaxNumber(F),
     },
     "Pax",
     iotsConfig((x) =>
