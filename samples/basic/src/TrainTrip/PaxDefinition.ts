@@ -1,6 +1,5 @@
 import { summon } from "@morphic-ts/batteries/lib/summoner-ESBASTJ"
 import { iotsConfig } from "@morphic-ts/io-ts-interpreters/lib"
-import { Newtype, iso } from "newtype-ts"
 
 import { typedKeysOf, ValidationError } from "@fp-app/framework"
 import { t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
@@ -29,41 +28,39 @@ export interface PaxNumberBrand {
   readonly PaxNumber: unique symbol // use `unique symbol` here to ensure uniqueness across modules / packages
 }
 
-type PaxNumberISO = Newtype<{ readonly PaxNumber: unique symbol }, number>
-
-const PaxNumberIso = iso<PaxNumberISO>()
-
 // TODO: I dont want a new type, I just want a refined, with ioTsConfig adjustment :/
 const PaxNumber = summon((F) =>
-  F.newtype<PaxNumberISO>("PaxNumber")(
-    F.refined(
-      F.number(),
-      (n): n is t.Branded<PositiveInt, PaxNumberBrand> => n >= 0 && n <= 6,
-      "PaxNumber",
-    ),
-    iotsConfig((x) =>
-      withBla(x, (value) => {
-        return `requires a number between 0 and max 6, but ${value} was specified.`
-      }),
-    ),
+  F.refined(
+    F.number(),
+    (n): n is t.Branded<PositiveInt, PaxNumberBrand> => n >= 0 && n <= 6,
+    "PaxNumber",
   ),
 )
 
-type PaxNumberType = t.TypeOf<typeof PaxNumber.type>
+type PaxNumber = t.TypeOf<typeof PaxNumber.type>
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface PaxNumber extends PaxNumberType {}
+
+// Workaround, but only applies to direct use of PaxNumber.type, not when used inside another type.
+const t2 = PaxNumber.type
+PaxNumber.type = withBla(t2, (value) => {
+  return `requires a number between 0 and max 6, but ${value} was specified.`
+})
+
+// const _PaxFields = summon((F) => {
+//   const PaxFields = F.interface(
+//     {
+//       adults: PaxNumber(F),
+//       babies: PaxNumber(F),
+//       children: PaxNumber(F),
+//       infants: PaxNumber(F),
+//       teenagers: PaxNumber(F),
+//     },
+//     "PaxFields",
+//   )
+//   return PaxFields
+// })
 
 const _PaxDefinition = summon((F) => {
-  const PaxFields = F.interface(
-    {
-      adults: PaxNumber(F),
-      babies: PaxNumber(F),
-      children: PaxNumber(F),
-      infants: PaxNumber(F),
-      teenagers: PaxNumber(F),
-    },
-    "PaxFields",
-  )
   // We can  get this if we introduce PaxFields again and refine it after?
   type T = {
     adults: PaxNumber
@@ -73,8 +70,8 @@ const _PaxDefinition = summon((F) => {
     teenagers: PaxNumber
   }
   const validatePax = (p: T) =>
-    typedKeysOf(p).some((k) => PaxNumberIso.unwrap(p[k]) > 0) &&
-    typedKeysOf(p).reduce((prev, cur) => (prev += PaxNumberIso.unwrap(p[cur])), 0) <= 6
+    typedKeysOf(p).some((k) => p[k] > 0) &&
+    typedKeysOf(p).reduce((prev, cur) => (prev += p[cur]), 0) <= 6
 
   return F.interface(
     {
@@ -101,7 +98,7 @@ const _PaxDefinition = summon((F) => {
         ),
         (value: T) => {
           return `requires at least 1 and max 6 people, but ${typedKeysOf(value).reduce(
-            (prev, cur) => (prev += PaxNumberIso.unwrap(value[cur])),
+            (prev, cur) => (prev += value[cur]),
             0,
           )} were specified`
         },
@@ -126,6 +123,8 @@ interface PaxDefinition extends PaxDefinitionType {}
 export default PaxDefinition
 
 // console.log(_PaxDefinition.type.decode({ adults: 1 }))
+
+// console.log(PaxNumber.type.decode(9))
 
 // console.log(
 //   _PaxDefinition.type.decode({
