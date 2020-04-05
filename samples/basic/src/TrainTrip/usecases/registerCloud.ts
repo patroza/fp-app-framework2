@@ -1,8 +1,7 @@
 import { createCommandWithDeps, DbError } from "@fp-app/framework"
-import { pipe } from "@fp-app/fp-ts-extensions"
+import { pipe, Do, TE } from "@fp-app/fp-ts-extensions"
 import { defaultDependencies, sendCloudSyncKey } from "./types"
 import { wrap } from "../infrastructure/utils"
-import { compose, map, chain, chainTup } from "@fp-app/fp-ts-extensions/src/TaskEither"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 
 const createCommand = createCommandWithDeps(() => ({
@@ -13,13 +12,16 @@ const createCommand = createCommandWithDeps(() => ({
 
 const registerCloud = createCommand<Input, void, DbError>(
   "registerCloud",
-  ({ _, sendCloudSync, trainTrips }) =>
-    compose(
-      map(({ trainTripId }) => trainTripId),
-      chain(wrap(trainTrips.load)),
-      chainTup(pipe(sendCloudSync, _.RTE.liftErr)),
-      map(([opportunityId, trainTrip]) => trainTrip.assignOpportunity(opportunityId)),
-    ),
+  ({ _, sendCloudSync, trainTrips }) => (input) =>
+    Do(TE.taskEither)
+      .bind("trainTrip", pipe(input.trainTripId, wrap(trainTrips.load)))
+      .bindL("opportunityId", ({ trainTrip }) =>
+        pipe(trainTrip, pipe(sendCloudSync, _.RTE.liftErr)),
+      )
+      .letL("", ({ opportunityId, trainTrip }) =>
+        trainTrip.assignOpportunity(opportunityId),
+      )
+      .return(() => void 0 as void),
 )
 
 export default registerCloud
