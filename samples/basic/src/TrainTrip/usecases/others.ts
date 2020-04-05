@@ -7,18 +7,11 @@ import {
   ValidationError,
   DbError,
 } from "@fp-app/framework"
-import { pipe, E } from "@fp-app/fp-ts-extensions"
+import { pipe, E, Do, TE } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { defaultDependencies } from "./types"
 import { wrap } from "../infrastructure/utils"
-import {
-  compose,
-  chainTup,
-  map,
-  chain,
-  chainFlatTup,
-} from "@fp-app/fp-ts-extensions/src/TaskEither"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 
 const createCommand = createCommandWithDeps(() => ({
@@ -30,40 +23,17 @@ export const changeStartDate = createCommand<
   ChangeStartDateInput,
   void,
   ChangeStartDateError
->("changeStartDate", ({ _, trainTrips }) =>
-  compose(
-    chainTup(
-      compose(
-        map((i) => i.startDate),
-        chain(pipe(FutureDate.create, _.RE.liftErr, E.toTaskEither)),
-      ),
-      // ALT
-      // pipe(
-      //   FutureDate.create,
-      //   _.E.liftErr,
-      //   toTE,
-      //   mapper(i => i.startDate),
-      // ),
-    ),
-    chainFlatTup(
-      compose(
-        map(([, i]) => i.trainTripId),
-        chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
-      ),
-      // ALT
-      // pipe(
-      //   trainTrips.load,
-      //   _.RTE.liftErr,
-      //   mapper(([, i]) => i.trainTripId),
-      // ),
-    ),
-    chain(
-      ([trainTrip, startDate]) =>
-        pipe(startDate, pipe(trainTrip.changeStartDate, _.RE.liftErr, E.toTaskEither)),
-      // ALT
-      // pipe(trainTrip.changeStartDate, _.RE.liftErr, toTE)(startDate),
-    ),
-  ),
+>("changeStartDate", ({ _, trainTrips }) => (input) =>
+  Do(TE.taskEither)
+    .bind(
+      "startDate",
+      pipe(input.startDate, pipe(FutureDate.create, _.RE.liftErr, E.toTaskEither)),
+    )
+    .bind("trainTrip", pipe(input.trainTripId, pipe(wrap(trainTrips.load))))
+    .doL(({ startDate, trainTrip }) =>
+      pipe(startDate, pipe(trainTrip.changeStartDate, E.toTaskEither)),
+    )
+    .return(() => void 0 as void),
 )
 
 export interface ChangeStartDateInput {
@@ -76,49 +46,20 @@ export const changeTravelClass = createCommand<
   ChangeTravelClassInput,
   void,
   ChangeTravelClassError
->("changeTravelClass", ({ _, trainTrips }) =>
-  compose(
-    chainTup(
-      compose(
-        map(({ travelClass }) => travelClass),
-        chain(pipe(TravelClassDefinition.create, _.RE.liftErr, E.toTaskEither)),
+>("changeTravelClass", ({ _, trainTrips }) => (input) =>
+  Do(TE.taskEither)
+    .bind(
+      "travelClass",
+      pipe(
+        input.travelClass,
+        pipe(TravelClassDefinition.create, _.RE.liftErr, E.toTaskEither),
       ),
-    ),
-    // alt:
-    // chainTup(({ travelClass }) =>
-    //   pipe(TravelClassDefinition.create, _.RE.liftErr, E.toTaskEither)(travelClass),
-    // ),
-    // alt2:
-    // chainTup(({ travelClass }) => {
-    //   const createTravelClassDefinition = pipe(TravelClassDefinition.create, _.RE.liftErr, E.toTaskEither)
-    //   return createTravelClassDefinition(travelClass),
-    // }),
-    chainFlatTup(
-      compose(
-        map(([, i]) => i.trainTripId),
-        chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
-      ),
-    ),
-    // I want to write this as: map([, i] => i.trainTripid), chain(trainTrips.load§)
-    // chainFlatTup(_.RTE.liftErr(([, i]) => trainTrips.load(i.trainTripId))),
-    // This means:
-    // chain(input => {
-    //   const load = _.RTE.liftErr(trainTrips.load)
-    //   const f = ([, i]: typeof input) => load(i.trainTripId)
-    //   return pipe(
-    //     f(input),
-    //     map(x => tuple(x, input[0], input[1])),
-    //   )
-    // }),
-    chain(([trainTrip, sl]) => {
-      const changeTravelClass = pipe(
-        trainTrip.changeTravelClass,
-        _.RE.liftErr,
-        E.toTaskEither,
-      )
-      return changeTravelClass(sl)
-    }),
-  ),
+    )
+    .bind("trainTrip", pipe(input.trainTripId, wrap(trainTrips.load)))
+    .doL(({ trainTrip, travelClass }) =>
+      pipe(travelClass, pipe(trainTrip.changeTravelClass, E.toTaskEither)),
+    )
+    .return(() => void 0 as void),
 )
 
 export interface ChangeTravelClassInput {
