@@ -14,8 +14,8 @@ import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
 import { getTrip } from "@/TrainTrip/infrastructure/api"
 import { defaultDependencies } from "./types"
-import { sequenceT } from "fp-ts/lib/Apply"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
+import { getMonoid } from "fp-ts/lib/Array"
 
 const createCommand = createCommandWithDeps(() => ({
   getTrip,
@@ -48,26 +48,26 @@ export interface Input {
 
 const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
   pipe(
-    sequenceT(E.getValidation(NA.getSemigroup<FieldValidationError>()))(
-      pipe(PaxDefinition.create(pax), E.mapLeft(toFieldError("pax")), E.mapLeft(NA.of)),
-      pipe(
-        FutureDate.create(startDate),
-        E.mapLeft(toFieldError("startDate")),
-        E.mapLeft(NA.of),
-      ),
-      pipe(
-        validateString(templateId),
-        E.mapLeft(toFieldError("templateId")),
-        E.mapLeft(NA.of),
-      ),
-    ),
+    Do(E.getValidation(getMonoid<FieldValidationError>()))
+      .sequenceS({
+        pax: pipe(
+          PaxDefinition.create(pax),
+          E.mapLeft(toFieldError("pax")),
+          E.mapLeft(NA.of),
+        ),
+        startDate: pipe(
+          FutureDate.create(startDate),
+          E.mapLeft(toFieldError("startDate")),
+          E.mapLeft(NA.of),
+        ),
+        templateId: pipe(
+          validateString(templateId),
+          E.mapLeft(toFieldError("templateId")),
+          E.mapLeft(NA.of),
+        ),
+      })
+      .done(),
     E.mapLeft(combineValidationErrors),
-
-    E.map(([pax, startDate, templateId]) => ({
-      pax,
-      startDate,
-      templateId,
-    })),
   )
 
 // TODO
