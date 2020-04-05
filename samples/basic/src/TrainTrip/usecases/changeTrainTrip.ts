@@ -41,19 +41,6 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
       .return(() => void 0 as void),
 )
 
-// ALT1
-// compose(
-//   map(
-//     ([trainTrip, proposal]) =>
-//       tuple(pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither), proposal),
-//   ),
-//   chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
-// ),
-// ALT2
-//{
-//  const proposeChanges = pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither)
-//  return proposeChanges(proposal)
-//}
 export default changeTrainTrip
 
 export interface Input extends StateProposition {
