@@ -59,9 +59,7 @@ export const changeStartDate = createCommand<
     ),
     chain(
       ([trainTrip, startDate]) =>
-        pipe(trainTrip.changeStartDate, _.RE.liftErr, E.toTaskEither, (f) =>
-          f(startDate),
-        ),
+        pipe(startDate, pipe(trainTrip.changeStartDate, _.RE.liftErr, E.toTaskEither)),
       // ALT
       // pipe(trainTrip.changeStartDate, _.RE.liftErr, toTE)(startDate),
     ),
