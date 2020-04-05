@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { flow, flip, tupled } from "fp-ts/lib/function"
 import { Lens } from "monocle-ts"
+import { Do } from "fp-ts-contrib/lib/Do"
 
 export type ThenArg<T> = T extends Promise<infer U>
   ? U
@@ -62,3 +63,5 @@ interface CoolLens<TRequired, TValue> extends Lens<TRequired, TValue> {
 
 export const convertCoolLens = <TRequired, TValue>(l: Lens<TRequired, TValue>) =>
   l as CoolLens<TRequired, TValue>
+
+export { Do }
