@@ -1,6 +1,7 @@
 import { summon } from "@morphic-ts/batteries/lib/summoner-ESBASTJ"
+import { AType } from "@morphic-ts/batteries/lib/usage/utils"
 import { ValidationError } from "@fp-app/framework"
-import { t, pipe } from "@fp-app/fp-ts-extensions"
+import { pipe } from "@fp-app/fp-ts-extensions"
 import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 import { mapLeft } from "@fp-app/fp-ts-extensions/src/Either"
 
@@ -18,6 +19,6 @@ const TravelClassDefinition = merge(_TravelClassDefinition, {
   create: createTravelClassDefinition,
 })
 
-type TravelClassDefinition = t.TypeOf<typeof TravelClassDefinition.type>
+type TravelClassDefinition = AType<typeof TravelClassDefinition>
 
 export default TravelClassDefinition

@@ -1,4 +1,5 @@
 import { summon } from "@morphic-ts/batteries/lib/summoner-ESBASTJ"
+import { AType } from "@morphic-ts/batteries/lib/usage/utils"
 import { iotsConfig } from "@morphic-ts/io-ts-interpreters/lib"
 
 import { typedKeysOf, ValidationError } from "@fp-app/framework"
@@ -41,7 +42,8 @@ const PaxNumber = summon((F) =>
   ),
 )
 
-type PaxNumber = t.TypeOf<typeof PaxNumber.type>
+type PaxNumber = AType<typeof PaxNumber>
+//type PaxNumberE = EType<typeof PaxNumber>
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 
 const _PaxDefinition = summon((F) => {
@@ -99,7 +101,7 @@ const PaxDefinition = merge(_PaxDefinition, {
   ),
 })
 
-type PaxDefinitionType = t.TypeOf<typeof _PaxDefinition.type>
+type PaxDefinitionType = AType<typeof _PaxDefinition>
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface PaxDefinition extends PaxDefinitionType {}
 
