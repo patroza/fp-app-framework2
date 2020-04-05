@@ -36,10 +36,9 @@ const TravelClass = merge(_TravelClass, {
   ),
   fromWire,
 })
-type TravelClassType = t.TypeOf<typeof TravelClass>
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface TravelClass extends TravelClassType {}
+interface TravelClass extends t.TypeOf<typeof TravelClass> {}
 
 export { TravelClass }
 
@@ -57,10 +56,9 @@ const Trip = merge(_Trip, {
     mapLeft((x) => new ValidationError(decodeErrors(x))),
   ),
 })
-type TripType = t.TypeOf<typeof Trip>
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface Trip extends TripType {}
+interface Trip extends t.TypeOf<typeof Trip> {}
 
 export default Trip
 
@@ -121,8 +119,8 @@ const TripWithSelectedTravelClass = merge(_TripWithSelectedTravelClass, {
   ),
 })
 
-type TripWithSelectedTravelClassType = t.TypeOf<typeof TripWithSelectedTravelClass>
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface TripWithSelectedTravelClass extends TripWithSelectedTravelClassType {}
+interface TripWithSelectedTravelClass
+  extends t.TypeOf<typeof TripWithSelectedTravelClass> {}
 
 export { TripWithSelectedTravelClass }

@@ -34,8 +34,7 @@ const FutureDate = merge(_FutureDate, {
   ),
 })
 
-type FutureDateType = t.TypeOf<typeof _FutureDate>
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface FutureDate extends FutureDateType {}
+interface FutureDate extends t.TypeOf<typeof _FutureDate> {}
 
 export default FutureDate

@@ -41,11 +41,10 @@ const CustomerRequestedChangesDTO = t.type({
   type: t.keyof({ CustomerRequestedChanges: null }),
   payload: t.type({ trainTripId: t.string, itineraryId: t.string }),
 })
-type CustomerRequestedChangesDTOType = t.TypeOf<typeof CustomerRequestedChangesDTO>
 const SupportedIntegrationEvents = t.union([
   CustomerRequestedChangesDTO,
   SomeOtherEventDTO,
 ])
-export type CustomerRequestedChangesDTO = CustomerRequestedChangesDTOType
+export type CustomerRequestedChangesDTO = t.TypeOf<typeof CustomerRequestedChangesDTO>
 
 export default resolveEvent
