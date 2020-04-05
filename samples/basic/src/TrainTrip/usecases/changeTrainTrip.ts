@@ -18,7 +18,6 @@ import { Do } from "fp-ts-contrib/lib/Do"
 import { getMonoid } from "fp-ts/lib/Array"
 import { wrap } from "../infrastructure/utils"
 import { flow } from "fp-ts/lib/function"
-import TrainTrip from "../TrainTrip"
 
 const createCommand = createCommandWithDeps(() => ({
   trainTrips,
@@ -27,18 +26,19 @@ const createCommand = createCommandWithDeps(() => ({
 
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
-  ({ _, trainTrips }) => (input) => {
-    const validate = pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)
-    const getTrainTrip = pipe(wrap(trainTrips.load), _.RTE.liftErr)
-    const proposeChanges = (trainTrip: TrainTrip) =>
-      pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither)
-
-    return Do(TE.taskEither)
-      .bind("proposal", validate(input))
-      .bindL("trainTrip", ({ proposal }) => getTrainTrip(proposal.trainTripId))
-      .doL(({ proposal, trainTrip }) => proposeChanges(trainTrip)(proposal))
-      .return(() => void 0 as void)
-  },
+  ({ _, trainTrips }) => (input) =>
+    Do(TE.taskEither)
+      .bind(
+        "proposal",
+        pipe(input, pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)),
+      )
+      .bindL("trainTrip", ({ proposal }) =>
+        pipe(proposal.trainTripId, wrap(trainTrips.load)),
+      )
+      .doL(({ proposal, trainTrip }) =>
+        pipe(proposal, pipe(trainTrip.proposeChanges, E.toTaskEither)),
+      )
+      .return(() => void 0 as void),
 )
 
 // ALT1
