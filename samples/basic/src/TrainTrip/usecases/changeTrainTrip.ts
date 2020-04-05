@@ -18,6 +18,7 @@ import { Do } from "fp-ts-contrib/lib/Do"
 import { getMonoid } from "fp-ts/lib/Array"
 import { wrap } from "../infrastructure/utils"
 import { flow } from "fp-ts/lib/function"
+import TrainTrip from "../TrainTrip"
 
 const createCommand = createCommandWithDeps(() => ({
   trainTrips,
@@ -26,34 +27,33 @@ const createCommand = createCommandWithDeps(() => ({
 
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
-  ({ _, trainTrips }) => (input) =>
-    Do(TE.taskEither)
-      .bind(
-        "proposal",
-        pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)(input),
-      )
-      .bindL("trainTrip", ({ proposal }) =>
-        pipe(wrap(trainTrips.load), _.RTE.liftErr)(proposal.trainTripId),
-      )
-      .doL(({ proposal, trainTrip }) =>
-        pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither)(proposal),
-      )
-      .return(() => void 0 as void),
+  ({ _, trainTrips }) => (input) => {
+    const validate = pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)
+    const getTrainTrip = pipe(wrap(trainTrips.load), _.RTE.liftErr)
+    const proposeChanges = (trainTrip: TrainTrip) =>
+      pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither)
 
-  // ALT1
-  // compose(
-  //   map(
-  //     ([trainTrip, proposal]) =>
-  //       tuple(pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither), proposal),
-  //   ),
-  //   chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
-  // ),
-  // ALT2
-  //{
-  //  const proposeChanges = pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither)
-  //  return proposeChanges(proposal)
-  //}
+    return Do(TE.taskEither)
+      .bind("proposal", validate(input))
+      .bindL("trainTrip", ({ proposal }) => getTrainTrip(proposal.trainTripId))
+      .doL(({ proposal, trainTrip }) => proposeChanges(trainTrip)(proposal))
+      .return(() => void 0 as void)
+  },
 )
+
+// ALT1
+// compose(
+//   map(
+//     ([trainTrip, proposal]) =>
+//       tuple(pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither), proposal),
+//   ),
+//   chain(([proposeChanges, trainTripId]) => proposeChanges(trainTripId)),
+// ),
+// ALT2
+//{
+//  const proposeChanges = pipe(trainTrip.proposeChanges, _.RE.liftErr, E.toTaskEither)
+//  return proposeChanges(proposal)
+//}
 export default changeTrainTrip
 
 export interface Input extends StateProposition {
