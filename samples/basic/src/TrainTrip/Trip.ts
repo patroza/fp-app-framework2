@@ -10,7 +10,7 @@ const _TravelClass = t.readonly(
   t.type({
     createdAt: t.date,
     templateId: t.NonEmptyString,
-    name: TravelClassDefinition,
+    name: TravelClassDefinition.type,
   }),
 )
 
