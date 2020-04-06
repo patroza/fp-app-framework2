@@ -1,4 +1,4 @@
-import TrainTrip, {
+import {
   TrainTripCreated,
   TrainTripId,
   TrainTripStateChanged,
@@ -15,13 +15,12 @@ import {
   requestKey,
   ApiError,
   InvalidStateError,
-  configure,
 } from "@fp-app/framework"
-import { pipe, TE } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, Do, toVoid } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"
 import { wrap } from "../infrastructure/utils"
-import { compose, map, chain, chainTup } from "@fp-app/fp-ts-extensions/src/TaskEither"
+import { compose, map, chain } from "@fp-app/fp-ts-extensions/src/TaskEither"
 
 // Domain Events should primarily be used to be turned into Integration Event (Post-Commit, call other service)
 // There may be other small reasons to use it, like to talk to an external system Pre-Commit.
@@ -83,41 +82,26 @@ createIntegrationCommandEventHandler<CustomerRequestedChanges, void, DbError>(
 
 const createDomainEventHandler = createDomainEventHandlerWithDeps(() => ({
   trainTrips,
-  getTripFromTrainTrip,
+  getTrip,
 }))
 
 createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
   /* on */ TrainTripStateChanged,
   "RefreshTripInfo",
-  ({ _, getTripFromTrainTrip, trainTrips }) =>
-    compose(
-      map((x) => x.trainTripId),
-      chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
-      chainTup(pipe(getTripFromTrainTrip, _.RTE.liftErr)),
-      // ALT1
-      // pipe(
-      //   (trainTrip: TrainTrip) =>
-      //     getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId),
-      //   _.RTE.liftErr,
-      // ),
-      // ALT2
-      // compose(
-      //   map(
-      //     trainTrip =>
-      //       trainTrip.currentTravelClassConfiguration.travelClass.templateId,
-      //   ),
-      //   chain(pipe(getTrip, _.RTE.liftErr)),
-      // ),
-      map(([trip, trainTrip]) => trainTrip.updateTrip(trip)),
-    ),
-)
-
-const getTripFromTrainTrip = configure(
-  function ({ getTrip }) {
-    return (trainTrip: TrainTrip) =>
-      getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId)
-  },
-  () => ({ getTrip }),
+  ({ _, getTrip, trainTrips }) => (event) =>
+    Do(TE.taskEither)
+      .bind(
+        "trainTrip",
+        pipe(event.trainTripId, pipe(wrap(trainTrips.load), _.RTE.liftErr)),
+      )
+      .bindL("trip", ({ trainTrip }) =>
+        pipe(
+          trainTrip.currentTravelClassConfiguration.travelClass.templateId,
+          pipe(getTrip, _.RTE.liftErr),
+        ),
+      )
+      .doL(({ trainTrip, trip }) => pipe(trainTrip.updateTrip(trip), TE.right))
+      .return(toVoid),
 )
 
 export interface TrainTripPublisher {

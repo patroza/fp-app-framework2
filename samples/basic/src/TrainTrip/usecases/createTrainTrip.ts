@@ -7,61 +7,36 @@ import {
   toFieldError,
   ValidationError,
   FieldValidationError,
-  configure,
 } from "@fp-app/framework"
-import { Result, pipe, E, NA } from "@fp-app/fp-ts-extensions"
+import { Do, Result, pipe, E, NA, TE } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
 import { getTrip } from "@/TrainTrip/infrastructure/api"
 import { defaultDependencies } from "./types"
-import { sequenceT } from "fp-ts/lib/Apply"
-import {
-  compose,
-  chainEitherK,
-  chainTup,
-  exec,
-  map,
-} from "@fp-app/fp-ts-extensions/src/TaskEither"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
+import { getMonoid } from "fp-ts/lib/Array"
 
 const createCommand = createCommandWithDeps(() => ({
-  getTripFromTrainTripInfo,
+  getTrip,
   trainTrips,
   ...defaultDependencies,
 }))
 
 const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
-  ({ _, getTripFromTrainTripInfo, trainTrips }) =>
-    compose(
-      chainEitherK(pipe(validateCreateTrainTripInfo, _.RE.liftErr)),
-      chainTup(pipe(getTripFromTrainTripInfo, _.RTE.liftErr)),
-      // pipe(
-      //   getTrip,
-      //   mapper((i: { templateId: string }) => i.templateId),
-      //   _.TE.liftErr,
-      // ),
-      // ALT
-      //i => pipe(getTrip, _.TE.liftErr)(i.templateId),
-      // ALT1
-      //pipe(mapper((i: { templateId: string }) => i.templateId)(getTrip), _.TE.liftErr),
-      // ALT3
-      // compose(
-      //   map(i => i.templateId),
-      //   chain(pipe(getTrip, _.TE.liftErr)),
-      // ),
-      map(([trip, preferences]) => TrainTrip.create(trip, preferences, new Date())),
-      exec(trainTrips.add),
-      map((trainTrip) => trainTrip.id),
-    ),
-)
-
-const getTripFromTrainTripInfo = configure(
-  function ({ getTrip }) {
-    return (i: ValidatedInput) => getTrip(i.templateId)
-  },
-  () => ({ getTrip }),
+  ({ _, getTrip, trainTrips }) => (input) =>
+    Do(TE.taskEither)
+      .bind(
+        "preferences",
+        pipe(input, pipe(validateCreateTrainTripInfo, _.RE.liftErr, E.toTaskEither)),
+      )
+      .bindL("trip", ({ preferences }) => getTrip(preferences.templateId))
+      .letL("trainTrip", ({ preferences, trip }) =>
+        TrainTrip.create(trip, preferences, new Date()),
+      )
+      .doL(({ trainTrip }) => pipe(trainTrips.add(trainTrip), TE.right))
+      .return(({ trainTrip }) => trainTrip.id),
 )
 
 export default createTrainTrip
@@ -73,29 +48,27 @@ export interface Input {
 
 const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
   pipe(
-    sequenceT(E.getValidation(NA.getSemigroup<FieldValidationError>()))(
-      pipe(PaxDefinition.create(pax), E.mapLeft(toFieldError("pax")), E.mapLeft(NA.of)),
-      pipe(
-        FutureDate.create(startDate),
-        E.mapLeft(toFieldError("startDate")),
-        E.mapLeft(NA.of),
-      ),
-      pipe(
-        validateString(templateId),
-        E.mapLeft(toFieldError("templateId")),
-        E.mapLeft(NA.of),
-      ),
-    ),
+    Do(E.getValidation(getMonoid<FieldValidationError>()))
+      .sequenceS({
+        pax: pipe(
+          PaxDefinition.create(pax),
+          E.mapLeft(toFieldError("pax")),
+          E.mapLeft(NA.of),
+        ),
+        startDate: pipe(
+          FutureDate.create(startDate),
+          E.mapLeft(toFieldError("startDate")),
+          E.mapLeft(NA.of),
+        ),
+        templateId: pipe(
+          validateString(templateId),
+          E.mapLeft(toFieldError("templateId")),
+          E.mapLeft(NA.of),
+        ),
+      })
+      .done(),
     E.mapLeft(combineValidationErrors),
-
-    E.map(([pax, startDate, templateId]) => ({
-      pax,
-      startDate,
-      templateId,
-    })),
   )
-
-type ValidatedInput = E.RightArg<ReturnType<typeof validateCreateTrainTripInfo>>
 
 // TODO
 const validateString = <T extends string>(str: string): Result<T, ValidationError> =>

@@ -314,7 +314,7 @@ export const lock = (_this: TrainTrip) => (currentDate: Date) => {
 }
 
 const startDateL = convertCoolLens(
-  Lens.fromPath<Pick<TrainTrip, "startDate" | "id">>()(["startDate"]),
+  Lens.fromPath<Pick<TrainTrip, "startDate">>()(["startDate"]),
 )
 const intChangeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">>(
   _this: This,

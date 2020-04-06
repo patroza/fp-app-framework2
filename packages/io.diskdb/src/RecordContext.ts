@@ -151,7 +151,8 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
 
 const runSequentially = async <T>(...taskCreators: Array<T.Task<T>>): Promise<T[]> => {
   if (taskCreators.length) {
-    const taskSequence = sequenceT(T.task)(taskCreators[0], ...taskCreators.slice(1))
+    // taskSeq required to run sequentially!!
+    const taskSequence = sequenceT(T.taskSeq)(taskCreators[0], ...taskCreators.slice(1))
     return await taskSequence()
   } else {
     return []

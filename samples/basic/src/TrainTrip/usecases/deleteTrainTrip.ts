@@ -1,8 +1,7 @@
 import { createCommandWithDeps, DbError } from "@fp-app/framework"
-import { pipe } from "@fp-app/fp-ts-extensions"
+import { pipe, Do, TE, toVoid } from "@fp-app/fp-ts-extensions"
 import { defaultDependencies } from "./types"
 import { wrap } from "../infrastructure/utils"
-import { compose, map, chain } from "@fp-app/fp-ts-extensions/src/TaskEither"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 
 const createCommand = createCommandWithDeps(() => ({
@@ -12,16 +11,21 @@ const createCommand = createCommandWithDeps(() => ({
 
 const deleteTrainTrip = createCommand<Input, void, DeleteTrainTripError>(
   "deleteTrainTrip",
-  ({ _, trainTrips }) =>
-    compose(
-      map(({ trainTripId }) => trainTripId),
-      chain(pipe(wrap(trainTrips.load), _.RTE.liftErr)),
-      // TODO: this should normally be on a different object.
-      map((x) => {
-        x.delete()
-        trainTrips.remove(x)
-      }),
-    ),
+  ({ _, trainTrips }) => (input) =>
+    Do(TE.taskEither)
+      .bind(
+        "trainTrip",
+        pipe(input.trainTripId, pipe(wrap(trainTrips.load), _.RTE.liftErr)),
+      )
+      .doL(({ trainTrip }) => pipe(trainTrip.delete(), TE.right))
+      .doL(({ trainTrip }) => pipe(trainTrips.remove(trainTrip), TE.right))
+      // ALT
+      //   .doL(({ trainTrip }) => {
+      //     trainTrip.delete()
+      //     trainTrips.remove(trainTrip)
+      //     return TE.right(0)
+      //   })
+      .return(toVoid),
 )
 
 export default deleteTrainTrip
