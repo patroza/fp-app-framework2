@@ -16,7 +16,7 @@ import {
   ApiError,
   InvalidStateError,
 } from "@fp-app/framework"
-import { pipe, TE, Do } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, Do, toVoid } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"
 import { wrap } from "../infrastructure/utils"
@@ -100,8 +100,8 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
           pipe(getTrip, _.RTE.liftErr),
         ),
       )
-      .letL("", ({ trainTrip, trip }) => trainTrip.updateTrip(trip))
-      .return(() => void 0 as void),
+      .doL(({ trainTrip, trip }) => pipe(trainTrip.updateTrip(trip), TE.right))
+      .return(toVoid),
 )
 
 export interface TrainTripPublisher {

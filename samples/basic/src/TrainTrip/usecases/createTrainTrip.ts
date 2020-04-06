@@ -35,7 +35,7 @@ const createTrainTrip = createCommand<Input, string, CreateError>(
       .letL("trainTrip", ({ preferences, trip }) =>
         TrainTrip.create(trip, preferences, new Date()),
       )
-      .letL("", ({ trainTrip }) => trainTrips.add(trainTrip)) // Alternative is: .doL(({ trainTrip }) => TE.right(trainTrips.add(trainTrip)))
+      .doL(({ trainTrip }) => pipe(trainTrips.add(trainTrip), TE.right))
       .return(({ trainTrip }) => trainTrip.id),
 )
 

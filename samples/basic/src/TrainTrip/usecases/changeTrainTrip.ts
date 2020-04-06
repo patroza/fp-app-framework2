@@ -8,7 +8,7 @@ import {
   ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { pipe, E, NA, t, TE } from "@fp-app/fp-ts-extensions"
+import { pipe, E, NA, t, TE, toVoid } from "@fp-app/fp-ts-extensions"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
@@ -38,7 +38,7 @@ const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
       .doL(({ proposal, trainTrip }) =>
         pipe(proposal, pipe(trainTrip.proposeChanges, E.toTaskEither)),
       )
-      .return(() => void 0 as void),
+      .return(toVoid),
 )
 
 export default changeTrainTrip

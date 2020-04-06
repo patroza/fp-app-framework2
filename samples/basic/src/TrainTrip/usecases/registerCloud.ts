@@ -1,5 +1,5 @@
 import { createCommandWithDeps, DbError } from "@fp-app/framework"
-import { pipe, Do, TE } from "@fp-app/fp-ts-extensions"
+import { pipe, Do, TE, toVoid } from "@fp-app/fp-ts-extensions"
 import { defaultDependencies, sendCloudSyncKey } from "./types"
 import { wrap } from "../infrastructure/utils"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
@@ -18,10 +18,10 @@ const registerCloud = createCommand<Input, void, DbError>(
       .bindL("opportunityId", ({ trainTrip }) =>
         pipe(trainTrip, pipe(sendCloudSync, _.RTE.liftErr)),
       )
-      .letL("", ({ opportunityId, trainTrip }) =>
-        trainTrip.assignOpportunity(opportunityId),
+      .doL(({ opportunityId, trainTrip }) =>
+        pipe(trainTrip.assignOpportunity(opportunityId), TE.right),
       )
-      .return(() => void 0 as void),
+      .return(toVoid),
 )
 
 export default registerCloud

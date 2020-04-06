@@ -7,7 +7,7 @@ import {
   ValidationError,
   DbError,
 } from "@fp-app/framework"
-import { pipe, E, Do, TE } from "@fp-app/fp-ts-extensions"
+import { pipe, E, Do, TE, toVoid } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { defaultDependencies } from "./types"
@@ -33,7 +33,7 @@ export const changeStartDate = createCommand<
     .doL(({ startDate, trainTrip }) =>
       pipe(startDate, pipe(trainTrip.changeStartDate, E.toTaskEither)),
     )
-    .return(() => void 0 as void),
+    .return(toVoid),
 )
 
 export interface ChangeStartDateInput {
@@ -59,7 +59,7 @@ export const changeTravelClass = createCommand<
     .doL(({ trainTrip, travelClass }) =>
       pipe(travelClass, pipe(trainTrip.changeTravelClass, E.toTaskEither)),
     )
-    .return(() => void 0 as void),
+    .return(toVoid),
 )
 
 export interface ChangeTravelClassInput {
