@@ -1,4 +1,4 @@
-import { HALConfig, requestType, RouteBuilder, typedKeysOf } from "@fp-app/framework"
+import { HALConfig, requestType, RouteBuilder, utils } from "@fp-app/framework"
 import Koa from "koa"
 import KoaRouter from "koa-router"
 import generateKoaHandler from "./generateKoaHandler"
@@ -68,7 +68,7 @@ export const generateHalLinks = (
   halConfig: HALConfig,
   data: Record<string, string>,
 ) => {
-  const halLinks = typedKeysOf(halConfig).reduce((prev, cur) => {
+  const halLinks = utils.typedKeysOf(halConfig).reduce((prev, cur) => {
     let href = halConfig[cur]
     if (href.startsWith(".")) {
       href = href.replace(".", ctx.URL.pathname)

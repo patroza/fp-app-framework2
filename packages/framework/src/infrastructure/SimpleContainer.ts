@@ -2,15 +2,15 @@
 // TODO: Get rid of the "keys" as required concept.
 // TODO: There's obviously a lot of possibility to improve the API, and Implementation here ;-)
 import "reflect-metadata"
+import { setFunctionName } from "../utils"
 import {
   Constructor,
   Disposable,
-  setFunctionName,
   ConstructorFunction,
   Constructable,
   AnyConstructable,
-} from "../utils"
-import assert from "../utils/assert"
+} from "../types"
+import { assert } from "../utils"
 import { isClass } from "typechecker/edition-node-12"
 import { DependencyDefinitions, Dependencies } from "./configure"
 

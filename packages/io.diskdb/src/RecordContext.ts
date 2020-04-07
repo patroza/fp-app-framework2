@@ -1,24 +1,17 @@
-import {
-  ConnectionException,
-  Event,
-  OptimisticLockException,
-  RecordContext,
-  isTruthyFilter,
-  CouldNotAquireDbLockException,
-} from "@fp-app/framework"
+import * as FW from "@fp-app/framework"
 import { pipe, O, RT, T, TO } from "@fp-app/fp-ts-extensions"
-import { lock } from "proper-lockfile"
+import PLF from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
-import { assertIsNotUndefined } from "@fp-app/framework"
 import { flow } from "fp-ts/lib/function"
 import { sequenceT } from "fp-ts/lib/Apply"
 
 // tslint:disable-next-line:max-classes-per-file
-export default class DiskRecordContext<T extends DBRecord> implements RecordContext<T> {
+export default class DiskRecordContext<T extends DBRecord>
+  implements FW.RecordContext<T> {
   private cache = new Map<string, CachedRecord<T>>()
   private removals: T[] = []
 
-  private events: Event[] = []
+  private events: FW.Event[] = []
 
   constructor(
     private readonly type: string,
@@ -31,9 +24,9 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
   }
 
   // Test with immutable approach.
-  readonly processEvents = (record: T, events: Event[]) => {
+  readonly processEvents = (record: T, events: FW.Event[]) => {
     const original = this.cache.get(record.id)
-    assertIsNotUndefined(original)
+    FW.assertIsNotUndefined(original)
     // Using Object.assign would mean that the object doesn't obey the immutability laws strictly.
     //Object.assign(original.data, record)
     // This however makes the cache kind of useless; the same entity could exist between multiple load calls etc
@@ -88,7 +81,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
             () => this.deleteRecord(e),
             forEachDelete && (() => forEachDelete(e)),
             () => Promise.resolve(this.cache.delete(e.id)),
-          ].filter(isTruthyFilter),
+          ].filter(FW.utils.isTruthyFilter),
         )
         .flat(),
     )
@@ -102,14 +95,14 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
           [
             () => this.saveRecord(data),
             forEachSave && (() => forEachSave(data)),
-          ].filter(isTruthyFilter),
+          ].filter(FW.utils.isTruthyFilter),
         )
         .flat(),
     )
 
   private readonly saveRecord = async (record: T) => {
     const cachedRecord = this.cache.get(record.id)
-    assertIsNotUndefined(cachedRecord, { cachedRecord })
+    FW.assertIsNotUndefined(cachedRecord, { cachedRecord })
     if (!cachedRecord.version) {
       return await this.actualSave(record, cachedRecord.version)
     }
@@ -122,7 +115,7 @@ export default class DiskRecordContext<T extends DBRecord> implements RecordCont
         TO.map((s) => JSON.parse(s) as SerializedDBRecord),
         TO.do(({ version }) => {
           if (version !== cachedRecord.version) {
-            throw new OptimisticLockException(this.type, record.id)
+            throw new FW.OptimisticLockException(this.type, record.id)
           }
         }),
         TO.fold(
@@ -167,7 +160,7 @@ const tRunSequentially = flow(runSequentially, terminate)
 
 interface DBRecord {
   id: string
-  intGetAndClearEvents: () => Event[]
+  intGetAndClearEvents: () => FW.Event[]
 }
 interface SerializedDBRecord {
   version: number
@@ -180,14 +173,14 @@ interface CachedRecord<T> {
 
 const lockRecordOnDisk = async <T>(type: string, id: string, cb: T.Task<T>) => {
   try {
-    const release = await lock(getFilename(type, id))
+    const release = await PLF.lock(getFilename(type, id))
     try {
       return await cb()
     } finally {
       await release()
     }
   } catch (err) {
-    throw new CouldNotAquireDbLockException(type, id, err as Error)
+    throw new FW.CouldNotAquireDbLockException(type, id, err as Error)
   }
 }
 
@@ -199,7 +192,7 @@ const tryReadFromDb = (type: string, id: string): TO.TaskOption<string> => async
     }
     return O.some(await readFile(filePath, { encoding: "utf-8" }))
   } catch (err) {
-    throw new ConnectionException(err)
+    throw new FW.ConnectionException(err)
   }
 }
 

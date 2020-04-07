@@ -1,4 +1,4 @@
-import { logger, setLogger } from "@fp-app/framework"
+import * as FW from "@fp-app/framework"
 import {
   handleAuthenticationFailedMiddleware,
   logRequestTime,
@@ -24,7 +24,7 @@ const startServer = async () => {
 
   const rootRouter = createRootRouter(request)
 
-  setLogger({
+  FW.utils.setLogger({
     addToLoggingContext,
     // tslint:disable-next-line:no-console
     debug: bindLogger(console.debug),
@@ -45,7 +45,7 @@ const startServer = async () => {
     .use(rootRouter.allowedMethods())
     .use(rootRouter.routes())
 
-  return app.listen(PORT, () => logger.log("server listening on 3535"))
+  return app.listen(PORT, () => FW.utils.logger.log("server listening on 3535"))
 }
 
-startServer().catch(logger.error)
+startServer().catch(FW.utils.logger.error)

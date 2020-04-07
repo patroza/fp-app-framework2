@@ -1,15 +1,15 @@
-import { logger, resolveEventType } from "@fp-app/framework"
+import * as FW from "@fp-app/framework"
 import { CustomerRequestedChanges } from "./TrainTrip/eventhandlers/integration.events"
 import { O, t, E, pipe } from "@fp-app/fp-ts-extensions"
 
 const resolveEvent = (): resolveEventType => (unknownEvent) => {
-  logger.log("Received integration event", unknownEvent)
+  FW.utils.logger.log("Received integration event", unknownEvent)
   const parsedEvent = SupportedIntegrationEvents.decode(unknownEvent)
   return pipe(
     parsedEvent,
     E.fold(
       () => {
-        logger.warn(
+        FW.utils.logger.warn(
           "Received event, but have no handler, or invalid payload: ",
           parsedEvent,
         )

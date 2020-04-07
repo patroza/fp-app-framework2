@@ -11,12 +11,12 @@ import {
   FieldValidationError,
   ForbiddenError,
   InvalidStateError,
-  logger,
   NamedHandlerWithDependencies,
   OptimisticLockException,
   RecordNotFound,
   requestType,
   ValidationError,
+  utils,
 } from "@fp-app/framework"
 import { Result, pipe, TE, E, trampoline, ToolDeps } from "@fp-app/fp-ts-extensions"
 
@@ -70,7 +70,7 @@ export default function generateKoaHandler<
       const task = generateTask(ctx)
       await task()
     } catch (err) {
-      logger.error(err)
+      utils.logger.error(err)
 
       if (err instanceof OptimisticLockException) {
         ctx.status = 409

@@ -1,5 +1,5 @@
 import { A } from "ts-toolbelt"
-import { Constructor } from "../utils"
+import { Constructor } from "../types"
 import { injectSymbol, Key } from "./SimpleContainer"
 
 /**

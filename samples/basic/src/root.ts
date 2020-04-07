@@ -1,11 +1,4 @@
-import {
-  createDependencyNamespace,
-  Key,
-  logger,
-  resolveEventKey,
-  UOWKey,
-  AnyConstructable,
-} from "@fp-app/framework"
+import * as FW from "@fp-app/framework"
 import * as diskdb from "@fp-app/io.diskdb"
 import chalk from "chalk"
 import resolveEvent from "./resolveIntegrationEvent"
@@ -37,18 +30,18 @@ const createRoot = () => {
 
     request,
     setupRequestContext,
-  } = createDependencyNamespace(namespace, RequestContextKey)
+  } = FW.createDependencyNamespace(namespace, RequestContextKey)
 
   container.registerScopedF(
-    trainTrips as Key<ReturnType<typeof trainTrips>>,
+    trainTrips as FW.Key<ReturnType<typeof trainTrips>>,
     trainTrips,
   )
   container.registerScopedF(
-    (DiskDBContext as unknown) as Key<ReturnType<typeof DiskDBContext>>,
+    (DiskDBContext as unknown) as FW.Key<ReturnType<typeof DiskDBContext>>,
     DiskDBContext,
   )
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  container.registerPassthrough(UOWKey, DiskDBContext as any)
+  container.registerPassthrough(FW.UOWKey, DiskDBContext as any)
 
   container.registerSingletonC(TrainTripPublisherKey, TrainTripPublisherInMemory)
   container.registerSingletonC(TrainTripReadContext, TrainTripReadContext)
@@ -61,12 +54,12 @@ const createRoot = () => {
   })
 
   container.registerSingletonF(toolDeps, toolDeps)
-  container.registerSingletonF(resolveEventKey, resolveEvent)
+  container.registerSingletonF(FW.resolveEventKey, resolveEvent)
 
   // Prevent stack-overflow; as logger depends on requestcontext
   // tslint:disable-next-line:no-console
-  const consoleOrLogger = (key: AnyConstructable) =>
-    key !== RequestContextKey ? logger : console
+  const consoleOrLogger = (key: FW.AnyConstructable) =>
+    key !== RequestContextKey ? FW.utils.logger : console
   container.registerInitializer("global", (i, key) =>
     consoleOrLogger(key).debug(
       chalk.magenta(`Created ${key.name} (${i.name}) (${i.constructor.name})`),

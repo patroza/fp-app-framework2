@@ -1,4 +1,4 @@
-import { RecordNotFound } from "@fp-app/framework"
+import * as FW from "@fp-app/framework"
 import { AsyncResult, E } from "@fp-app/fp-ts-extensions"
 import { getFilename } from "./RecordContext"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
@@ -24,10 +24,10 @@ export default class ReadContext<T> {
   readonly create = (id: string, value: T) =>
     createOrUpdateReadContextEntry(this.type, id, value)
   readonly delete = (id: string) => deleteReadContextEntry(this.type, id)
-  readonly read = (id: string): AsyncResult<T, RecordNotFound> => async () => {
+  readonly read = (id: string): AsyncResult<T, FW.RecordNotFound> => async () => {
     const filePath = getFilename(this.type, id)
     if (!(await exists(filePath))) {
-      return E.err(new RecordNotFound(this.type, id))
+      return E.err(new FW.RecordNotFound(this.type, id))
     }
     const r = await readReadContextEntry<T>(this.type, id)
     return E.ok(r)
