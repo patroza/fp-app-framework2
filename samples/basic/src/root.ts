@@ -6,7 +6,7 @@ import {
   UOWKey,
   AnyConstructable,
 } from "@fp-app/framework"
-import { exists, mkdir } from "@fp-app/io.diskdb"
+import * as diskdb from "@fp-app/io.diskdb"
 import chalk from "chalk"
 import resolveEvent from "./resolveIntegrationEvent"
 import "./TrainTrip/eventhandlers" // To be ble to auto register them :/
@@ -85,8 +85,8 @@ const createRoot = () => {
 }
 
 const initialize = async () => {
-  if (!(await exists("./data"))) {
-    await mkdir("./data")
+  if (!(await diskdb.utils.exists("./data"))) {
+    await diskdb.utils.mkdir("./data")
   }
 }
 

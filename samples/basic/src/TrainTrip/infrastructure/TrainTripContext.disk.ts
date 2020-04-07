@@ -5,8 +5,7 @@ import TrainTrip, {
 } from "@/TrainTrip/TrainTrip"
 import { TrainTripContext as TrainTripContextType } from "@/TrainTrip/usecases/types"
 import { DomainEventHandler, Event, configure } from "@fp-app/framework"
-import { DiskRecordContext } from "@fp-app/io.diskdb"
-import { parse, stringify } from "flatted"
+import * as diskdb from "@fp-app/io.diskdb"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { TravelClass } from "../Trip"
 import { TrainTripView } from "../usecases/getTrainTrip"
@@ -48,7 +47,7 @@ const DiskDBContext = configure(
 )
 
 export function trainTrips() {
-  return new DiskRecordContext<TrainTrip>(
+  return new diskdb.DiskRecordContext<TrainTrip>(
     "trainTrip",
     serializeTrainTrip,
     deserializeDbTrainTrip,
@@ -83,7 +82,7 @@ const TrainTripToView = (trip: TrainTrip): TrainTripView => {
 
 // Need access to private events here..
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const serializeTrainTrip = ({ events: _, ...rest }: any) => stringify(rest)
+const serializeTrainTrip = ({ events: _, ...rest }: any) => diskdb.stringify(rest)
 
 function deserializeDbTrainTrip(serializedTrainTrip: string) {
   const {
@@ -95,7 +94,7 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
     startDate,
     travelClassConfiguration,
     ...rest
-  } = parse(serializedTrainTrip) as TrainTripDTO
+  } = diskdb.parse<TrainTripDTO>(serializedTrainTrip)
   // what do we do? we restore all properties that are just property bags
   // and we recreate proper object graph for properties that have behaviors
   // TODO: use type information or configuration, probably a library ;-)
