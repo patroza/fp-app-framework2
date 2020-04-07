@@ -3,6 +3,13 @@ import Koa from "koa"
 import KoaRouter from "koa-router"
 import generateKoaHandler from "./generateKoaHandler"
 import { authMiddleware } from "./middleware"
+import Joi = require("@hapi/joi")
+
+export const buildRouter = (
+  buildFn: (
+    F: typeof Joi & { createRouter: () => KoaRouteBuilder, createValidator: typeof utils.createValidator },
+  ) => () => KoaRouteBuilder,
+) => buildFn({ createRouter: () => new KoaRouteBuilder(), createValidator: utils.createValidator, ...Joi })
 
 export default class KoaRouteBuilder extends RouteBuilder<Koa.Context, KoaRouter> {
   build(request: requestType) {
