@@ -4,9 +4,9 @@ import { Lens } from "monocle-ts"
 import {
   Entity,
   ForbiddenError,
-  generateUuid,
   InvalidStateError,
   ValidationError,
+  utils,
 } from "@fp-app/framework"
 import Event from "@fp-app/framework/src/event"
 import {
@@ -55,7 +55,7 @@ export default class TrainTrip extends Entity {
     )!
 
     const t = new TrainTrip(
-      generateUuid(),
+      utils.generateUuid(),
       pax,
       startDate,
       travelClassConfiguration,

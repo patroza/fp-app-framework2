@@ -5,12 +5,7 @@ import {
   getTemplateType,
   getTravelPlanType,
 } from "@/TrainTrip/usecases/types"
-import {
-  ApiError,
-  InvalidStateError,
-  RecordNotFound,
-  typedKeysOf,
-} from "@fp-app/framework"
+import { ApiError, InvalidStateError, RecordNotFound, utils } from "@fp-app/framework"
 import { pipe, TE, E, trampoline, ToolDeps, RTE, RE } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
@@ -56,7 +51,8 @@ const toTrip = trampoline(
     return pipe(
       TE.traverse(
         [_.TE.startWith(curTC)].concat(
-          typedKeysOf(tpl.travelClasses)
+          utils
+            .typedKeysOf(tpl.travelClasses)
             .filter((x) => x !== curTC.name)
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             .map((slKey) => tpl.travelClasses[slKey]!)
@@ -87,7 +83,7 @@ const tplToTravelClass = (tpl: Template, currentDate: Date) =>
 
 const getTplLevelName = (tpl: Template) =>
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  typedKeysOf(tpl.travelClasses).find((x) => tpl.travelClasses[x]!.id === tpl.id)!
+  utils.typedKeysOf(tpl.travelClasses).find((x) => tpl.travelClasses[x]!.id === tpl.id)!
 
 // Typescript support for partial application is not really great, so we try currying instead for now
 // https://stackoverflow.com/questions/50400120/using-typescript-for-partial-application

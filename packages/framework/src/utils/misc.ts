@@ -1,4 +1,4 @@
-import { assert } from "./assert"
+import assert from "./assert"
 import { Writeable, Disposable } from "../types"
 
 const asWritable = <T>(obj: T) => obj as Writeable<T>
