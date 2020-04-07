@@ -7,9 +7,9 @@ import Joi = require("@hapi/joi")
 
 export const buildRouter = (
   buildFn: (
-    F: typeof Joi & { createRouter: () => KoaRouteBuilder, createValidator: typeof utils.createValidator },
-  ) => () => KoaRouteBuilder,
-) => buildFn({ createRouter: () => new KoaRouteBuilder(), createValidator: utils.createValidator, ...Joi })
+    F: typeof Joi & { builder: () => KoaRouteBuilder, createValidator: typeof utils.createValidator },
+  ) => KoaRouteBuilder,
+) => buildFn({ builder: () => new KoaRouteBuilder(), createValidator: utils.createValidator, ...Joi })
 
 export default class KoaRouteBuilder extends RouteBuilder<Koa.Context, KoaRouter> {
   build(request: requestType) {

@@ -6,24 +6,24 @@ import getTrainTrip from "./TrainTrip/usecases/getTrainTrip"
 import lockTrainTrip from "./TrainTrip/usecases/lockTrainTrip"
 import { Pax } from "./TrainTrip/PaxDefinition"
 
-const createTrainTripRouter = buildRouter((F) => {
-  const trainTripIdValidator = F.string().guid().required()
-  const routeWithTrainTripId = F.object({
-    trainTripId: trainTripIdValidator,
-  }).required()
+const createTrainTripRouter = () =>
+  buildRouter((F) => {
+    const trainTripIdValidator = F.string().guid().required()
+    const routeWithTrainTripId = F.object({
+      trainTripId: trainTripIdValidator,
+    }).required()
 
-  const paxEntrySchema = F.number().integer().required()
+    const paxEntrySchema = F.number().integer().required()
 
-  const paxSchema = F.object<Pax>({
-    adults: paxEntrySchema,
-    babies: paxEntrySchema,
-    children: paxEntrySchema,
-    infants: paxEntrySchema,
-    teenagers: paxEntrySchema,
-  }).required()
+    const paxSchema = F.object<Pax>({
+      adults: paxEntrySchema,
+      babies: paxEntrySchema,
+      children: paxEntrySchema,
+      infants: paxEntrySchema,
+      teenagers: paxEntrySchema,
+    }).required()
 
-  return () =>
-    F.createRouter()
+    return F.builder()
       .post("/", createTrainTrip, {
         validator: F.createValidator(
           F.object({
@@ -54,6 +54,6 @@ const createTrainTripRouter = buildRouter((F) => {
       .post("/:trainTripId/lock", lockTrainTrip, {
         validator: F.createValidator(routeWithTrainTripId),
       })
-})
+  })
 
 export default createTrainTripRouter
