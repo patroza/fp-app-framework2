@@ -2,7 +2,7 @@ import { summon } from "@morphic-ts/batteries/lib/summoner-ESBASTJ"
 import { AType } from "@morphic-ts/batteries/lib/usage/utils"
 import { iotsConfig } from "@morphic-ts/io-ts-interpreters/lib"
 
-import { typedKeysOf, ValidationError } from "@fp-app/framework"
+import * as FW from "@fp-app/framework"
 import { t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
 import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 import { flow } from "fp-ts/lib/function"
@@ -59,8 +59,8 @@ const _PaxDefinition = summon((F) => {
     teenagers: PaxNumber
   }
   const validatePax = (p: T) =>
-    typedKeysOf(p).some((k) => p[k] > 0) &&
-    typedKeysOf(p).reduce((prev, cur) => (prev += p[cur]), 0) <= 6
+    FW.utils.typedKeysOf(p).some((k) => p[k] > 0) &&
+    FW.utils.typedKeysOf(p).reduce((prev, cur) => (prev += p[cur]), 0) <= 6
 
   return F.interface(
     {
@@ -86,10 +86,9 @@ const _PaxDefinition = summon((F) => {
           x.encode,
         ),
         (value: T) => {
-          return `requires at least 1 and max 6 people, but ${typedKeysOf(value).reduce(
-            (prev, cur) => (prev += value[cur]),
-            0,
-          )} were specified`
+          return `requires at least 1 and max 6 people, but ${FW.utils
+            .typedKeysOf(value)
+            .reduce((prev, cur) => (prev += value[cur]), 0)} were specified`
         },
       ),
     ),
@@ -101,7 +100,7 @@ const PaxDefinition = merge(_PaxDefinition, {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     _PaxDefinition.type.decode,
     map((x) => x as PaxDefinition),
-    mapLeft((x) => new ValidationError(decodeErrors(x))),
+    mapLeft((x) => new FW.ValidationError(decodeErrors(x))),
   ),
 })
 

@@ -1,7 +1,7 @@
 import { TrainTripPublisher } from "@/TrainTrip/eventhandlers"
 import { TrainTripId } from "@/TrainTrip/TrainTrip"
 import {
-  getLogger,
+  utils,
   paramInject,
   requestInNewScopeKey,
   requestInNewScopeType,
@@ -17,7 +17,7 @@ export default class TrainTripPublisherInMemory implements TrainTripPublisher {
   // TODO: easy way how to inject a configured logger
   // ie the key is 'configuredLogger', and it will be configured based on the
   // function/class.
-  private readonly logger = getLogger(this.constructor.name)
+  private readonly logger = utils.getLogger(this.constructor.name)
 
   constructor(
     @paramInject(requestInNewScopeKey) private readonly request: requestInNewScopeType,

@@ -1,8 +1,8 @@
 import { AsyncResult, ToolDeps, toolDeps, RTE, O } from "@fp-app/fp-ts-extensions"
 import chalk from "chalk"
 import Event from "../../event"
-import { Constructor, getLogger, setFunctionName, typedKeysOf } from "../../utils"
-import assert from "../../utils/assert"
+import { assert, getLogger, setFunctionName, typedKeysOf } from "../../utils"
+import { Constructor } from "../../types"
 import {
   registerDomainEventHandler,
   registerIntegrationEventHandler,

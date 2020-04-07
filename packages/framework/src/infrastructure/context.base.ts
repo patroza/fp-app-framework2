@@ -1,6 +1,6 @@
 import { O, RT, T } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
-import { Disposable } from "../utils"
+import { Disposable } from "../types"
 import DomainEventHandler from "./domainEventHandler"
 import { autoinject, generateKey } from "./SimpleContainer"
 

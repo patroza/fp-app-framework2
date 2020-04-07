@@ -6,11 +6,8 @@ import { CustomerRequestedChangesDTO } from "@/resolveIntegrationEvent"
 import {
   CombinedValidationError,
   executePostCommitHandlers,
-  generateShortUuid,
-  logger,
-  noop,
   RecordNotFound,
-  setLogger,
+  utils,
 } from "@fp-app/framework"
 import { E } from "@fp-app/fp-ts-extensions"
 import moment from "moment"
@@ -37,11 +34,11 @@ const createRootAndBind = (cb: () => Promise<void>) => {
 }
 
 // Silence logger
-setLogger({
-  debug: noop,
-  error: noop,
-  log: noop,
-  warn: noop,
+utils.setLogger({
+  debug: utils.noop,
+  error: utils.noop,
+  log: utils.noop,
+  warn: utils.noop,
 })
 
 beforeEach(() =>
@@ -90,7 +87,7 @@ describe("usecases", () => {
           ],
         })
 
-        logger.log(E.unsafeUnwrap(result))
+        utils.logger.log(E.unsafeUnwrap(result))
         expect(executePostCommitHandlersMock).toBeCalledTimes(0)
       }))
   })
@@ -124,7 +121,7 @@ describe("usecases", () => {
         expect(r.startDate).toEqual(state.startDate!.toISOString())
         expect(r.pax).toEqual(state.pax)
         expect(executePostCommitHandlersMock).toBeCalledTimes(1)
-        logger.log(r)
+        utils.logger.log(r)
       }))
 
     it("errors on non existent travel class", () =>
@@ -220,7 +217,7 @@ describe("integration events", () => {
           payload: { trainTripId, itineraryId: "some-itinerary-id" },
           type: "CustomerRequestedChanges",
         }
-        await root.publishInNewContext(JSON.stringify(p), generateShortUuid())
+        await root.publishInNewContext(JSON.stringify(p), utils.generateShortUuid())
 
         const newTrainTripResult = await root.request(getTrainTrip, { trainTripId })()
         expect(E.unsafeUnwrap(newTrainTripResult).allowUserModification).toBe(false)

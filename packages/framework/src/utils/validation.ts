@@ -5,7 +5,6 @@ import {
   FieldValidationError,
   ValidationError,
 } from "../errors"
-export { Joi }
 import { convert } from "@yeongjet/joi-to-json-schema"
 import { logger } from "./logger"
 

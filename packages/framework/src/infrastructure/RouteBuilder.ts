@@ -4,6 +4,7 @@ import { ValidatorType, JsonValue } from "../utils/validation"
 import { DbError } from "./errors"
 import { NamedHandlerWithDependencies, requestType } from "./mediator"
 import { tuple } from "fp-ts/lib/function"
+import { promisify } from "util"
 
 export default abstract class RouteBuilder<TContext, TRouter> {
   private static register = <TContext, TRouter>(
@@ -72,8 +73,10 @@ export function writeRouterSchema<TContext, TRouter>(
     }))
     return prev
   }, {} as Record<string, MethodSchema[]>)
-  fs.writeFileSync("./router-schema.json", JSON.stringify(schema, undefined, 2))
+  return writeFile("./router-schema.json", JSON.stringify(schema, undefined, 2))
 }
+
+const writeFile = promisify(fs.writeFile)
 
 type MethodSchema = {
   method: METHODS

@@ -1,10 +1,21 @@
-import { HALConfig, requestType, RouteBuilder, typedKeysOf } from "@fp-app/framework"
+import { HALConfig, requestType, RouteBuilder, utils } from "@fp-app/framework"
 import Koa from "koa"
 import KoaRouter from "koa-router"
 import generateKoaHandler from "./generateKoaHandler"
 import { authMiddleware } from "./middleware"
+import Joi from "@hapi/joi"
 
-export default class KoaRouteBuilder extends RouteBuilder<Koa.Context, KoaRouter> {
+export const buildRouter = (buildFn: RouteBuilderFn) => buildFn(builder)
+
+const builder = Object.freeze({
+  builder: () => new KoaRouteBuilder(),
+  createValidator: utils.createValidator,
+  v: Joi,
+})
+
+type RouteBuilderFn = (F: typeof builder) => KoaRouteBuilder
+
+export class KoaRouteBuilder extends RouteBuilder<Koa.Context, KoaRouter> {
   build(request: requestType) {
     const router = new KoaRouter()
     if (this.basicAuthEnabled) {
@@ -68,7 +79,7 @@ export const generateHalLinks = (
   halConfig: HALConfig,
   data: Record<string, string>,
 ) => {
-  const halLinks = typedKeysOf(halConfig).reduce((prev, cur) => {
+  const halLinks = utils.typedKeysOf(halConfig).reduce((prev, cur) => {
     let href = halConfig[cur]
     if (href.startsWith(".")) {
       href = href.replace(".", ctx.URL.pathname)

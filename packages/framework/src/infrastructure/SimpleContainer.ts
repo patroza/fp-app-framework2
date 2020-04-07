@@ -2,16 +2,16 @@
 // TODO: Get rid of the "keys" as required concept.
 // TODO: There's obviously a lot of possibility to improve the API, and Implementation here ;-)
 import "reflect-metadata"
+import { setFunctionName } from "../utils"
 import {
   Constructor,
   Disposable,
-  setFunctionName,
   ConstructorFunction,
   Constructable,
   AnyConstructable,
-} from "../utils"
-import assert from "../utils/assert"
-import { isClass } from "typechecker/edition-node-12"
+} from "../types"
+import { assert } from "../utils"
+import * as tc from "typechecker/edition-node-12"
 import { DependencyDefinitions, Dependencies } from "./configure"
 
 export default class SimpleContainer {
@@ -246,7 +246,7 @@ export default class SimpleContainer {
   private tryCreateInstance = <T>(key: any) => {
     const factory = this.factories.get(key)
     if (!factory) {
-      if (!isClass(key)) {
+      if (!tc.isClass(key)) {
         return this.createFunctionInstance(key)
       }
       return new key()

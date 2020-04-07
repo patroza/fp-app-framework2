@@ -1,4 +1,4 @@
-import { calculateElapsed, logger, RequestContextBase } from "@fp-app/framework"
+import { utils, RequestContextBase } from "@fp-app/framework"
 import chalk from "chalk"
 import { EventEmitter } from "events"
 import Koa from "koa"
@@ -34,14 +34,14 @@ export const setupNamespace = ({
 export const logRequestTime: Koa.Middleware = async (ctx, next) => {
   const reqPath = `${ctx.method} ${ctx.path}`
   const reqHeaders = ctx.headers
-  logger.log(`${chalk.bold(reqPath)} Start request`, {
+  utils.logger.log(`${chalk.bold(reqPath)} Start request`, {
     headers: JSON.parse(JSON.stringify(reqHeaders)),
   })
 
   onFinished(ctx.res, () => {
-    const elapsed = calculateElapsed(ctx["start-time"])
+    const elapsed = utils.calculateElapsed(ctx["start-time"])
     const elapsedFormatted = `${elapsed}ms`
-    logger.debug(
+    utils.logger.debug(
       `${chalk.bgWhite.black(elapsedFormatted)} ${chalk.bold(
         reqPath,
       )} Closed HTTP request`,
@@ -52,9 +52,9 @@ export const logRequestTime: Koa.Middleware = async (ctx, next) => {
 
   const headers = ctx.response.headers
   const status = ctx.status
-  const elapsed2 = calculateElapsed(ctx["start-time"])
+  const elapsed2 = utils.calculateElapsed(ctx["start-time"])
   const elapsedFormatted2 = `${elapsed2}ms`
-  logger.log(
+  utils.logger.log(
     `${chalk.bgWhite.black(elapsedFormatted2)} ${chalk.bold(
       reqPath,
     )} Finished HTTP processing`,

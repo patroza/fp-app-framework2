@@ -1,5 +1,6 @@
 import chalk from "chalk"
-import { Disposable, noop, typedKeysOf } from "./misc"
+import { noop, typedKeysOf } from "./misc"
+import { Disposable } from "../types"
 
 type logLevels = Pick<typeof console, "log" | "error" | "warn" | "debug">
 interface AddLogging {

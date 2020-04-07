@@ -3,13 +3,8 @@ import { createNamespace, getNamespace } from "cls-hooked"
 import format from "date-fns/format"
 import { EventEmitter } from "events"
 import Event from "../event"
-import {
-  Constructor,
-  generateShortUuid,
-  getLogger,
-  removeElement,
-  using,
-} from "../utils"
+import { generateShortUuid, getLogger, removeElement, using } from "../utils"
+import { Constructor } from "../types"
 import { loggingDecorator, uowDecorator } from "./decorators"
 import DomainEventHandler from "./domainEventHandler"
 import executePostCommitHandlers from "./executePostCommitHandlers"
