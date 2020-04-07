@@ -1,13 +1,8 @@
 import * as FW from "@fp-app/framework"
-import {
-  handleAuthenticationFailedMiddleware,
-  logRequestTime,
-  saveStartTime,
-  setupNamespace,
-} from "@fp-app/hosting.koa"
+import * as KH from "@fp-app/hosting.koa"
 import Koa from "koa"
 import bodyParser from "koa-bodyparser"
-import { PORT } from "./config"
+import * as config from "./config"
 import createRoot from "./root"
 import createRootRouter from "./root.router"
 
@@ -22,7 +17,7 @@ const startServer = async () => {
 
   await initialize()
 
-  const rootRouter = createRootRouter(request)
+  const [rootMap, rootRouter] = createRootRouter(request)
 
   FW.utils.setLogger({
     addToLoggingContext,
@@ -37,15 +32,17 @@ const startServer = async () => {
   })
 
   const app = new Koa()
-    .use(saveStartTime)
-    .use(setupNamespace({ setupRequestContext }))
-    .use(logRequestTime)
+    .use(KH.saveStartTime)
+    .use(KH.setupNamespace({ setupRequestContext }))
+    .use(KH.logRequestTime)
     .use(bodyParser())
-    .use(handleAuthenticationFailedMiddleware)
+    .use(KH.handleAuthenticationFailedMiddleware)
     .use(rootRouter.allowedMethods())
     .use(rootRouter.routes())
 
-  return app.listen(PORT, () => FW.utils.logger.log("server listening on 3535"))
+  await FW.writeRouterSchema(rootMap)
+
+  return app.listen(config.PORT, () => FW.utils.logger.log("server listening on 3535"))
 }
 
 startServer().catch(FW.utils.logger.error)

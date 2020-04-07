@@ -11,7 +11,7 @@ import {
   AnyConstructable,
 } from "../types"
 import { assert } from "../utils"
-import { isClass } from "typechecker/edition-node-12"
+import * as tc from "typechecker/edition-node-12"
 import { DependencyDefinitions, Dependencies } from "./configure"
 
 export default class SimpleContainer {
@@ -246,7 +246,7 @@ export default class SimpleContainer {
   private tryCreateInstance = <T>(key: any) => {
     const factory = this.factories.get(key)
     if (!factory) {
-      if (!isClass(key)) {
+      if (!tc.isClass(key)) {
         return this.createFunctionInstance(key)
       }
       return new key()
