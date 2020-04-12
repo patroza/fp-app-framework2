@@ -5,13 +5,13 @@
   "author": "Patrick Roza",
   "license": "MIT",
   "scripts": {
-    "start": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling nodemon --exec ts-node --transpile-only -r tsconfig-paths/register --files src/unsafe.ts",
-    "start:debug": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling nodemon --exec node --inspect -r ts-node/register/transpile-only -r tsconfig-paths/register src/unsafe.ts",
-    "start:prod": "ts-node --transpile-only -r tsconfig-paths/register --files src/unsafe.ts",
-    "prettier": "prettier --write \"src/**/*.ts\"",
+    "start": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling nodemon --exec ts-node --transpile-only -r tsconfig-paths/register --files bin/start-server.ts",
+    "start:debug": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling nodemon --exec node --inspect -r ts-node/register/transpile-only -r tsconfig-paths/register bin/start-server.ts",
+    "start:prod": "ts-node --transpile-only -r tsconfig-paths/register --files bin/start-server.ts",
+    "prettier": "prettier --write \"src/**/*.ts\" \"bin/**/*.ts\"",
     "test": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling jest",
     "test:compile": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" \"bin/**/*.ts\"",
     "testsuite": "TSC_WATCHFILE=UseFsEventsWithFallbackDynamicPolling yarn test:compile && yarn lint && yarn test",
     "autofix": "yarn lint --fix && yarn prettier --write"
   },
