@@ -19,6 +19,7 @@ const mainR = sequenceT(T.effect)(getHelloWorldRoute)
 
 interface RequestInfo {
   id: string
+  method: string
   path: string
   startedAt: Date
   finishedAt?: Date
@@ -26,6 +27,7 @@ interface RequestInfo {
 const requestInfoMW = KOA.middleware((ctx, next) => {
   const requestContext: RequestInfo = {
     id: ctx.get("X-Request-Id") || utils.generateShortUuid(),
+    method: ctx.method,
     path: ctx.originalUrl,
     startedAt: getCurrentDate(),
   }

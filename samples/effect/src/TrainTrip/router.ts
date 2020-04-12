@@ -12,7 +12,8 @@ const getTrainTrip = KOA.route(
   "/:trainTripId",
   Do(T.effect)
     // TODO: this somehow makes the error type end up as `unknown` instead of `never`
-    //.bindL("input", () => KOA.accessReq((ctx) => ({ id: ctx.params.id })))
+    // .bindL("input", () => KOA.accessReq((ctx) => ({ id: ctx.params.id })))
+    // .bindL("result", ({ input }) => pipe(input, T.chain(GetTrainTrip)))
     .bind(
       "result",
       pipe(
