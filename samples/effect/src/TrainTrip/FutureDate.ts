@@ -14,12 +14,12 @@ export interface FutureDate2Brand {
 
 export const _FutureDate = withBla(
   t.brand(
-    t.DateFromISOString, // a codec representing the type to be refined
+    t.date, // a codec representing the type to be refined
     (n): n is t.Branded<Date, FutureDate2Brand> => isInFuture(n), // a custom type guard using the build-in helper `Branded`
     "FutureDate", // the name must match the readonly field in the brand
   ),
   (value) => {
-    if (!t.DateFromISOString.is(value)) {
+    if (!t.date.is(value)) {
       return "invalid value"
     }
     return `${value.toDateString()} is not in the Future`

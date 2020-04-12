@@ -5,7 +5,7 @@ import FutureDate from "./FutureDate"
 describe("changeStartDate", () => {
   it("works", () => {
     const tt = { id: "some-id", startDate: new Date(2020, 1, 1) }
-    const newDate = E.unsafeUnwrap(FutureDate.create("2050-01-01"))
+    const newDate = E.unsafeUnwrap(FutureDate.create(new Date("2050-01-01")))
     const r = changeStartDate(tt)(newDate)
     expect(E.isOk(r)).toBe(true)
     const [newTT, events] = E.unsafeUnwrap(r)
