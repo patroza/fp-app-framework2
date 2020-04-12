@@ -5,20 +5,15 @@ import * as O from "fp-ts/lib/Option"
 import { sequenceT } from "fp-ts/lib/Apply"
 import { pipe } from "fp-ts/lib/pipeable"
 import { Do } from "fp-ts-contrib/lib/Do"
-import GetTrainTrip from "./usecases/GetTrainTrip"
-import CreateTrainTrip from "./usecases/CreateTrainTrip"
+import * as GetTrainTrip from "./usecases/GetTrainTrip"
+import * as CreateTrainTrip from "./usecases/CreateTrainTrip"
 import { ValidationError } from "@fp-app/framework"
 import * as RC from "./infrastructure/TrainTripReadContext.disk"
-
-const mapErrorToHTTP = T.mapError((err) => {
-  if (err instanceof ValidationError) {
-    return KOA.routeError(400, err)
-  }
-  return KOA.routeError(500, err)
-})
+import { E, decodeErrors } from "@fp-app/fp-ts-extensions"
+import { joinData, mapErrorToHTTP } from "@/requestHelpers"
 
 // TODO: Without all the hussle..
-const provideRequestScoped = <R, E, A>(
+export const provideRequestScoped = <R, E, A>(
   i: T.Effect<R & RC.HasReadContext, E, A>,
 ): T.Effect<T.Erase<R, RC.HasReadContext>, E, A> =>
   T.provideR((r: R) => ({
@@ -32,9 +27,11 @@ const getTrainTrip = KOA.route(
   pipe(
     Do(T.effect)
       .bindL("input", () =>
-        KOA.accessReq((ctx) => ({ trainTripId: ctx.params.trainTripId })),
+        KOA.accessReqM((ctx) =>
+          pipe(validateGetTrainTripInput(joinData(ctx)), T.fromEither),
+        ),
       )
-      .bindL("result", ({ input }) => GetTrainTrip(input))
+      .bindL("result", ({ input }) => GetTrainTrip.default(input))
       .return(({ result }) =>
         O.isSome(result)
           ? KOA.routeResponse(200, result.value)
@@ -45,6 +42,13 @@ const getTrainTrip = KOA.route(
   ),
 )
 
+const validateGetTrainTripInput = (input: unknown) =>
+  pipe(
+    GetTrainTrip.Input.decode(input),
+    E.map((x) => x as GetTrainTrip.Input),
+    E.mapLeft((x) => new ValidationError(decodeErrors(x))),
+  )
+
 const createTrainTrip = KOA.route(
   "post",
   "/",
@@ -53,8 +57,10 @@ const createTrainTrip = KOA.route(
       .bind(
         "result",
         pipe(
-          KOA.accessReq((ctx) => ctx.request.body),
-          T.chain(CreateTrainTrip),
+          KOA.accessReqM((ctx) =>
+            pipe(validateCreateTrainTripInput(joinData(ctx)), T.fromEither),
+          ),
+          T.chain(CreateTrainTrip.default),
         ),
       )
       .return(({ result }) => KOA.routeResponse(200, result)),
@@ -62,6 +68,13 @@ const createTrainTrip = KOA.route(
     provideRequestScoped,
   ),
 )
+
+const validateCreateTrainTripInput = (input: unknown) =>
+  pipe(
+    CreateTrainTrip.Input.decode(input),
+    E.map((x) => x as CreateTrainTrip.Input),
+    E.mapLeft((x) => new ValidationError(decodeErrors(x))),
+  )
 
 const routes = sequenceT(T.effect)(createTrainTrip, getTrainTrip)
 

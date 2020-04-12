@@ -4,7 +4,7 @@ import {
   ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { Do, Result, pipe, E, NA } from "@fp-app/fp-ts-extensions"
+import { Do, Result, pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
@@ -26,11 +26,16 @@ const CreateTrainTrip = (input: Input) =>
 
 export default CreateTrainTrip
 
-export interface Input {
-  templateId: string
-  pax: Pax
-  startDate: Date
-}
+export const Input = t.type(
+  {
+    templateId: t.NonEmptyString,
+    pax: Pax,
+    startDate: t.DateFromISOString,
+  },
+  "GetTrainTripInput",
+)
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface Input extends t.TypeOf<typeof Input> {}
 
 const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
   pipe(
