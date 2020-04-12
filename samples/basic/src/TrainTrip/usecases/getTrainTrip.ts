@@ -3,6 +3,7 @@ import TrainTripReadContext from "../infrastructure/TrainTripReadContext.disk"
 import { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { defaultDependencies } from "./types"
+import { wrap } from "../infrastructure/utils"
 
 const createQuery = createQueryWithDeps(() => ({
   readCtx: TrainTripReadContext,
@@ -11,7 +12,7 @@ const createQuery = createQueryWithDeps(() => ({
 
 const getTrainTrip = createQuery<Input, TrainTripView, DbError>(
   "getTrainTrip",
-  ({ readCtx }) => (input) => readCtx.read(input.trainTripId),
+  ({ readCtx }) => (input) => wrap(readCtx.read)(input.trainTripId),
 )
 
 export default getTrainTrip
