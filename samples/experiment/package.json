@@ -21,6 +21,6 @@
     "fp-ts-laws": "^0.2.1"
   },
   "resolutions": {
-    "@hapi/joi": "^17.1.0"
+    "@hapi/joi": "^17.1.1"
   }
 }
