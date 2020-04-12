@@ -20,11 +20,11 @@ const getTrainTrip = KOA.route(
         T.chain(GetTrainTrip),
       ),
     )
-    .return(({ result }) => {
-      return O.isSome(result)
+    .return(({ result }) =>
+      O.isSome(result)
         ? KOA.routeResponse(200, result.value)
-        : KOA.routeResponse(404, null)
-    }),
+        : KOA.routeResponse(404, null),
+    ),
 )
 
 const router = pipe(sequenceT(T.effect)(getTrainTrip), KOA.withSubRouter("/train-trip"))
