@@ -6,10 +6,13 @@ import {
   getTravelPlanType,
 } from "@/TrainTrip/usecases/types"
 import { ApiError, InvalidStateError, RecordNotFound, utils } from "@fp-app/framework"
-import { pipe, TE, E, trampoline, ToolDeps, RTE, RE } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
 import Trip, { TravelClass, TripWithSelectedTravelClass } from "../Trip"
+import { E, F, T, O } from "@/meffect"
+import { pipe } from "fp-ts/lib/pipeable"
+import { TrainTripView } from "../usecases/GetTrainTrip"
+import { trampoline, ToolDeps, TE, RE, RTE } from "@fp-app/fp-ts-extensions"
 
 const getTrip = trampoline(
   (_: ToolDeps<ApiError | InvalidStateError>) => ({
@@ -22,6 +25,34 @@ const getTrip = trampoline(
       TE.chain(toTrip(getTemplate)),
     ),
 )
+
+const TripApiURI = "@fp-app/effect/trip-api"
+const TripApi_ = F.define({
+  [TripApiURI]: {
+    get: F.fn<
+      (id: string) => T.IO<ApiError | InvalidStateError, TripWithSelectedTravelClass>
+    >(),
+  },
+})
+export type TripApi = F.TypeOf<typeof TripApi_>
+
+export const TripApi = F.opaque<TripApi>()(TripApi_)
+export type HasTripApi = {
+  [TripApiURI]: {
+    get: (id: string) => T.UIO<O.Option<TrainTripView>>
+  }
+}
+export const { get } = F.access(TripApi)[TripApiURI]
+
+export const provideTripApi = F.implement(TripApi)({
+  [TripApiURI]: {
+    get: (id: string) => {
+      // TODO: resolve shared dependency instead
+      const get = getTrip({ getTemplate: getTemplateFake() })
+      return T.encaseTaskEither(get(id))
+    },
+  },
+})
 
 // would be great to merge here also the dependency configuration
 // and the trampoline

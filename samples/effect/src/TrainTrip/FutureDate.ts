@@ -4,6 +4,7 @@ import { ValidationError } from "@fp-app/framework"
 import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 import { map, mapLeft } from "@fp-app/fp-ts-extensions/src/Either"
 
+// TODO: not pure ;-)
 const isInFuture = (date: Date) => date > new Date()
 
 // a unique brand for positive numbers
@@ -13,12 +14,12 @@ export interface FutureDate2Brand {
 
 export const _FutureDate = withBla(
   t.brand(
-    t.date, // a codec representing the type to be refined
+    t.DateFromISOString, // a codec representing the type to be refined
     (n): n is t.Branded<Date, FutureDate2Brand> => isInFuture(n), // a custom type guard using the build-in helper `Branded`
     "FutureDate", // the name must match the readonly field in the brand
   ),
   (value) => {
-    if (!t.date.is(value)) {
+    if (!t.DateFromISOString.is(value)) {
       return "invalid value"
     }
     return `${value.toDateString()} is not in the Future`

@@ -4,6 +4,8 @@ import * as KOA from "@matechs/koa"
 // import { Do } from "fp-ts-contrib/lib/Do"
 import { pipe } from "fp-ts/lib/pipeable"
 import * as RC from "@/TrainTrip/infrastructure/TrainTripReadContext.disk"
+import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
+import * as TA from "@/TrainTrip/infrastructure/api"
 
 const port = 3535
 
@@ -16,7 +18,13 @@ const program = pipe(
 )
 
 T.run(
-  pipe(program, KOA.provideKoa, RC.provideReadContext),
+  pipe(
+    program,
+    KOA.provideKoa,
+    TA.provideTripApi,
+    TC.provideTrainTripContext,
+    RC.provideReadContext,
+  ),
   E.fold(
     (server) => {
       console.log(`Listening on port ${port}`)
