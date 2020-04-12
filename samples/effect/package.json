@@ -16,6 +16,10 @@
     "autofix": "yarn lint --fix && yarn prettier --write"
   },
   "dependencies": {
+    "@fp-app/fp-ts-extensions": "0.1.0",
+    "@fp-app/framework": "0.1.0",
+    "@fp-app/hosting.koa": "0.1.0",
+    "@fp-app/io.diskdb": "0.1.0",
     "@matechs/effect": "5.0.26",
     "@matechs/koa": "^0.0.2",
     "@morphic-ts/batteries": "^0.12.0",
