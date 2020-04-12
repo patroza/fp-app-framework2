@@ -8,6 +8,9 @@ import { Do } from "fp-ts-contrib/lib/Do"
 import GetTrainTrip from "./usecases/GetTrainTrip"
 import CreateTrainTrip from "./usecases/CreateTrainTrip"
 import { ValidationError } from "@fp-app/framework"
+import * as RC from "./infrastructure/TrainTripReadContext.disk"
+import { HasTripApi } from "./infrastructure/api"
+import { HasTrainTripContext } from "./infrastructure/TrainTripContext.disk"
 
 const mapErrorToHTTP = T.mapError((err) => {
   if (err instanceof ValidationError) {
@@ -16,25 +19,37 @@ const mapErrorToHTTP = T.mapError((err) => {
   return KOA.routeError(500, err)
 })
 
+// TODO: Without all the hussle..
+const provideRequestScoped = <R, E, A>(
+  i: T.Effect<R, E, A>,
+): T.Effect<T.Erase<R, RC.HasReadContext>, E, A> =>
+  T.provideS((r: HasTripApi & HasTrainTripContext) => ({
+    ...r,
+    ...RC.env,
+  }))(i)
+
 const getTrainTrip = KOA.route(
   "get",
   "/:trainTripId",
-  Do(T.effect)
-    // TODO: this somehow makes the error type end up as `unknown` instead of `never`
-    // .bindL("input", () => KOA.accessReq((ctx) => ({ id: ctx.params.id })))
-    // .bindL("result", ({ input }) => pipe(input, T.chain(GetTrainTrip)))
-    .bind(
-      "result",
-      pipe(
-        KOA.accessReq((ctx) => ({ trainTripId: ctx.params.trainTripId })),
-        T.chain(GetTrainTrip),
+  pipe(
+    Do(T.effect)
+      // TODO: this somehow makes the error type end up as `unknown` instead of `never`
+      // .bindL("input", () => KOA.accessReq((ctx) => ({ id: ctx.params.id })))
+      // .bindL("result", ({ input }) => pipe(input, T.chain(GetTrainTrip)))
+      .bind(
+        "result",
+        pipe(
+          KOA.accessReq((ctx) => ({ trainTripId: ctx.params.trainTripId })),
+          T.chain(GetTrainTrip),
+        ),
+      )
+      .return(({ result }) =>
+        O.isSome(result)
+          ? KOA.routeResponse(200, result.value)
+          : KOA.routeResponse(404, null),
       ),
-    )
-    .return(({ result }) =>
-      O.isSome(result)
-        ? KOA.routeResponse(200, result.value)
-        : KOA.routeResponse(404, null),
-    ),
+    provideRequestScoped,
+  ),
 )
 
 const createTrainTrip = KOA.route(
@@ -51,6 +66,7 @@ const createTrainTrip = KOA.route(
       )
       .return(({ result }) => KOA.routeResponse(200, result)),
     mapErrorToHTTP,
+    provideRequestScoped,
   ),
 )
 

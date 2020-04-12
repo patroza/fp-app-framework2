@@ -24,7 +24,7 @@ export type HasReadContext = {
 }
 export const { read } = F.access(ReadContext)[ReadContextURI]
 
-export const provideReadContext = F.implement(ReadContext)({
+export const env = {
   [ReadContextURI]: {
     read: (id: string) => {
       // TODO: make this a request-scoped instance
@@ -33,4 +33,6 @@ export const provideReadContext = F.implement(ReadContext)({
       return T.encaseTask(ctx.read(id))
     },
   },
-})
+}
+
+export const provideReadContext = F.implement(ReadContext)(env)

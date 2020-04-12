@@ -3,7 +3,6 @@ import { effect as T, managed as M, exit as E } from "@matechs/effect"
 import * as KOA from "@matechs/koa"
 // import { Do } from "fp-ts-contrib/lib/Do"
 import { pipe } from "fp-ts/lib/pipeable"
-import * as RC from "@/TrainTrip/infrastructure/TrainTripReadContext.disk"
 import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import * as TA from "@/TrainTrip/infrastructure/api"
 
@@ -18,13 +17,7 @@ const program = pipe(
 )
 
 T.run(
-  pipe(
-    program,
-    KOA.provideKoa,
-    TA.provideTripApi,
-    TC.provideTrainTripContext,
-    RC.provideReadContext,
-  ),
+  pipe(program, KOA.provideKoa, TA.provideTripApi, TC.provideTrainTripContext),
   E.fold(
     (server) => {
       console.log(`Listening on port ${port}`)
