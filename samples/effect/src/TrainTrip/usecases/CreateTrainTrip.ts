@@ -17,18 +17,11 @@ const CreateTrainTrip = (input: Input) =>
   Do(T.effect)
     .bind("preferences", T.fromEither(validateCreateTrainTripInfo(input)))
     .bindL("trip", ({ preferences }) => get(preferences.templateId))
-    // TODO: new Date, should be a date service..
-    .bindL("trainTrip", ({ preferences, trip }) => {
-      // TODO: want to use letL with this, however it breaks E type auto determination
-      const tt = TrainTrip.create(trip, preferences, new Date())
-      return pipe(
-        TC.add(tt),
-        T.map(() => tt),
-      )
-    })
-    // .letL("trainTrip", ({ preferences, trip }) =>
-    //   TrainTrip.create(trip, preferences, new Date()),
-    // )
+    // TODO: new Date, should be a date service.. // T.sync(() => new Date())
+    .letL("trainTrip", ({ preferences, trip }) =>
+      TrainTrip.create(trip, preferences, new Date()),
+    )
+    .doL(({ trainTrip }) => TC.add(trainTrip))
     .return(({ trainTrip }) => trainTrip.id)
 
 export default CreateTrainTrip
