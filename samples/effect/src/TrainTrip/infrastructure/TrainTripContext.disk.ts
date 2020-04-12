@@ -11,8 +11,7 @@ import { TravelClass } from "../Trip"
 import { TrainTripView } from "../usecases/GetTrainTrip"
 import TrainTripReadContext from "./TrainTripReadContext.disk"
 import PaxDefinition, { Pax } from "../PaxDefinition"
-import { T, F, O } from "@/meffect"
-import { TE } from "@fp-app/fp-ts-extensions"
+import { T, F } from "@/meffect"
 
 // Since we assume that saving a valid object, means restoring a valid object
 // we can assume data correctness and can skip normal validation and constructing.
@@ -60,6 +59,7 @@ const TrainTripContextURI = "@fp-app/effect/traintrip-context"
 const TrainTripContext_ = F.define({
   [TrainTripContextURI]: {
     add: F.fn<(tt: TrainTrip) => T.UIO<void>>(),
+    save: F.fn<() => T.UIO<void>>(),
   },
 })
 export type TrainTripContext = F.TypeOf<typeof TrainTripContext_>
@@ -68,40 +68,27 @@ export const TrainTripContext = F.opaque<TrainTripContext>()(TrainTripContext_)
 export type HasTrainTripContext = {
   [TrainTripContextURI]: {
     add: (tt: TrainTrip) => T.UIO<void>
+    save: () => T.UIO<void>
   }
 }
-export const { add } = F.access(TrainTripContext)[TrainTripContextURI]
+export const { add, save } = F.access(TrainTripContext)[TrainTripContextURI]
 
-export const provideTrainTripContext = F.implement(TrainTripContext)({
+export const contextEnv = "@fp-app/effect/traintrip-context/ctx"
+
+export interface Context {
+  [contextEnv]: {
+    ctx: TrainTripContextType
+  }
+}
+
+export const env = {
   [TrainTripContextURI]: {
-    add: (tt: TrainTrip) => {
-      // TODO: make this a request-scoped instance
-      // so the provide should then happen on the Request Level...
-      // so that we also only save once during the request, at the end.
-      const deps = {
-        eventHandler: new DomainEventHandler(
-          (evt) => {
-            console.log("Would publish domain evt, but not implemented", evt)
-            return TE.right(void 0)
-          },
-          (evt) => {
-            console.log("Would retrieve integration evt, but not implemented", evt)
-            return O.none
-          },
-          (eventsMap) => {
-            console.log("Would publish integration evt, but not implemented", eventsMap)
-          },
-        ),
-        // TODO: reuse existing read context
-        readContext: new TrainTripReadContext(),
-        trainTrips: trainTrips(),
-      }
-      const ctx = DiskDBContext(deps)
-      ctx.trainTrips.add(tt)
-      return T.encaseTask(ctx.save)
-    },
+    add: (tt: TrainTrip) =>
+      T.accessM((r: Context) => T.pure(r[contextEnv].ctx.trainTrips.add(tt))),
+    save: () => T.accessM((r: Context) => T.encaseTask(r[contextEnv].ctx.save)),
   },
-})
+}
+export const provideTrainTripContext = F.implement(TrainTripContext)(env)
 
 export default DiskDBContext
 

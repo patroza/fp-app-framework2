@@ -24,14 +24,18 @@ export type HasReadContext = {
 }
 export const { read } = F.access(ReadContext)[ReadContextURI]
 
+export const contextEnv = "@fp-app/effect/traintrip-read-context/ctx"
+
+export interface Context {
+  [contextEnv]: {
+    ctx: TrainTripReadContext
+  }
+}
+
 export const env = {
   [ReadContextURI]: {
-    read: (id: string) => {
-      // TODO: make this a request-scoped instance
-      // so the provide should then happen on the Request Level...
-      const ctx = new TrainTripReadContext()
-      return T.encaseTask(ctx.read(id))
-    },
+    read: (id: string) =>
+      T.accessM((r: Context) => T.encaseTask(r[contextEnv].ctx.read(id))),
   },
 }
 

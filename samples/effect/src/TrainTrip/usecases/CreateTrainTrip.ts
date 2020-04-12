@@ -4,7 +4,7 @@ import {
   ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { Do, Result, pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
+import { Do, Result, pipe, E, NA, t, decodeErrors } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
@@ -22,9 +22,18 @@ const CreateTrainTrip = (input: Input) =>
       TrainTrip.create(trip, preferences, new Date()),
     )
     .doL(({ trainTrip }) => TC.add(trainTrip))
+    // TODO: save should occur automatically as part of succeeding command requests.. or not?
+    .do(TC.save())
     .return(({ trainTrip }) => trainTrip.id)
 
 export default CreateTrainTrip
+
+export const validatePrimitives = (input: unknown) =>
+  pipe(
+    Input.decode(input),
+    E.map((x) => x as Input),
+    E.mapLeft((x) => new ValidationError(decodeErrors(x))),
+  )
 
 export const Input = t.type(
   {
