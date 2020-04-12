@@ -4,7 +4,7 @@ import {
   ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { Do, Result, pipe, E, NA, t, decodeErrors } from "@fp-app/fp-ts-extensions"
+import { Do, Result, pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
@@ -12,6 +12,7 @@ import { get } from "@/TrainTrip/infrastructure/api"
 import { getMonoid } from "fp-ts/lib/Array"
 import { T } from "@/meffect"
 import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
+import { createPrimitiveValidator } from "@/utils"
 
 const CreateTrainTrip = (input: Input) =>
   Do(T.effect)
@@ -28,13 +29,6 @@ const CreateTrainTrip = (input: Input) =>
 
 export default CreateTrainTrip
 
-export const validatePrimitives = (input: unknown) =>
-  pipe(
-    Input.decode(input),
-    E.map((x) => x as Input),
-    E.mapLeft((x) => new ValidationError(decodeErrors(x))),
-  )
-
 export const Input = t.type(
   {
     templateId: t.NonEmptyString,
@@ -45,6 +39,8 @@ export const Input = t.type(
 )
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface Input extends t.TypeOf<typeof Input> {}
+
+export const validatePrimitives = createPrimitiveValidator<Input, typeof Input>(Input)
 
 const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
   pipe(
