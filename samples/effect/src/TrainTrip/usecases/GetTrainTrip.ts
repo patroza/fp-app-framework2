@@ -1,13 +1,8 @@
 import { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
-import { effect as T } from "@matechs/effect"
-import * as O from "fp-ts/lib/Option"
-import { HasReadContext } from "../infrastructure/TrainTripReadContext.disk"
 import * as RC from "../infrastructure/TrainTripReadContext.disk"
 
-const GetTrainTrip: (
-  input: Input,
-) => T.Effect<HasReadContext, never, O.Option<TrainTripView>> = (input) =>
+const GetTrainTrip = (input: Input) =>
   // TODO: validate input.
   RC.read(input.trainTripId)
 
