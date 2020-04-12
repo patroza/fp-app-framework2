@@ -9,8 +9,6 @@ import GetTrainTrip from "./usecases/GetTrainTrip"
 import CreateTrainTrip from "./usecases/CreateTrainTrip"
 import { ValidationError } from "@fp-app/framework"
 import * as RC from "./infrastructure/TrainTripReadContext.disk"
-import { HasTripApi } from "./infrastructure/api"
-import { HasTrainTripContext } from "./infrastructure/TrainTripContext.disk"
 
 const mapErrorToHTTP = T.mapError((err) => {
   if (err instanceof ValidationError) {
@@ -21,9 +19,9 @@ const mapErrorToHTTP = T.mapError((err) => {
 
 // TODO: Without all the hussle..
 const provideRequestScoped = <R, E, A>(
-  i: T.Effect<R, E, A>,
+  i: T.Effect<R & RC.HasReadContext, E, A>,
 ): T.Effect<T.Erase<R, RC.HasReadContext>, E, A> =>
-  T.provideS((r: HasTripApi & HasTrainTripContext) => ({
+  T.provideR((r: R) => ({
     ...r,
     ...RC.env,
   }))(i)
@@ -42,6 +40,7 @@ const getTrainTrip = KOA.route(
           ? KOA.routeResponse(200, result.value)
           : KOA.routeResponse(404, null),
       ),
+    mapErrorToHTTP,
     provideRequestScoped,
   ),
 )
