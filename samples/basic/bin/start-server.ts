@@ -2,9 +2,9 @@ import * as FW from "@fp-app/framework"
 import * as KH from "@fp-app/hosting.koa"
 import Koa from "koa"
 import bodyParser from "koa-bodyparser"
-import * as config from "./config"
-import createRoot from "./root"
-import createRootRouter from "./root.router"
+import * as config from "@/config"
+import createRoot from "@/root"
+import createRootRouter from "@/root.router"
 
 const startServer = async () => {
   const {
