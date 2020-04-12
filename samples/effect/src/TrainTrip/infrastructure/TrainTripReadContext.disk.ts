@@ -1,7 +1,6 @@
 import { ReadContext as RC } from "@fp-app/io.diskdb"
 import { TrainTripView } from "../usecases/GetTrainTrip"
-import { effect as T, freeEnv as F } from "@matechs/effect"
-import * as O from "fp-ts/lib/Option"
+import { T, F, O } from "@/meffect"
 
 export default class TrainTripReadContext extends RC<TrainTripView> {
   constructor() {
