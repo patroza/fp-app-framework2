@@ -11,7 +11,7 @@ import { DomainEventHandler } from "@fp-app/framework"
 import TrainTripReadContext, * as RC from "./infrastructure/TrainTripReadContext.disk"
 import DiskDBContext, * as TTC from "./infrastructure/TrainTripContext.disk"
 import { TE } from "@fp-app/fp-ts-extensions"
-import { joinData, mapErrorToHTTP } from "@/requestHelpers"
+import { joinData, mapErrorToHTTP, captureError } from "@/requestHelpers"
 
 // TODO: Without all the hustle..
 export const provideRequestScoped = <R, E, A>(
@@ -70,6 +70,7 @@ const getTrainTrip = KOA.route(
           : KOA.routeResponse(404, null),
       ),
     mapErrorToHTTP,
+    captureError,
     provideRequestScoped,
   ),
 )
@@ -88,6 +89,7 @@ const createTrainTrip = KOA.route(
       .bindL("result", ({ input }) => CreateTrainTrip.default(input))
       .return(({ result }) => KOA.routeResponse(200, result)),
     mapErrorToHTTP,
+    captureError,
     provideRequestScoped,
   ),
 )
