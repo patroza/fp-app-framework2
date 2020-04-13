@@ -11,7 +11,7 @@ import { DomainEventHandler } from "@fp-app/framework"
 import TrainTripReadContext, * as RC from "./infrastructure/TrainTripReadContext.disk"
 import DiskDBContext, * as TTC from "./infrastructure/TrainTripContext.disk"
 import { TE } from "@fp-app/fp-ts-extensions"
-import { joinData, mapErrorToHTTP, captureError } from "@/requestHelpers"
+import { joinData, handleErrors } from "@/requestHelpers"
 import { createLazy } from "@fp-app/framework/src/utils"
 
 // TODO: Without all the hustle..
@@ -77,8 +77,7 @@ const getTrainTrip = KOA.route(
           ? KOA.routeResponse(200, result.value)
           : KOA.routeResponse(404, null),
       ),
-    mapErrorToHTTP,
-    captureError,
+    handleErrors,
     provideRequestScoped,
   ),
 )
@@ -96,8 +95,7 @@ const createTrainTrip = KOA.route(
       )
       .bindL("result", ({ input }) => CreateTrainTrip.default(input))
       .return(({ result }) => KOA.routeResponse(200, result)),
-    mapErrorToHTTP,
-    captureError,
+    handleErrors,
     provideRequestScoped,
   ),
 )

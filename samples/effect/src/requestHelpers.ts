@@ -14,6 +14,10 @@ import {
   ConnectionException,
 } from "@fp-app/framework"
 import { completed } from "@matechs/effect/lib/effect"
+import { pipe } from "fp-ts/lib/pipeable"
+
+export const handleErrors = <R, E extends ErrorBase, A>(eff: T.Effect<R, E, A>) =>
+  pipe(eff, mapErrorToHTTP, captureError)
 
 export const captureError = <R, E, A>(inp: T.Effect<R, E, A>) =>
   T.foldExit((cause) => {
