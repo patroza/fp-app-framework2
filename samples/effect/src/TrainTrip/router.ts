@@ -8,6 +8,7 @@ import { Do } from "fp-ts-contrib/lib/Do"
 import * as GetTrainTrip from "./usecases/GetTrainTrip"
 import * as CreateTrainTrip from "./usecases/CreateTrainTrip"
 import * as ChangeTrainTrip from "./usecases/ChangeTrainTrip"
+import * as DeleteTrainTrip from "./usecases/DeleteTrainTrip"
 import { DomainEventHandler } from "@fp-app/framework"
 import TrainTripReadContext, * as RC from "./infrastructure/TrainTripReadContext.disk"
 import DiskDBContext, * as TTC from "./infrastructure/TrainTripContext.disk"
@@ -119,7 +120,29 @@ const changeTrainTrip = KOA.route(
   ),
 )
 
-const routes = sequenceT(T.effect)(createTrainTrip, getTrainTrip, changeTrainTrip)
+const deleteTrainTrip = KOA.route(
+  "delete",
+  "/:trainTripId",
+  pipe(
+    Do(T.effect)
+      .bindL("input", () =>
+        KOA.accessReqM((ctx) =>
+          pipe(DeleteTrainTrip.validatePrimitives(joinData(ctx)), T.fromEither),
+        ),
+      )
+      .bindL("result", ({ input }) => DeleteTrainTrip.default(input))
+      .return(({ result }) => KOA.routeResponse(200, result)),
+    handleErrors,
+    provideRequestScoped,
+  ),
+)
+
+const routes = sequenceT(T.effect)(
+  createTrainTrip,
+  getTrainTrip,
+  changeTrainTrip,
+  deleteTrainTrip,
+)
 
 const router = pipe(routes, KOA.withSubRouter("/train-trip"))
 
