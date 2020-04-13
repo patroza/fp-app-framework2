@@ -31,6 +31,7 @@ export const captureError = <R, E, A>(inp: T.Effect<R, E, A>) =>
     } else if (cause.abortedWith instanceof ConnectionException) {
       return T.raiseError(KOA.routeError(504, {}))
     } else {
+      console.error("Unknown error ocurred", cause.abortedWith)
       return T.raiseAbort(cause.abortedWith)
     }
   }, T.pure)(inp) as T.Effect<R, E & KOA.RouteError<unknown>, A>
