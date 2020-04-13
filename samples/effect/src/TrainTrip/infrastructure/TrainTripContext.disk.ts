@@ -68,7 +68,7 @@ export interface TrainTripContext extends F.TypeOf<typeof TrainTripContext_> {}
 
 export const TrainTripContext = F.opaque<TrainTripContext>()(TrainTripContext_)
 
-export const { add, save } = F.access(TrainTripContext)[TrainTripContextURI]
+export const { add, load, save } = F.access(TrainTripContext)[TrainTripContextURI]
 
 export const contextEnv = "@fp-app/effect/traintrip-context/ctx"
 
