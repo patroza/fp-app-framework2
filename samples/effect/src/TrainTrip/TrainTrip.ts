@@ -100,7 +100,13 @@ export default class TrainTrip extends Entity {
     this.registerDomainEvent,
   )
 
-  readonly lock = captureEvents(unwrapResult(this, lock), this.registerDomainEvent)
+  readonly lock = captureEvents(
+    unwrapResult(this, (_this) => (cd: Date) => {
+      const [a, b] = lock(_this)(cd)
+      return tuple(a, b)
+    }),
+    this.registerDomainEvent,
+  )
 
   readonly assignOpportunity = unwrapResult(this, assignOpportunity)
 
@@ -270,10 +276,15 @@ export const proposeChanges = (_this: TrainTrip) =>
 // TODO: we have to return the object from each map
 // TODO: convert back from Imperative to Functional.
 const applyDefinedChanges = (_this: TrainTrip) => ({
+  locked,
   pax,
   startDate,
   travelClass,
-}: StateProposition) => {
+}: StateProposition): E.Either<
+  InvalidStateError | ValidationError,
+  [TrainTrip, Event[], boolean]
+> => {
+  // TODO: use do?
   let events: Event[] = []
   let changed = false
   if (startDate !== undefined) {
@@ -304,13 +315,30 @@ const applyDefinedChanges = (_this: TrainTrip) => ({
       changed = true
     }
   }
+  if (locked !== undefined) {
+    if (_this.lockedAt && !locked) {
+      return E.left(new ValidationError("Cannot unlock a locked"))
+    }
+    if (locked) {
+      // TODO: Date should be moved up.
+      const r = lock(_this)(new Date())
+      _this = r[0]
+      events = events.concat(r[1])
+      if (r[2]) {
+        changed = true
+      }
+    }
+  }
   return ok(tuple(_this, events, changed))
 }
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 export const lock = (_this: TrainTrip) => (currentDate: Date) => {
+  if (_this.lockedAt) {
+    return tuple(_this, [], false)
+  }
   _this = lockedAtL.modify(() => currentDate)(_this)
   const events: Event[] = [new TrainTripStateChanged(_this.id)]
-  return tuple(_this, events)
+  return tuple(_this, events, true)
 }
 
 const startDateL = convertCoolLens(
@@ -452,6 +480,7 @@ export class TrainTripDeleted extends Event {
 }
 
 export interface StateProposition {
+  locked?: boolean
   pax?: PaxDefinition
   startDate?: FutureDate
   travelClass?: TravelClassDefinition

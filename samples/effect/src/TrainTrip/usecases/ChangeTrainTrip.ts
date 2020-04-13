@@ -43,6 +43,7 @@ export default ChangeTrainTrip
 export const Input = t.type(
   {
     trainTripId: t.NonEmptyString,
+    locked: t.union([t.boolean, t.undefined]),
     pax: t.union([Pax, t.undefined]),
     startDate: t.union([t.DateFromISOString, t.undefined]),
     travelClass: t.union([t.NonEmptyString, t.undefined]),
@@ -54,6 +55,7 @@ export interface Input extends t.TypeOf<typeof Input> {}
 export const validatePrimitives = createPrimitiveValidator<Input, typeof Input>(Input)
 
 const validateStateProposition = ({
+  locked,
   pax,
   startDate,
   trainTripId,
@@ -83,7 +85,7 @@ const validateStateProposition = ({
           E.mapLeft(NA.of),
         ),
       })
-      .done(),
+      .return((r) => ({ ...r, locked })),
     E.mapLeft(combineValidationErrors),
   )
 
