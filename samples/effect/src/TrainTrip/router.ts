@@ -12,41 +12,49 @@ import TrainTripReadContext, * as RC from "./infrastructure/TrainTripReadContext
 import DiskDBContext, * as TTC from "./infrastructure/TrainTripContext.disk"
 import { TE } from "@fp-app/fp-ts-extensions"
 import { joinData, mapErrorToHTTP, captureError } from "@/requestHelpers"
+import { createLazy } from "@fp-app/framework/src/utils"
 
 // TODO: Without all the hustle..
 export const provideRequestScoped = <R, E, A>(
   i: T.Effect<R & RC.HasReadContext & TTC.HasTrainTripContext, E, A>,
 ): T.Effect<T.Erase<R, RC.HasReadContext & TTC.HasTrainTripContext>, E, A> =>
   T.provideR((r: R) => {
-    // TODO: Finish the domain event handlers.
-    const eventHandler = new DomainEventHandler(
-      (evt) => {
-        console.log("Would publish domain evt, but not implemented", evt)
-        return TE.right(void 0)
-      },
-      (evt) => {
-        console.log("Would retrieve integration evt, but not implemented", evt)
-        return O.none
-      },
-      (eventsMap) => {
-        console.log("Would publish integration evt, but not implemented", eventsMap)
-      },
-    )
-    const readContext = new TrainTripReadContext()
-    const trainTrips = TTC.trainTrips()
-    const ctx = DiskDBContext({
-      eventHandler,
-      readContext,
-      trainTrips,
+    const readContext = createLazy(() => new TrainTripReadContext())
+    const ctx = createLazy(() => {
+      // TODO: Finish the domain event handlers.
+      const eventHandler = new DomainEventHandler(
+        (evt) => {
+          console.log("Would publish domain evt, but not implemented", evt)
+          return TE.right(void 0)
+        },
+        (evt) => {
+          console.log("Would retrieve integration evt, but not implemented", evt)
+          return O.none
+        },
+        (eventsMap) => {
+          console.log("Would publish integration evt, but not implemented", eventsMap)
+        },
+      )
+      const trainTrips = TTC.trainTrips()
+      return DiskDBContext({
+        eventHandler,
+        readContext: readContext.value,
+        trainTrips,
+      })
     })
+
     return {
       ...r,
       [RC.contextEnv]: {
-        ctx: readContext,
+        get ctx() {
+          return readContext.value
+        },
       },
       ...RC.env,
       [TTC.contextEnv]: {
-        ctx,
+        get ctx() {
+          return ctx.value
+        },
       },
       ...TTC.env,
       // TODO: Mess; reason being that the implementation has an accessor of other R's, but the requestors will receive it preconfigured :S
