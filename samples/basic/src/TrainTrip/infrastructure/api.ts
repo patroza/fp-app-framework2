@@ -165,6 +165,6 @@ export interface TravelPlan {
   startDate: Date
 }
 
-interface Stop {}
+type Stop = {}
 interface TravelPlanStop extends Stop {}
 interface TemplateStop extends Stop {}
