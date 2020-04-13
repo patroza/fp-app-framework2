@@ -34,7 +34,9 @@ const TripApi_ = F.define({
     >(),
   },
 })
-export type TripApi = F.TypeOf<typeof TripApi_>
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface TripApi extends F.TypeOf<typeof TripApi_> {}
 
 export const TripApi = F.opaque<TripApi>()(TripApi_)
 export type HasTripApi = {

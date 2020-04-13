@@ -8,7 +8,7 @@ import { Do, Result, pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
-import { get } from "@/TrainTrip/infrastructure/api"
+import * as API from "@/TrainTrip/infrastructure/api"
 import { getMonoid } from "fp-ts/lib/Array"
 import { T } from "@/meffect"
 import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
@@ -17,7 +17,7 @@ import { createPrimitiveValidator } from "@/utils"
 const CreateTrainTrip = (input: Input) =>
   Do(T.effect)
     .bind("preferences", T.fromEither(validateCreateTrainTripInfo(input)))
-    .bindL("trip", ({ preferences }) => get(preferences.templateId))
+    .bindL("trip", ({ preferences }) => API.get(preferences.templateId))
     // TODO: new Date, should be a date service.. // T.sync(() => new Date())
     .letL("trainTrip", ({ preferences, trip }) =>
       TrainTrip.create(trip, preferences, new Date()),

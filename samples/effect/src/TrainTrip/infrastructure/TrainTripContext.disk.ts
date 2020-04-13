@@ -11,7 +11,7 @@ import { TravelClass } from "../Trip"
 import { TrainTripView } from "../usecases/GetTrainTrip"
 import TrainTripReadContext from "./TrainTripReadContext.disk"
 import PaxDefinition, { Pax } from "../PaxDefinition"
-import { T, F } from "@/meffect"
+import { T, F, O } from "@/meffect"
 
 // Since we assume that saving a valid object, means restoring a valid object
 // we can assume data correctness and can skip normal validation and constructing.
@@ -62,7 +62,8 @@ const TrainTripContext_ = F.define({
     save: F.fn<() => T.UIO<void>>(),
   },
 })
-export type TrainTripContext = F.TypeOf<typeof TrainTripContext_>
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface TrainTripContext extends F.TypeOf<typeof TrainTripContext_> {}
 
 export const TrainTripContext = F.opaque<TrainTripContext>()(TrainTripContext_)
 export type HasTrainTripContext = {
