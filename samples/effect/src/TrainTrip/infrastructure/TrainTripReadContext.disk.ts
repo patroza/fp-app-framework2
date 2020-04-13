@@ -14,7 +14,6 @@ const ReadContext_ = F.define({
     read: F.fn<(id: string) => T.UIO<O.Option<TrainTripView>>>(),
   },
 })
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ReadContext extends F.TypeOf<typeof ReadContext_> {}
 
 export const ReadContext = F.opaque<ReadContext>()(ReadContext_)

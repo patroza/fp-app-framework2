@@ -64,7 +64,6 @@ const TrainTripContext_ = F.define({
     save: F.fn<() => T.UIO<void>>(),
   },
 })
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface TrainTripContext extends F.TypeOf<typeof TrainTripContext_> {}
 
 export const TrainTripContext = F.opaque<TrainTripContext>()(TrainTripContext_)

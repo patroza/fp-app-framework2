@@ -418,7 +418,6 @@ const TravelClassConfiguration = merge(_TravelClassConfiguration, {
 })
 type TravelClassConfigurationType = t.TypeOf<typeof TravelClassConfiguration>
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface TravelClassConfiguration extends TravelClassConfigurationType {}
 
 export { TravelClassConfiguration }

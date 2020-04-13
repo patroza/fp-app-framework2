@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
 import TrainTrip, { Price } from "@/TrainTrip/TrainTrip"
 import {
   createTravelPlanType,
@@ -166,9 +165,6 @@ export interface TravelPlan {
   startDate: Date
 }
 
-// tslint:disable-next-line:no-empty-interface
 interface Stop {}
-// tslint:disable-next-line:no-empty-interface
 interface TravelPlanStop extends Stop {}
-// tslint:disable-next-line:no-empty-interface
 interface TemplateStop extends Stop {}

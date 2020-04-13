@@ -26,17 +26,12 @@ export type createTravelPlanType = (
   info: { pax: PaxDefinition; startDate: Date },
 ) => AsyncResult<string, ApiError>
 
-// tslint:disable-next-line:no-empty-interface
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface ReadonlyContext {}
-
-export interface ReadonlyTrainTripContext extends ReadonlyContext {
+export interface ReadonlyTrainTripContext {
   trainTrips: RecordContext<TrainTrip>
 }
 
 export interface TrainTripContext extends ReadonlyTrainTripContext, UnitOfWork {}
 
-// tslint:disable-next-line:no-empty-interface
 export type RequestContext = RequestContextBase & Record<string, unknown>
 
 export const RequestContextKey = generateKey<RequestContext>("request-context")

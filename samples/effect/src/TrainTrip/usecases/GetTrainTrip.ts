@@ -14,7 +14,6 @@ export const Input = t.type(
   },
   "GetTrainTripInput",
 )
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface Input extends t.TypeOf<typeof Input> {}
 
 export const validatePrimitives = createPrimitiveValidator<Input, typeof Input>(Input)

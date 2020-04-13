@@ -37,7 +37,6 @@ const TravelClass = merge(_TravelClass, {
   fromWire,
 })
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface TravelClass extends t.TypeOf<typeof TravelClass> {}
 
 export { TravelClass }
@@ -57,7 +56,6 @@ const Trip = merge(_Trip, {
   ),
 })
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface Trip extends t.TypeOf<typeof Trip> {}
 
 export default Trip
@@ -119,7 +117,6 @@ const TripWithSelectedTravelClass = merge(_TripWithSelectedTravelClass, {
   ),
 })
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface TripWithSelectedTravelClass
   extends t.TypeOf<typeof TripWithSelectedTravelClass> {}
 

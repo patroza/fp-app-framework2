@@ -23,7 +23,6 @@ const Pax = t.type(
 // TODO: For Validation, we could brand any type as `readonly validated: unique symbol`...
 // Think about the applications.
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface Pax extends t.TypeOf<typeof Pax> {}
 export { Pax }
 
@@ -45,10 +44,6 @@ const PaxNumber = summon((F) =>
 )
 
 type PaxNumber = AType<typeof PaxNumber>
-// gives a TS error..
-// interface PaxNumber extends AType<typeof PaxNumber> {}
-//type PaxNumberR = EType<typeof PaxNumber>
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 
 const _PaxDefinition = summon((F) => {
   type T = {
@@ -104,7 +99,6 @@ const PaxDefinition = merge(_PaxDefinition, {
   ),
 })
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface PaxDefinition extends AType<typeof _PaxDefinition> {}
 
 export default PaxDefinition

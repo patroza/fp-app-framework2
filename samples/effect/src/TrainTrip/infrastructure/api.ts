@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
 import TrainTrip, { Price } from "@/TrainTrip/TrainTrip"
 import {
   createTravelPlanType,
@@ -34,7 +33,6 @@ const TripApi_ = F.define({
   },
 })
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface TripApi extends F.TypeOf<typeof TripApi_> {}
 
 export const TripApi = F.opaque<TripApi>()(TripApi_)
@@ -194,9 +192,6 @@ export interface TravelPlan {
   startDate: Date
 }
 
-// tslint:disable-next-line:no-empty-interface
-interface Stop {}
-// tslint:disable-next-line:no-empty-interface
+type Stop = {}
 interface TravelPlanStop extends Stop {}
-// tslint:disable-next-line:no-empty-interface
 interface TemplateStop extends Stop {}

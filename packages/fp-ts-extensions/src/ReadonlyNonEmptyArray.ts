@@ -5,7 +5,6 @@ import { either } from "fp-ts/lib/Either"
 import { isNone } from "fp-ts/lib/Option"
 import { ReadonlyNonEmptyArray } from "fp-ts/lib/ReadonlyNonEmptyArray"
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ReadonlyNonEmptyArrayC<C extends t.Mixed>
   extends t.Type<
     ReadonlyNonEmptyArray<t.TypeOf<C>>,
