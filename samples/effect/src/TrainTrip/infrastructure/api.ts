@@ -9,9 +9,8 @@ import { ApiError, InvalidStateError, RecordNotFound, utils } from "@fp-app/fram
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
 import Trip, { TravelClass, TripWithSelectedTravelClass } from "../Trip"
-import { E, F, T, O } from "@/meffect"
+import { E, F, T } from "@/meffect"
 import { pipe } from "fp-ts/lib/pipeable"
-import { TrainTripView } from "../usecases/GetTrainTrip"
 import { trampoline, ToolDeps, TE, RE, RTE } from "@fp-app/fp-ts-extensions"
 
 const getTrip = trampoline(
@@ -39,11 +38,7 @@ const TripApi_ = F.define({
 export interface TripApi extends F.TypeOf<typeof TripApi_> {}
 
 export const TripApi = F.opaque<TripApi>()(TripApi_)
-export type HasTripApi = {
-  [TripApiURI]: {
-    get: (id: string) => T.UIO<O.Option<TrainTripView>>
-  }
-}
+
 export const { get } = F.access(TripApi)[TripApiURI]
 
 export const provideTripApi = F.implement(TripApi)({

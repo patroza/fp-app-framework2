@@ -59,6 +59,7 @@ const TrainTripContextURI = "@fp-app/effect/traintrip-context"
 const TrainTripContext_ = F.define({
   [TrainTripContextURI]: {
     add: F.fn<(tt: TrainTrip) => T.UIO<void>>(),
+    load: F.fn<(id: string) => T.UIO<O.Option<TrainTrip>>>(),
     save: F.fn<() => T.UIO<void>>(),
   },
 })
@@ -66,12 +67,7 @@ const TrainTripContext_ = F.define({
 export interface TrainTripContext extends F.TypeOf<typeof TrainTripContext_> {}
 
 export const TrainTripContext = F.opaque<TrainTripContext>()(TrainTripContext_)
-export type HasTrainTripContext = {
-  [TrainTripContextURI]: {
-    add: (tt: TrainTrip) => T.UIO<void>
-    save: () => T.UIO<void>
-  }
-}
+
 export const { add, save } = F.access(TrainTripContext)[TrainTripContextURI]
 
 export const contextEnv = "@fp-app/effect/traintrip-context/ctx"
@@ -86,6 +82,8 @@ export const env = {
   [TrainTripContextURI]: {
     add: (tt: TrainTrip) =>
       T.accessM((r: Context) => T.pure(r[contextEnv].ctx.trainTrips.add(tt))),
+    load: (id: string) =>
+      T.accessM((r: Context) => T.encaseTask(r[contextEnv].ctx.trainTrips.load(id))),
     save: () => T.accessM((r: Context) => T.encaseTask(r[contextEnv].ctx.save)),
   },
 }

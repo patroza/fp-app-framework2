@@ -18,11 +18,7 @@ const ReadContext_ = F.define({
 export interface ReadContext extends F.TypeOf<typeof ReadContext_> {}
 
 export const ReadContext = F.opaque<ReadContext>()(ReadContext_)
-export type HasReadContext = {
-  [ReadContextURI]: {
-    read: (id: string) => T.UIO<O.Option<TrainTripView>>
-  }
-}
+
 export const { read } = F.access(ReadContext)[ReadContextURI]
 
 export const contextEnv = "@fp-app/effect/traintrip-read-context/ctx"

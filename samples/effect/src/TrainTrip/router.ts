@@ -16,8 +16,8 @@ import { createLazy } from "@fp-app/framework/src/utils"
 
 // TODO: Without all the hustle..
 export const provideRequestScoped = <R, E, A>(
-  i: T.Effect<R & RC.HasReadContext & TTC.HasTrainTripContext, E, A>,
-): T.Effect<T.Erase<R, RC.HasReadContext & TTC.HasTrainTripContext>, E, A> =>
+  i: T.Effect<R & RC.ReadContext & TTC.TrainTripContext, E, A>,
+): T.Effect<T.Erase<R, RC.ReadContext & TTC.TrainTripContext>, E, A> =>
   T.provideR((r: R) => {
     const readContext = createLazy(() => new TrainTripReadContext())
     const ctx = createLazy(() => {
@@ -58,7 +58,7 @@ export const provideRequestScoped = <R, E, A>(
       },
       ...TTC.env,
       // TODO: Mess; reason being that the implementation has an accessor of other R's, but the requestors will receive it preconfigured :S
-    } as R & RC.HasReadContext & TTC.HasTrainTripContext
+    } as R & RC.ReadContext & TTC.TrainTripContext
   })(i)
 
 const getTrainTrip = KOA.route(
