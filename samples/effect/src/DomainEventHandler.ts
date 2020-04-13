@@ -1,8 +1,6 @@
-import { AsyncResult, TE, E, O } from "@fp-app/fp-ts-extensions"
-import Event from "../event"
-import { publishType } from "./mediator/publish"
+import { AsyncResult, TE, E } from "@fp-app/fp-ts-extensions"
 import { TaskEither } from "fp-ts/lib/TaskEither"
-import executePostCommitHandlers, { HandlerList } from "./executePostCommitHandlers"
+import { Event, publishType } from "@fp-app/framework"
 
 // tslint:disable-next-line:max-classes-per-file
 export default class DomainEventHandler {
@@ -11,10 +9,7 @@ export default class DomainEventHandler {
 
   constructor(
     private readonly publish: publishType,
-    private readonly getIntegrationHandlers: (evt: Event) => O.Option<HandlerList>,
-    private readonly executeIntegrationEvents: ReturnType<
-      typeof executePostCommitHandlers
-    >,
+    private readonly executeIntegrationEvents: publishType,
   ) {}
 
   commitAndPostEvents = async (
@@ -27,7 +22,10 @@ export default class DomainEventHandler {
       throw new Error("Domain event error: " + r.left)
     }
     await commit()
-    this.publishIntegrationEvents()
+    const r2 = await this.publishIntegrationEvents()
+    if (E.isErr(r2)) {
+      throw new Error("integration event error: " + r2.left)
+    }
   }
 
   private readonly executeEvents = (
@@ -61,20 +59,16 @@ export default class DomainEventHandler {
 
   private readonly publishEvents = (events: Event[]): AsyncResult<void, Error> =>
     TE.chainTasks(events.map((e) => this.publish(e)))
+  private readonly publishIntegrationEventsInt = (
+    events: Event[],
+  ): AsyncResult<void, Error> =>
+    TE.chainTasks(events.map((e) => this.executeIntegrationEvents(e)))
 
-  private readonly publishIntegrationEvents = () => {
+  private readonly publishIntegrationEvents = async () => {
     this.events = []
-    const integrationEventsMap = new Map<Event, HandlerList>()
-    for (const evt of this.processedEvents) {
-      const integrationEventHandlers = this.getIntegrationHandlers(evt)
-      if (O.isNone(integrationEventHandlers)) {
-        continue
-      }
-      integrationEventsMap.set(evt, integrationEventHandlers.value)
-    }
-    if (integrationEventsMap.size) {
-      this.executeIntegrationEvents(integrationEventsMap)
-    }
+    const r = await this.publishIntegrationEventsInt(this.processedEvents)()
     this.processedEvents = []
+
+    return r
   }
 }

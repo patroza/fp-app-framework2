@@ -9,7 +9,6 @@ import * as GetTrainTrip from "./usecases/GetTrainTrip"
 import * as CreateTrainTrip from "./usecases/CreateTrainTrip"
 import * as ChangeTrainTrip from "./usecases/ChangeTrainTrip"
 import * as DeleteTrainTrip from "./usecases/DeleteTrainTrip"
-import { DomainEventHandler } from "@fp-app/framework"
 import TrainTripReadContext, * as RC from "./infrastructure/TrainTripReadContext.disk"
 import DiskDBContext, * as TTC from "./infrastructure/TrainTripContext.disk"
 import { TE } from "@fp-app/fp-ts-extensions"
@@ -19,6 +18,7 @@ import * as PreCommit from "./eventhandlers/preCommit"
 import * as PostCommit from "./eventhandlers/postCommit"
 import * as API from "./infrastructure/api"
 import * as TTP from "./infrastructure/trainTripPublisher.inMemory"
+import DomainEventHandler from "@/DomainEventHandler"
 
 // TODO: Without all the hustle..
 export const provideRequestScoped = <R, E, A>(
@@ -48,7 +48,9 @@ export const provideRequestScoped = <R, E, A>(
       )
       const trainTrips = TTC.trainTrips()
       return DiskDBContext({
-        eventHandler,
+        // TODO
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        eventHandler: eventHandler as any,
         readContext: readContext.value,
         trainTrips,
       })

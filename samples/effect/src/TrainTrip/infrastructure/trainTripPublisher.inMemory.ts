@@ -1,29 +1,30 @@
 import { TrainTripId } from "@/TrainTrip/TrainTrip"
 import { utils } from "@fp-app/framework"
 import { F, T } from "@/meffect"
+import RegisterCloud from "../eventhandlers/RegisterCloud"
+import { provideRequestScoped } from "../router"
 
 /**
  * Poor man's queue, great for testing. Do not use in production, or you may loose queued tasks on server restart
  */
 export default class TrainTripPublisherInMemory {
   private readonly map = new Map<TrainTripId, NodeJS.Timeout>()
-  // TODO: easy way how to inject a configured logger
-  // ie the key is 'configuredLogger', and it will be configured based on the
-  // function/class.
   private readonly logger = utils.getLogger(this.constructor.name)
 
-  //   constructor(
-  //     @paramInject(requestInNewScopeKey) private readonly request: requestInNewScopeType,
-  //   ) {}
-
-  registerIfPending = (trainTripId: TrainTripId) => {
+  registerIfPending = (
+    trainTripId: TrainTripId,
+    req: <R, E, A>(inp: T.Effect<R, E, A>) => T.Effect<unknown, E, A>,
+  ) => {
     if (!this.trainTripIsPending(trainTripId)) {
       return
     }
-    return this.register(trainTripId)
+    return this.register(trainTripId, req)
   }
 
-  register = (trainTripId: TrainTripId) => {
+  register = (
+    trainTripId: TrainTripId,
+    req: <R, E, A>(inp: T.Effect<R, E, A>) => T.Effect<unknown, E, A>,
+  ) => {
     const current = this.map.get(trainTripId)
     if (current) {
       clearTimeout(current)
@@ -31,19 +32,18 @@ export default class TrainTripPublisherInMemory {
     this.map.set(
       trainTripId,
       setTimeout(() => {
-        this.tryPublishTrainTrip(trainTripId)
+        this.tryPublishTrainTrip(trainTripId, req)
       }, CLOUD_PUBLISH_DELAY),
     )
   }
 
-  private tryPublishTrainTrip = async (trainTripId: string) => {
+  private tryPublishTrainTrip = async (
+    trainTripId: string,
+    req: <R, E, A>(inp: T.Effect<R, E, A>) => T.Effect<unknown, E, A>,
+  ) => {
     try {
       this.logger.log(`Publishing TrainTrip to Cloud: ${trainTripId}: TODO`)
-      // Talk to the Cloud Service to sync with Cloud
-      //   await pipe(
-      //     this.request(registerCloud, { trainTripId }),
-      //     TE.mapLeft((err) => this.logger.error(err)),
-      //   )()
+      await T.runToPromise(req(RegisterCloud({ trainTripId })))
     } catch (err) {
       // TODO: really handle error
       this.logger.error(err)
@@ -86,12 +86,28 @@ export interface Context {
   }
 }
 
+// TODO: This inherits everything from the global scope
+// and the current request-scope. It should be fine to pick up
+// the current request-id for logging, but otherwise should be new scope
+// based on global, and fully new request scope.
+// this should also have "all env" as type :/
+
+// what is missing in the global scope providing is the providing for "RegisterCloud"..
+// probably should build an own total scope like we do for the Router!
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const requestInNewScope = (r: any) => <R, E, A>(inp: T.Effect<R, E, A>) =>
+  T.provideS({ ...r })(provideRequestScoped(inp))
+
 export const env = {
   [TrainTripPublisherURI]: {
     register: (id: string) =>
-      T.accessM((r: Context) => T.pure(r[contextEnv].ctx.register(id))),
+      T.accessM((r: Context) =>
+        T.pure(r[contextEnv].ctx.register(id, requestInNewScope(r))),
+      ),
     registerIfPending: (id: string) =>
-      T.accessM((r: Context) => T.pure(r[contextEnv].ctx.registerIfPending(id))),
+      T.accessM((r: Context) =>
+        T.pure(r[contextEnv].ctx.registerIfPending(id, requestInNewScope(r))),
+      ),
   },
 }
 export const provideTrainTripPublisher = F.implement(TrainTripPublisher)(env)
