@@ -38,7 +38,11 @@ export interface RecordContext<T> {
   add: (record: T) => void
   remove: (record: T) => void
   load: RT.ReaderTask<string, O.Option<T>>
+
+  // Workarounds for playing around with immutable Entities that have to be updated
+  // after they're finished changing.
   processEvents: (record: T, events: Event[]) => void
+  registerChanged: (record: T) => void
 }
 
 export const UOWKey = generateKey<UnitOfWork>("unit-of-work")

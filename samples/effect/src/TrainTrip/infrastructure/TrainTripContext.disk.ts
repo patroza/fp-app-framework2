@@ -62,13 +62,14 @@ const TrainTripContext_ = F.define({
     load: F.fn<(id: string) => T.UIO<O.Option<TrainTrip>>>(),
     remove: F.fn<(tt: TrainTrip) => T.UIO<void>>(),
     save: F.fn<() => T.UIO<void>>(),
+    registerChanged: F.fn<(tt: TrainTrip) => T.UIO<void>>(),
   },
 })
 export interface TrainTripContext extends F.TypeOf<typeof TrainTripContext_> {}
 
 export const TrainTripContext = F.opaque<TrainTripContext>()(TrainTripContext_)
 
-export const { add, load, remove, save } = F.access(TrainTripContext)[
+export const { add, load, registerChanged, remove, save } = F.access(TrainTripContext)[
   TrainTripContextURI
 ]
 
@@ -89,6 +90,11 @@ export const env = {
     remove: (tt: TrainTrip) =>
       T.accessM((r: Context) => T.pure(r[contextEnv].ctx.trainTrips.remove(tt))),
     save: () => T.accessM((r: Context) => T.encaseTask(r[contextEnv].ctx.save)),
+
+    registerChanged: (tt: TrainTrip) =>
+      T.accessM((r: Context) =>
+        T.sync(() => r[contextEnv].ctx.trainTrips.registerChanged(tt)),
+      ),
   },
 }
 export const provideTrainTripContext = F.implement(TrainTripContext)(env)

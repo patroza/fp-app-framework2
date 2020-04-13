@@ -462,18 +462,21 @@ export class TrainTripCreated extends Event {
 }
 
 export class UserInputReceived extends Event {
+  readonly type = "UserInputReceived"
   constructor(readonly trainTripId: TrainTripId) {
     super()
   }
 }
 
 export class TrainTripStateChanged extends Event {
+  readonly type = "TrainTripStateChanged"
   constructor(readonly trainTripId: TrainTripId) {
     super()
   }
 }
 
 export class TrainTripDeleted extends Event {
+  readonly type = "TrainTripDeleted"
   constructor(readonly trainTripId: TrainTripId) {
     super()
   }

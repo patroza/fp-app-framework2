@@ -4,6 +4,7 @@ import {
   ValidationError,
   FieldValidationError,
   RecordNotFound,
+  Event,
 } from "@fp-app/framework"
 import { pipe, E, NA, t, toVoid, O } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
@@ -14,8 +15,10 @@ import { getMonoid } from "fp-ts/lib/Array"
 import { flow } from "fp-ts/lib/function"
 import { T } from "@/meffect"
 import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
-import TrainTrip from "../TrainTrip"
+import TrainTrip, { proposeChanges } from "../TrainTrip"
 import { createPrimitiveValidator } from "@/utils"
+import { handlers } from "../eventhandlers/preCommit"
+import { sequenceT } from "fp-ts/lib/Apply"
 
 const ChangeTrainTrip = (input: Input) =>
   Do(T.effect)
@@ -32,13 +35,25 @@ const ChangeTrainTrip = (input: Input) =>
         ),
       ),
     )
-    .doL(({ proposal, trainTrip }) =>
-      pipe(trainTrip.proposeChanges(proposal), T.fromEither),
+    .bindL("result", ({ proposal, trainTrip }) =>
+      pipe(proposeChanges(trainTrip)(proposal), T.fromEither),
     )
+    // TODO: move to Router and unify?
+    // e.g response will be: { result, events, entities }
+    .doL(({ result: [, events] }) => handleEvents(events))
+    // Must execute after handling events, before saving
+    // maybe combine into save(...entities)?
+    .doL(({ result: [tt] }) => TC.registerChanged(tt))
     .do(TC.save())
     .return(toVoid)
 
 export default ChangeTrainTrip
+
+const handleEvents = <TEvents extends Event[]>(events: TEvents) =>
+  sequenceT(T.effect)(
+    events.map((x) => handlers(x as any))[0],
+    ...events.map((x) => handlers(x as any)).slice(1),
+  )
 
 export const Input = t.type(
   {

@@ -25,6 +25,10 @@ export default class DiskRecordContext<T extends DBRecord>
 
   // Test with immutable approach.
   readonly processEvents = (record: T, events: FW.Event[]) => {
+    this.registerChanged(record)
+    this.events = this.events.concat(events)
+  }
+  readonly registerChanged = (record: T) => {
     const original = this.cache.get(record.id)
     FW.assertIsNotUndefined(original)
     // Using Object.assign would mean that the object doesn't obey the immutability laws strictly.
@@ -32,7 +36,6 @@ export default class DiskRecordContext<T extends DBRecord>
     // This however makes the cache kind of useless; the same entity could exist between multiple load calls etc
     // however interestingly in practice that doesn't seem to occur anyway...
     this.cache.set(record.id, { version: original.version, data: record })
-    this.events = this.events.concat(events)
   }
 
   readonly remove = (record: T) => {
