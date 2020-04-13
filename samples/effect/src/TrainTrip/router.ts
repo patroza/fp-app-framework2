@@ -15,20 +15,23 @@ import DiskDBContext, * as TTC from "./infrastructure/TrainTripContext.disk"
 import { TE } from "@fp-app/fp-ts-extensions"
 import { joinData, handleErrors } from "@/requestHelpers"
 import { createLazy } from "@fp-app/framework/src/utils"
+import { handlers } from "./eventhandlers/preCommit"
+import * as API from "./infrastructure/api"
 
 // TODO: Without all the hustle..
 export const provideRequestScoped = <R, E, A>(
   i: T.Effect<R & RC.ReadContext & TTC.TrainTripContext, E, A>,
-): T.Effect<T.Erase<R, RC.ReadContext & TTC.TrainTripContext>, E, A> =>
-  T.provideR((r: R) => {
+): T.Effect<T.Erase<R, RC.ReadContext & TTC.TrainTripContext> & API.TripApi, E, A> =>
+  T.provideR((r: R & API.TripApi) => {
     const readContext = createLazy(() => new TrainTripReadContext())
     const ctx = createLazy(() => {
       // TODO: Finish the domain event handlers.
       const eventHandler = new DomainEventHandler(
-        (evt) => {
-          console.log("Would publish domain evt, but not implemented", evt)
-          return TE.right(void 0)
-        },
+        (evt) =>
+          TE.tryCatch(
+            () => T.runToPromise(T.provideAll(env)(handlers(evt as any))),
+            (err) => err as Error,
+          ),
         (evt) => {
           console.log("Would retrieve integration evt, but not implemented", evt)
           return O.none
@@ -45,7 +48,7 @@ export const provideRequestScoped = <R, E, A>(
       })
     })
 
-    return {
+    const env = {
       ...r,
       [RC.contextEnv]: {
         get ctx() {
@@ -60,7 +63,8 @@ export const provideRequestScoped = <R, E, A>(
       },
       ...TTC.env,
       // TODO: Mess; reason being that the implementation has an accessor of other R's, but the requestors will receive it preconfigured :S
-    } as R & RC.ReadContext & TTC.TrainTripContext
+    } as R & API.TripApi & RC.ReadContext & TTC.TrainTripContext
+    return env
   })(i)
 
 const getTrainTrip = KOA.route(

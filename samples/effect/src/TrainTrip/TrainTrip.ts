@@ -456,6 +456,7 @@ These event names look rather technical (like CRUD) and not very domain driven
 */
 
 export class TrainTripCreated extends Event {
+  readonly type = "TrainTripCreated"
   constructor(readonly trainTripId: TrainTripId) {
     super()
   }

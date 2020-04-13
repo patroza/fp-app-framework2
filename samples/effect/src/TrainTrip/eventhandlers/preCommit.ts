@@ -2,6 +2,7 @@ import TrainTrip, {
   TrainTripStateChanged,
   UserInputReceived,
   TrainTripDeleted,
+  TrainTripCreated,
 } from "@/TrainTrip/TrainTrip"
 import { RecordNotFound } from "@fp-app/framework"
 import { pipe, Do, toVoid, O } from "@fp-app/fp-ts-extensions"
@@ -52,16 +53,21 @@ const OnTrainTripStateChanged = (event: TrainTripStateChanged) =>
     .doL(({ trainTrip, trip }) => T.sync(() => trainTrip.updateTrip(trip)))
     .return(toVoid)
 
+const notImplemented = (evt: Events) =>
+  T.sync(() => console.log(`${evt.type} event not implemented`))
+
 const eventHandlers = {
   TrainTripStateChanged: OnTrainTripStateChanged,
-  TrainTripDeleted: (_: TrainTripDeleted) => T.pure("Not implemented"),
-  UserInputReceived: (_: UserInputReceived) => T.pure("Not implemented"),
+  TrainTripDeleted: notImplemented,
+  UserInputReceived: notImplemented,
+  TrainTripCreated: notImplemented,
 }
-type Events = TrainTripStateChanged | TrainTripDeleted | UserInputReceived
-export const handlers = (evt: Events) => {
-  console.log(evt)
-  return eventHandlers[evt.type](evt as any)
-}
+type Events =
+  | TrainTripCreated
+  | TrainTripStateChanged
+  | TrainTripDeleted
+  | UserInputReceived
+export const handlers = (evt: Events) => eventHandlers[evt.type](evt as any)
 
 // createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
 //     /* on */ TrainTripStateChanged,
