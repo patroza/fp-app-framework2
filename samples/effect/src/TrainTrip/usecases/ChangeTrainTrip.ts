@@ -17,7 +17,8 @@ import { T } from "@/meffect"
 import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import TrainTrip, { proposeChanges } from "../TrainTrip"
 import { createPrimitiveValidator } from "@/utils"
-import { handlers } from "../eventhandlers/preCommit"
+import * as PreCommit from "../eventhandlers/preCommit"
+import * as PostCommit from "../eventhandlers/postCommit"
 import { sequenceT } from "fp-ts/lib/Apply"
 
 const ChangeTrainTrip = (input: Input) =>
@@ -45,14 +46,21 @@ const ChangeTrainTrip = (input: Input) =>
     // maybe combine into save(...entities)?
     .doL(({ result: [tt] }) => TC.registerChanged(tt))
     .do(TC.save())
+    .doL(({ result: [, events] }) => handlePostCommitEvents(events))
     .return(toVoid)
 
 export default ChangeTrainTrip
 
 const handleEvents = <TEvents extends Event[]>(events: TEvents) =>
   sequenceT(T.effect)(
-    events.map((x) => handlers(x as any))[0],
-    ...events.map((x) => handlers(x as any)).slice(1),
+    events.map((x) => PreCommit.handlers(x as any))[0],
+    ...events.map((x) => PreCommit.handlers(x as any)).slice(1),
+  )
+
+const handlePostCommitEvents = <TEvents extends Event[]>(events: TEvents) =>
+  sequenceT(T.effect)(
+    events.map((x) => PostCommit.handlers(x as any))[0],
+    ...events.map((x) => PostCommit.handlers(x as any)).slice(1),
   )
 
 export const Input = t.type(

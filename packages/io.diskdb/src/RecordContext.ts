@@ -1,6 +1,6 @@
 import * as FW from "@fp-app/framework"
 import { pipe, O, RT, T, TO } from "@fp-app/fp-ts-extensions"
-import PLF from "proper-lockfile"
+import * as PLF from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
 import { flow } from "fp-ts/lib/function"
 import { sequenceT } from "fp-ts/lib/Apply"

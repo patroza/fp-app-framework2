@@ -30,6 +30,7 @@ const TripApi_ = F.define({
     get: F.fn<
       (id: string) => T.IO<ApiError | InvalidStateError, TripWithSelectedTravelClass>
     >(),
+    sendCloudSync: F.fn<(tt: TrainTrip) => T.IO<ApiError, string>>(),
   },
 })
 
@@ -37,7 +38,7 @@ export interface TripApi extends F.TypeOf<typeof TripApi_> {}
 
 export const TripApi = F.opaque<TripApi>()(TripApi_)
 
-export const { get } = F.access(TripApi)[TripApiURI]
+export const { get, sendCloudSync } = F.access(TripApi)[TripApiURI]
 
 export const provideTripApi = F.implement(TripApi)({
   [TripApiURI]: {
@@ -46,6 +47,7 @@ export const provideTripApi = F.implement(TripApi)({
       const get = getTrip({ getTemplate: getTemplateFake() })
       return T.encaseTaskEither(get(id))
     },
+    sendCloudSync: (tt: TrainTrip) => T.encaseTaskEither(sendCloudSyncFake()(tt)),
   },
 })
 

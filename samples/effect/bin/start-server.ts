@@ -4,6 +4,7 @@ import * as KOA from "@matechs/koa"
 // import { Do } from "fp-ts-contrib/lib/Do"
 import { pipe } from "fp-ts/lib/pipeable"
 import * as TA from "@/TrainTrip/infrastructure/api"
+import * as TTP from "@/TrainTrip/infrastructure/trainTripPublisher.inMemory"
 
 const port = 3535
 
@@ -16,7 +17,16 @@ const program = pipe(
 )
 
 T.run(
-  pipe(program, KOA.provideKoa, TA.provideTripApi),
+  pipe(
+    program,
+    KOA.provideKoa,
+    TA.provideTripApi,
+    TTP.provideTrainTripPublisher,
+    T.provideR((r) => ({
+      ...r,
+      [TTP.contextEnv]: { ctx: new TTP.default() },
+    })),
+  ),
   E.fold(
     (server) => {
       console.log(`Listening on port ${port}`)

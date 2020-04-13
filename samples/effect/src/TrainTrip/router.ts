@@ -15,30 +15,36 @@ import DiskDBContext, * as TTC from "./infrastructure/TrainTripContext.disk"
 import { TE } from "@fp-app/fp-ts-extensions"
 import { joinData, handleErrors } from "@/requestHelpers"
 import { createLazy } from "@fp-app/framework/src/utils"
-import { handlers } from "./eventhandlers/preCommit"
+import * as PreCommit from "./eventhandlers/preCommit"
+import * as PostCommit from "./eventhandlers/postCommit"
 import * as API from "./infrastructure/api"
+import * as TTP from "./infrastructure/trainTripPublisher.inMemory"
 
 // TODO: Without all the hustle..
 export const provideRequestScoped = <R, E, A>(
   i: T.Effect<R & RC.ReadContext & TTC.TrainTripContext, E, A>,
-): T.Effect<T.Erase<R, RC.ReadContext & TTC.TrainTripContext> & API.TripApi, E, A> =>
-  T.provideR((r: R & API.TripApi) => {
+): T.Effect<
+  T.Erase<R, RC.ReadContext & TTC.TrainTripContext> &
+    API.TripApi &
+    TTP.TrainTripPublisher,
+  E,
+  A
+> =>
+  T.provideR((r: R & TTP.TrainTripPublisher & API.TripApi) => {
     const readContext = createLazy(() => new TrainTripReadContext())
     const ctx = createLazy(() => {
       // TODO: Finish the domain event handlers.
       const eventHandler = new DomainEventHandler(
         (evt) =>
           TE.tryCatch(
-            () => T.runToPromise(T.provideAll(env)(handlers(evt as any))),
+            () => T.runToPromise(T.provideAll(env)(PreCommit.handlers(evt as any))),
             (err) => err as Error,
           ),
-        (evt) => {
-          console.log("Would retrieve integration evt, but not implemented", evt)
-          return O.none
-        },
-        (eventsMap) => {
-          console.log("Would publish integration evt, but not implemented", eventsMap)
-        },
+        (evt) =>
+          TE.tryCatch(
+            () => T.runToPromise(T.provideAll(env)(PostCommit.handlers(evt as any))),
+            (err) => err as Error,
+          ),
       )
       const trainTrips = TTC.trainTrips()
       return DiskDBContext({
@@ -63,7 +69,11 @@ export const provideRequestScoped = <R, E, A>(
       },
       ...TTC.env,
       // TODO: Mess; reason being that the implementation has an accessor of other R's, but the requestors will receive it preconfigured :S
-    } as R & API.TripApi & RC.ReadContext & TTC.TrainTripContext
+    } as R &
+      TTP.TrainTripPublisher &
+      API.TripApi &
+      RC.ReadContext &
+      TTC.TrainTripContext
     return env
   })(i)
 

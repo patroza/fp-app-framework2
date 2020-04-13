@@ -8,7 +8,6 @@ import { RecordNotFound } from "@fp-app/framework"
 import { pipe, Do, toVoid, O } from "@fp-app/fp-ts-extensions"
 import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import * as API from "@/TrainTrip/infrastructure/api"
-
 import { T } from "@/meffect"
 
 // import { U } from "ts-toolbelt"
@@ -54,20 +53,26 @@ const OnTrainTripStateChanged = (event: TrainTripStateChanged) =>
     .return(toVoid)
 
 const notImplemented = (evt: Events) =>
-  T.sync(() => console.log(`${evt.type} event not implemented`))
+  T.sync(() => console.log(`${evt.type} domain event not implemented`))
 
 const eventHandlers = {
   TrainTripStateChanged: OnTrainTripStateChanged,
-  TrainTripDeleted: notImplemented,
-  UserInputReceived: notImplemented,
-  TrainTripCreated: notImplemented,
 }
 type Events =
   | TrainTripCreated
   | TrainTripStateChanged
   | TrainTripDeleted
   | UserInputReceived
-export const handlers = (evt: Events) => eventHandlers[evt.type](evt as any)
+
+export const handlers = (evt: Events) => {
+  const keys = Object.keys(eventHandlers)
+  if (keys.includes(evt.type)) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    return eventHandlers[evt.type as keyof typeof eventHandlers](evt as any)
+  } else {
+    return notImplemented(evt)
+  }
+}
 
 // createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
 //     /* on */ TrainTripStateChanged,
