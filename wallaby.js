@@ -7,12 +7,16 @@ module.exports = function (w) {
       '!**/*.d.ts',
       '!**/*.test.ts',
       '!**/node_modules',
+      '!node_modules/',
+      '!.git/',
     ],
 
     tests: [
       '**/*.test.ts',
       '!samples/experiment/**/*.test.ts',
       '!**/node_modules',
+      '!node_modules/',
+      '!.git/',
     ],
     // for node.js tests you need to set env property as well
     // https://wallabyjs.com/docs/integration/node.html
