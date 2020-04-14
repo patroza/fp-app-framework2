@@ -13,7 +13,7 @@ import { getMonoid } from "fp-ts/lib/Array"
 import { flow } from "fp-ts/lib/function"
 import { T } from "@/meffect"
 import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
-import * as TrainTrip from "../TrainTrip"
+import TrainTrip from "../TrainTrip"
 import { createPrimitiveValidator } from "@/utils"
 import { saveT } from "../infrastructure/saveTrainTrip"
 

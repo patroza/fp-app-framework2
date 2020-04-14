@@ -2,7 +2,7 @@ import { Do, toVoid } from "@fp-app/fp-ts-extensions"
 import { T } from "@/meffect"
 import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import * as API from "@/TrainTrip/infrastructure/api"
-import * as TrainTrip from "@/TrainTrip/TrainTrip"
+import TrainTrip from "@/TrainTrip/TrainTrip"
 import { saveT } from "../infrastructure/saveTrainTrip"
 
 const RegisterCloud = (input: Input) =>

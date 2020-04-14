@@ -1,4 +1,4 @@
-import * as TrainTrip from "@/TrainTrip/TrainTrip"
+import TrainTrip, { Events, TrainTripStateChanged } from "@/TrainTrip/TrainTrip"
 import { Do } from "@fp-app/fp-ts-extensions"
 import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import * as API from "@/TrainTrip/infrastructure/api"
@@ -25,7 +25,7 @@ import { T } from "@/meffect"
 //     OnTrainTripStateChanged,
 //   })
 
-const OnTrainTripStateChanged = (event: TrainTrip.TrainTripStateChanged) =>
+const OnTrainTripStateChanged = (event: TrainTripStateChanged) =>
   Do(T.effect)
     .bind("trainTrip", TC.loadE(event.trainTripId))
     .bindL("trip", ({ trainTrip }) =>
@@ -43,11 +43,6 @@ const notImplemented = (evt: Events) =>
 const eventHandlers = {
   TrainTripStateChanged: OnTrainTripStateChanged,
 }
-type Events =
-  | TrainTrip.TrainTripCreated
-  | TrainTrip.TrainTripStateChanged
-  | TrainTrip.TrainTripDeleted
-  | TrainTrip.UserInputReceived
 
 export const handlers = (evt: Events) => {
   const keys = Object.keys(eventHandlers)

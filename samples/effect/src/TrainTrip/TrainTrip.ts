@@ -2,7 +2,6 @@
 import { Lens } from "monocle-ts"
 
 import {
-  Entity,
   ForbiddenError,
   InvalidStateError,
   ValidationError,
@@ -37,61 +36,16 @@ import {
   mapLeft,
 } from "@fp-app/fp-ts-extensions/src/Either"
 
-export default class TrainTrip extends Entity {
-  /** the primary way to create a new TrainTrip */
-  static create = (
-    trip: TripWithSelectedTravelClass,
-    { pax, startDate }: { startDate: FutureDate; pax: PaxDefinition },
-    currentDate: Date,
-  ) => {
-    const travelClassConfiguration = trip.travelClasses.map((x) =>
-      unsafeUnwrap(TravelClassConfiguration.create(x)),
-    )
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const currentTravelClassConfiguration = travelClassConfiguration.find(
-      (x) => x.travelClass.name === trip.currentTravelClass.name,
-    )!
-
-    const t = new TrainTrip(
-      utils.generateUuid(),
-      pax,
-      startDate,
-      travelClassConfiguration,
-      currentTravelClassConfiguration,
-      currentDate,
-    )
-    const events = [new TrainTripCreated(t.id)] as const
-
-    return [t, events] as const
-  }
-
+interface TrainTrip {
   readonly opportunityId?: string
   readonly lockedAt?: Date
 
-  /** use TrainTrip.create() instead */
-  constructor(
-    id: string,
-    readonly pax: PaxDefinition,
-    readonly startDate: Date,
-    readonly travelClassConfiguration: TravelClassConfiguration[] = [],
-    readonly currentTravelClassConfiguration: TravelClassConfiguration,
-    readonly createdAt: Date,
-    rest?: Partial<
-      Omit<
-        { -readonly [key in keyof TrainTrip]: TrainTrip[key] },
-        | "id"
-        | "pax"
-        | "startDate"
-        | "travelClassConfiguration"
-        | "currentTravelClassConfiguration"
-        | "createdAt"
-      >
-    >,
-    // rest?: Partial<{ -readonly [key in keyof TrainTrip]: TrainTrip[key] }>,
-  ) {
-    super(id)
-    Object.assign(this, rest)
-  }
+  readonly id: string
+  readonly pax: PaxDefinition
+  readonly startDate: Date
+  readonly travelClassConfiguration: TravelClassConfiguration[]
+  readonly currentTravelClassConfiguration: TravelClassConfiguration
+  readonly createdAt: Date
 }
 
 // changePax = (pax: PaxDefinition) =>
@@ -102,7 +56,7 @@ export default class TrainTrip extends Entity {
 //     map(this.createChangeEvents),
 //   )
 
-export const changeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">>(
+const changeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">>(
   _this: This,
 ) => (startDate: FutureDate) =>
   pipe(
@@ -114,7 +68,7 @@ export const changeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">
     ),
   )
 
-export const changeTravelClass = (_this: TrainTrip) =>
+const changeTravelClass = (_this: TrainTrip) =>
   trampoline(
     (_: ToolDeps<ForbiddenError | InvalidStateError>) => (
       travelClass: TravelClassDefinition,
@@ -145,12 +99,12 @@ export const changeTravelClass = (_this: TrainTrip) =>
 ////////////
 
 const opportunityIdL = Lens.fromPath<TrainTrip>()(["opportunityId"])
-export const assignOpportunity = (_this: TrainTrip) => (opportunityId: string) => {
+const assignOpportunity = (_this: TrainTrip) => (opportunityId: string) => {
   _this = opportunityIdL.modify(() => opportunityId)(_this)
   return tuple(_this, [] as Event[])
 }
 
-export const del = (_this: TrainTrip) => () => {
+const del = (_this: TrainTrip) => () => {
   return tuple(new TrainTripDeleted(_this.id))
 }
 
@@ -163,7 +117,7 @@ const currentTravelClassConfigurationL = Lens.fromPath<TrainTrip>()([
   "currentTravelClassConfiguration",
 ])
 
-export const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
+const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
   // This will clear all configurations upon trip update
   // TODO: Investigate a resolution mechanism to update existing configurations, depends on business case ;-)
   _this = travelClassConfigurationL.modify(() =>
@@ -194,7 +148,7 @@ export const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
   return tuple(_this, [] as Event[])
 }
 
-export const proposeChanges = (_this: TrainTrip) =>
+const proposeChanges = (_this: TrainTrip) =>
   trampoline(
     (_: ToolDeps<ValidationError | InvalidStateError | ForbiddenError>) => (
       state: StateProposition,
@@ -283,7 +237,7 @@ const applyDefinedChanges = (_this: TrainTrip) => ({
   return ok(tuple(_this, events, changed))
 }
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
-export const lock = (_this: TrainTrip) => (currentDate: Date) => {
+const lock = (_this: TrainTrip) => (currentDate: Date) => {
   if (_this.lockedAt) {
     return tuple(_this, [], false)
   }
@@ -336,7 +290,31 @@ const intChangeTravelClass = (_this: TrainTrip) => (
   return ok([_this, events, true])
 }
 
-export const create = TrainTrip.create
+const create = (
+  trip: TripWithSelectedTravelClass,
+  { pax, startDate }: { startDate: FutureDate; pax: PaxDefinition },
+  currentDate: Date,
+): readonly [TrainTrip, readonly Event[]] => {
+  const travelClassConfiguration = trip.travelClasses.map((x) =>
+    unsafeUnwrap(TravelClassConfiguration.create(x)),
+  )
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const currentTravelClassConfiguration = travelClassConfiguration.find(
+    (x) => x.travelClass.name === trip.currentTravelClass.name,
+  )!
+
+  const t: TrainTrip = {
+    id: utils.generateUuid(),
+    pax,
+    startDate,
+    travelClassConfiguration,
+    currentTravelClassConfiguration,
+    createdAt: currentDate,
+  }
+  const events = [new TrainTripCreated(t.id)] as const
+
+  return [t, events] as const
+}
 
 const confirmUserChangeAllowed = <This extends Pick<TrainTrip, "lockedAt" | "id">>(
   _this: This,
@@ -345,8 +323,21 @@ const confirmUserChangeAllowed = <This extends Pick<TrainTrip, "lockedAt" | "id"
     ? err(new ForbiddenError(`No longer allowed to change TrainTrip ${_this.id}`))
     : success()
 
-export const isLocked = <This extends Pick<TrainTrip, "lockedAt">>(_this: This) =>
+const isLocked = <This extends Pick<TrainTrip, "lockedAt">>(_this: This) =>
   Boolean(_this.lockedAt)
+
+const TrainTrip = {
+  create,
+  isLocked,
+  changeStartDate,
+  changeTravelClass,
+  proposeChanges,
+  assignOpportunity,
+  del,
+  updateTrip,
+}
+
+export default TrainTrip
 
 const createChangeEvents = <This extends Pick<TrainTrip, "id">>(_this: This) =>
   function* (changed: boolean) {
@@ -407,6 +398,12 @@ export { TravelClassConfiguration }
 These event names look rather technical (like CRUD) and not very domain driven
 
 */
+
+export type Events =
+  | TrainTripCreated
+  | TrainTripStateChanged
+  | TrainTripDeleted
+  | UserInputReceived
 
 export class TrainTripCreated extends Event {
   readonly type = "TrainTripCreated"

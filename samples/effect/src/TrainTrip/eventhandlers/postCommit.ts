@@ -2,6 +2,7 @@ import {
   TrainTripCreated,
   TrainTripStateChanged,
   UserInputReceived,
+  Events,
 } from "@/TrainTrip/TrainTrip"
 import { T } from "@/meffect"
 import * as TTP from "@/TrainTrip/infrastructure/trainTripPublisher.inMemory"
@@ -18,8 +19,6 @@ import * as TTP from "@/TrainTrip/infrastructure/trainTripPublisher.inMemory"
 
 const notImplemented = (evt: Events) =>
   T.sync(() => console.log(`${evt.type} integration event not implemented`))
-
-type Events = TrainTripCreated | TrainTripStateChanged | UserInputReceived
 
 export const handlers = (evt: Events) => {
   const keys = Object.keys(eventHandlers)

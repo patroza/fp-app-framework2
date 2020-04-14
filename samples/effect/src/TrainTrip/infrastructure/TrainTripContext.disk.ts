@@ -1,10 +1,6 @@
-import TrainTrip, {
-  isLocked,
-  Price,
-  TravelClassConfiguration,
-} from "@/TrainTrip/TrainTrip"
+import TrainTrip, { TravelClassConfiguration, Price } from "@/TrainTrip/TrainTrip"
 import { TrainTripContext as TrainTripContextType } from "@/TrainTrip/usecases/types"
-import { DomainEventHandler, Event, configure, RecordNotFound } from "@fp-app/framework"
+import { configure, RecordNotFound } from "@fp-app/framework"
 import * as diskdb from "@fp-app/io.diskdb"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { TravelClass } from "../Trip"
@@ -18,11 +14,8 @@ import { pipe } from "fp-ts/lib/pipeable"
 // we can assume data correctness and can skip normal validation and constructing.
 // until proven otherwise.
 const DiskDBContext = configure(
-  function TrainTripContext({ eventHandler, readContext, trainTrips }) {
+  function TrainTripContext({ readContext, trainTrips }) {
     let disposed = false
-    const getAndClearEvents = (): Event[] => {
-      return trainTrips.intGetAndClearEvents()
-    }
     const save = () =>
       trainTrips.intSave(
         (i) => readContext.create(i.id, TrainTripToView(i)),
@@ -30,19 +23,17 @@ const DiskDBContext = configure(
       )
     const dispose = () => (disposed = true)
     return {
-      getAndClearEvents,
       save: () => {
         if (disposed) {
           throw new Error("The context is already disposed")
         }
-        return eventHandler.commitAndPostEvents(getAndClearEvents, save)
+        return save()
       },
       trainTrips,
       dispose,
     } as TrainTripContextType
   },
   () => ({
-    eventHandler: DomainEventHandler,
     readContext: TrainTripReadContext,
     trainTrips,
   }),
@@ -125,7 +116,7 @@ const TrainTripToView = (trip: TrainTrip): TrainTripView => {
   return {
     id,
 
-    allowUserModification: !isLocked(trip),
+    allowUserModification: !TrainTrip.isLocked(trip),
     createdAt,
 
     pax,
@@ -137,9 +128,7 @@ const TrainTripToView = (trip: TrainTrip): TrainTripView => {
   }
 }
 
-// Need access to private events here..
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const serializeTrainTrip = ({ events: _, ...rest }: any) => diskdb.stringify(rest)
+const serializeTrainTrip = (tt: TrainTrip) => diskdb.stringify(tt)
 
 function deserializeDbTrainTrip(serializedTrainTrip: string) {
   const {
@@ -147,10 +136,10 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
     currentTravelClassConfiguration,
     id,
     lockedAt,
+    opportunityId,
     pax,
     startDate,
     travelClassConfiguration,
-    ...rest
   } = diskdb.parse<TrainTripDTO>(serializedTrainTrip)
   // what do we do? we restore all properties that are just property bags
   // and we recreate proper object graph for properties that have behaviors
@@ -159,21 +148,19 @@ function deserializeDbTrainTrip(serializedTrainTrip: string) {
   const travelClassConfigurations = travelClassConfiguration.map(
     mapTravelClassConfigurationDTO,
   )
-  const trainTrip = new TrainTrip(
+  const trainTrip: TrainTrip = {
     id,
-    pax as PaxDefinition,
-    new Date(startDate),
-    travelClassConfigurations,
+    pax: pax as PaxDefinition,
+    startDate: new Date(startDate),
+    travelClassConfiguration: travelClassConfigurations,
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    travelClassConfigurations.find(
+    currentTravelClassConfiguration: travelClassConfigurations.find(
       (x) => x.travelClass.name === currentTravelClassConfiguration.travelClass.name,
     )!,
-    new Date(createdAt),
-    {
-      ...rest,
-      lockedAt: lockedAt ? new Date(lockedAt) : undefined,
-    },
-  )
+    createdAt: new Date(createdAt),
+    lockedAt: lockedAt ? new Date(lockedAt) : undefined,
+    opportunityId,
+  }
 
   return trainTrip
 }
@@ -199,6 +186,7 @@ interface TrainTripDTO {
   id: string
   startDate: string
   lockedAt?: string
+  opportunityId?: string
   pax: Pax
   travelClassConfiguration: TravelClassConfigurationDTO[]
 }

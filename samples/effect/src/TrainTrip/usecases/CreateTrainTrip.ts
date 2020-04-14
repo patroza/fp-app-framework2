@@ -7,7 +7,7 @@ import {
 import { Do, Result, pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
-import * as TrainTrip from "../TrainTrip"
+import TrainTrip from "../TrainTrip"
 import * as API from "@/TrainTrip/infrastructure/api"
 import { getMonoid } from "fp-ts/lib/Array"
 import { T } from "@/meffect"

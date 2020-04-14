@@ -11,14 +11,10 @@ import * as ChangeTrainTrip from "./usecases/ChangeTrainTrip"
 import * as DeleteTrainTrip from "./usecases/DeleteTrainTrip"
 import TrainTripReadContext, * as RC from "./infrastructure/TrainTripReadContext.disk"
 import DiskDBContext, * as TTC from "./infrastructure/TrainTripContext.disk"
-import { TE } from "@fp-app/fp-ts-extensions"
 import { joinData, handleErrors } from "@/requestHelpers"
 import { createLazy } from "@fp-app/framework/src/utils"
-import * as PreCommit from "./eventhandlers/preCommit"
-import * as PostCommit from "./eventhandlers/postCommit"
 import * as API from "./infrastructure/api"
 import * as TTP from "./infrastructure/trainTripPublisher.inMemory"
-import DomainEventHandler from "@/DomainEventHandler"
 
 // TODO: Without all the hustle..
 export const provideRequestScoped = <R, E, A>(
@@ -33,24 +29,24 @@ export const provideRequestScoped = <R, E, A>(
   T.provideR((r: R & TTP.TrainTripPublisher & API.TripApi) => {
     const readContext = createLazy(() => new TrainTripReadContext())
     const ctx = createLazy(() => {
-      // TODO: Finish the domain event handlers.
-      const eventHandler = new DomainEventHandler(
-        (evt) =>
-          TE.tryCatch(
-            () => T.runToPromise(T.provideAll(env)(PreCommit.handlers(evt as any))),
-            (err) => err as Error,
-          ),
-        (evt) =>
-          TE.tryCatch(
-            () => T.runToPromise(T.provideAll(env)(PostCommit.handlers(evt as any))),
-            (err) => err as Error,
-          ),
-      )
+      //   // TODO: Finish the domain event handlers.
+      //   const eventHandler = new DomainEventHandler(
+      //     (evt) =>
+      //       TE.tryCatch(
+      //         () => T.runToPromise(T.provideAll(env)(PreCommit.handlers(evt as any))),
+      //         (err) => err as Error,
+      //       ),
+      //     (evt) =>
+      //       TE.tryCatch(
+      //         () => T.runToPromise(T.provideAll(env)(PostCommit.handlers(evt as any))),
+      //         (err) => err as Error,
+      //       ),
+      //   )
       const trainTrips = TTC.trainTrips()
       return DiskDBContext({
-        // TODO
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        eventHandler: eventHandler as any,
+        // // TODO
+        // // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eventHandler: eventHandler as any,
         readContext: readContext.value,
         trainTrips,
       })

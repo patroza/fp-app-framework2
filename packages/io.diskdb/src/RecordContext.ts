@@ -63,7 +63,11 @@ export default class DiskRecordContext<T extends DBRecord>
     const items = [...this.cache.values()].map((x) => x.data).concat(this.removals)
     const evts = this.events
     this.events = []
-    return items.reduce((prev, cur) => prev.concat(cur.intGetAndClearEvents()), evts)
+    // TEMP for bwc.
+    return items.reduce(
+      (prev, cur) => prev.concat((cur as any).intGetAndClearEvents()),
+      evts,
+    )
   }
 
   readonly intSave = (
@@ -163,7 +167,6 @@ const tRunSequentially = flow(runSequentially, terminate)
 
 interface DBRecord {
   id: string
-  intGetAndClearEvents: () => FW.Event[]
 }
 interface SerializedDBRecord {
   version: number

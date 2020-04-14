@@ -3,6 +3,9 @@ import { TaskEither } from "fp-ts/lib/TaskEither"
 import { Event, publishType } from "@fp-app/framework"
 
 // tslint:disable-next-line:max-classes-per-file
+/**
+ * @deprecated
+ */
 export default class DomainEventHandler {
   private events: Event[] = []
   private processedEvents: Event[] = []

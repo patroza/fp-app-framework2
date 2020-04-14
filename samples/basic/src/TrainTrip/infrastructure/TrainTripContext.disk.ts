@@ -28,7 +28,6 @@ const DiskDBContext = configure(
       )
     const dispose = () => (disposed = true)
     return {
-      getAndClearEvents,
       save: () => {
         if (disposed) {
           throw new Error("The context is already disposed")

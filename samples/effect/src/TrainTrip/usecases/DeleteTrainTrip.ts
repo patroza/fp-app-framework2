@@ -3,7 +3,7 @@ import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import { t } from "@fp-app/fp-ts-extensions"
 import { createPrimitiveValidator } from "@/utils"
 import { T } from "@/meffect"
-import * as TrainTrip from "../TrainTrip"
+import TrainTrip from "../TrainTrip"
 import save from "../infrastructure/saveTrainTrip"
 
 const DeleteTrainTrip = (input: Input) =>
