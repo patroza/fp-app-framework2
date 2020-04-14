@@ -11,21 +11,21 @@ import TravelClassDefinition from "../TravelClassDefinition"
 import { Do } from "fp-ts-contrib/lib/Do"
 import { getMonoid } from "fp-ts/lib/Array"
 import { flow } from "fp-ts/lib/function"
-import { T } from "@/meffect"
+import { T, liftEitherSuspended } from "@/meffect"
 import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import TrainTrip from "../TrainTrip"
 import { createPrimitiveValidator } from "@/utils"
-import { saveT } from "../infrastructure/saveTrainTrip"
+import * as STT from "../infrastructure/saveTrainTrip"
 
 const ChangeTrainTrip = (input: Input) =>
   T.asUnit(
     Do(T.effect)
-      .bind("proposal", pipe(validateStateProposition(input), T.fromEither))
+      .bind("proposal", liftEitherSuspended(validateStateProposition)(input))
       .bindL("trainTrip", ({ proposal }) => TC.loadE(proposal.trainTripId))
       .bindL("result", ({ proposal, trainTrip }) =>
         pipe(TrainTrip.proposeChanges(trainTrip)(proposal), T.fromEither),
       )
-      .doL(({ result }) => saveT(result))
+      .doL(({ result: [tt, evt] }) => STT.save(tt, evt))
       .done(),
   )
 

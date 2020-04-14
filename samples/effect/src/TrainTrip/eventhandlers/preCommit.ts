@@ -38,7 +38,10 @@ const OnTrainTripStateChanged = (event: TrainTripStateChanged) =>
     .return(({ result: [, events] }) => events)
 
 const notImplemented = (evt: Events) =>
-  T.sync(() => console.log(`${evt.type} domain event not implemented`))
+  T.sync(() => {
+    console.log(`${evt.type} domain event not implemented`)
+    return []
+  })
 
 const eventHandlers = {
   TrainTripStateChanged: OnTrainTripStateChanged,

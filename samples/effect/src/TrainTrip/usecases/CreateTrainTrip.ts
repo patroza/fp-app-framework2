@@ -10,13 +10,13 @@ import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
 import * as API from "@/TrainTrip/infrastructure/api"
 import { getMonoid } from "fp-ts/lib/Array"
-import { T } from "@/meffect"
+import { T, liftEitherSuspended } from "@/meffect"
 import { createPrimitiveValidator } from "@/utils"
 import save from "../infrastructure/saveTrainTrip"
 
 const CreateTrainTrip = (input: Input) =>
   Do(T.effect)
-    .bind("preferences", T.fromEither(validateCreateTrainTripInfo(input)))
+    .bind("preferences", liftEitherSuspended(validateCreateTrainTripInfo)(input))
     .bindL("trip", ({ preferences }) => API.get(preferences.templateId))
     // TODO: new Date, should be a date service.. // T.sync(() => new Date())
     .letL("result", ({ preferences, trip }) =>
@@ -63,7 +63,6 @@ const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
       .done(),
     E.mapLeft(combineValidationErrors),
   )
-
 // TODO
 const validateString = <T extends string>(str: string): Result<T, ValidationError> =>
   str ? E.ok(str as T) : E.err(new ValidationError("not a valid str"))

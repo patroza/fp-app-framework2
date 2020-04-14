@@ -8,18 +8,18 @@ import { sequenceT } from "fp-ts/lib/Apply"
 import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import { tupled } from "fp-ts/lib/function"
 
-const save = (
+export const save = (
   tt: TrainTrip,
   events: readonly Event[],
   method: "change" | "delete" | "add" = "change",
 ) =>
   Do(T.effect)
     .do(
-      method === "change"
-        ? TC.registerChanged(tt)
+      method === "delete"
+        ? TC.remove(tt)
         : method === "add"
         ? TC.add(tt)
-        : TC.remove(tt),
+        : TC.registerChanged(tt),
     )
     // eventHandlers should update records accordingly
     .do(handleEvents(events))

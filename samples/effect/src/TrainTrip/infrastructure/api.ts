@@ -118,6 +118,7 @@ const getTplLevelName = (tpl: Template) =>
 // eslint-disable-next-line @typescript-eslint/require-await
 const getTemplateFake = (): getTemplateType => (templateId) => async () => {
   const tpl = mockedTemplates()[templateId] as Template | undefined
+  console.log("get faked template " + templateId)
   if (!tpl) {
     return E.err(new RecordNotFound("Template", templateId))
   }
@@ -149,8 +150,14 @@ const getFakePriceFromTemplate = () => ({ price: { amount: 100, currency: "EUR" 
 const createTravelPlanFake = (): createTravelPlanType => () => async () =>
   E.ok<ApiError, string>(v4())
 
-const sendCloudSyncFake = (): RTE.ReaderTaskEither<TrainTrip, ApiError, string> => () =>
-  TE.right<ApiError, string>(v4())
+const sendCloudSyncFake = (): RTE.ReaderTaskEither<
+  TrainTrip,
+  ApiError,
+  string
+> => () => {
+  console.log("Syncing cloud sync fake..")
+  return TE.right<ApiError, string>(v4())
+}
 
 const getTravelPlanFake = (): getTravelPlanType => (travelPlanId) =>
   TE.right({ id: travelPlanId } as TravelPlan)
