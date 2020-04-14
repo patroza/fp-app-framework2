@@ -7,7 +7,7 @@
     ]
   },
   "scripts": {
-    "start": "cd samples/basic && yarn start",
+    "start": "cd samples/effect && yarn start",
     "testsuite": "yarn lerna:parallel yarn testsuite",
     "testsuite:local": "yarn lerna:serial yarn testsuite",
     "lerna:parallel": "lerna exec --parallel --scope \"@fp-app/*\" --ignore \"@types/*\" --ignore \"@fp-app/experiment\"",
