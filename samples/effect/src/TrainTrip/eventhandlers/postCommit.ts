@@ -18,7 +18,10 @@ import * as TTP from "@/TrainTrip/infrastructure/trainTripPublisher.inMemory"
 // Other options can be to have a compensating action running regularly that checks and fixes things. A sort of eventual consistency.
 
 const notImplemented = (evt: Events) =>
-  T.sync(() => console.log(`${evt.type} integration event not implemented`))
+  T.sync(() => {
+    console.log(`${evt.type} integration event not implemented`)
+    return []
+  })
 
 export const handlers = (evt: Events) => {
   const keys = Object.keys(eventHandlers)
