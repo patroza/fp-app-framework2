@@ -35,8 +35,6 @@ import {
   ok,
   success,
   mapLeft,
-  Either,
-  either,
 } from "@fp-app/fp-ts-extensions/src/Either"
 
 export default class TrainTrip extends Entity {
@@ -63,7 +61,6 @@ export default class TrainTrip extends Entity {
       currentDate,
     )
     const events = [new TrainTripCreated(t.id)] as const
-    t.registerDomainEvent(new TrainTripCreated(t.id))
 
     return [t, events] as const
   }
@@ -95,53 +92,6 @@ export default class TrainTrip extends Entity {
     super(id)
     Object.assign(this, rest)
   }
-
-  readonly proposeChanges = captureEventsEither(
-    unwrapResultEither(this, proposeChanges),
-    this.registerDomainEvent,
-  )
-
-  readonly lock = captureEvents(
-    unwrapResult(this, (_this) => (cd: Date) => {
-      const [a, b] = lock(_this)(cd)
-      return tuple(a, b)
-    }),
-    this.registerDomainEvent,
-  )
-
-  readonly assignOpportunity = unwrapResult(this, assignOpportunity)
-
-  readonly updateTrip = unwrapResult(this, updateTrip)
-
-  // TODO: This seems like cheating, we're missing another Aggregate Root..
-  readonly delete = captureEvents(del(this), this.registerDomainEvent)
-
-  ////////////
-  //// Separate sample; not used other than testing
-  readonly changeStartDate = captureEventsEither(
-    unwrapResultEither(this, changeStartDate),
-    this.registerDomainEvent,
-  )
-
-  readonly changeTravelClass = captureEventsEither(
-    unwrapResultEither(this, changeTravelClass),
-    this.registerDomainEvent,
-  )
-
-  //private readonly applyDefinedChanges = applyDefinedChanges(this)
-
-  // private readonly intChangeStartDate = unwrapResult(intChangeStartDate(this))
-
-  // //private readonly intChangePax = unwrapResult(intChangePax(this))
-  // private readonly intChangeTravelClass = unwrapResultEither(intChangeTravelClass(this))
-  // private confirmUserChangeAllowed = confirmUserChangeAllowed(this)
-
-  // private readonly createChangeEvents = (changed: boolean) => {
-  //   const events = [...createChangeEvents(this)(changed)]
-  //   for (const event of events) {
-  //     this.registerDomainEvent(event)
-  //   }
-  // }
 }
 
 // changePax = (pax: PaxDefinition) =>
@@ -197,7 +147,7 @@ export const changeTravelClass = (_this: TrainTrip) =>
 const opportunityIdL = Lens.fromPath<TrainTrip>()(["opportunityId"])
 export const assignOpportunity = (_this: TrainTrip) => (opportunityId: string) => {
   _this = opportunityIdL.modify(() => opportunityId)(_this)
-  return tuple(_this, void 0 as void)
+  return tuple(_this, [] as Event[])
 }
 
 export const del = (_this: TrainTrip) => () => {
@@ -506,35 +456,4 @@ export type TemplateId = ID
 export interface Price {
   amount: number
   currency: string
-}
-
-const captureEventsEither = <TE, TEvent extends Event, TArgs extends unknown[]>(
-  func: (...args: TArgs) => Either<TE, readonly TEvent[]>,
-  registerDomainEvent: (evt: Event) => void,
-) => (...args: TArgs) =>
-  either.map(func(...args), (evts) => evts.forEach(registerDomainEvent))
-
-const captureEvents = <TEvent extends Event, TArgs extends unknown[]>(
-  func: (...args: TArgs) => readonly TEvent[],
-  registerDomainEvent: (evt: Event) => void,
-) => (...args: TArgs) => func(...args).forEach(registerDomainEvent)
-
-const unwrapResultEither = <This, TE, T, T2, TArgs extends unknown[]>(
-  t: This,
-  func: (t: This) => (...args: TArgs) => Either<TE, readonly [T, T2]>,
-) => (...args: TArgs) =>
-  either.map(func(t)(...args), ([newT, r]) => {
-    // this unifies the FP and OO world right now
-    Object.assign(t, newT)
-    return r
-  })
-
-const unwrapResult = <This, T, T2, TArgs extends unknown[]>(
-  t: This,
-  func: (t: This) => (...args: TArgs) => readonly [T, T2],
-) => (...args: TArgs) => {
-  // this unifies the FP and OO world right now
-  const [newT, r] = func(t)(...args)
-  Object.assign(t, newT)
-  return r
 }
