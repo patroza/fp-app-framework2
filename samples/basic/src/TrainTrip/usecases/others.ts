@@ -1,12 +1,12 @@
 //// Separate endpoint sample; unused.
 
 import {
-  createCommandWithDeps,
   ForbiddenError,
   InvalidStateError,
   ValidationError,
   DbError,
 } from "@fp-app/framework"
+import { createCommandWithDeps } from "@fp-app/framework-classic"
 import { pipe, E, Do, TE, toVoid } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition from "../TravelClassDefinition"

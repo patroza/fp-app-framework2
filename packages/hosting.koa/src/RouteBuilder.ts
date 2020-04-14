@@ -1,4 +1,10 @@
-import { HALConfig, requestType, RouteBuilder, utils } from "@fp-app/framework"
+import { utils } from "@fp-app/framework"
+import {
+  HALConfig,
+  requestType,
+  RouteBuilder,
+  utils as utilsc,
+} from "@fp-app/framework-classic"
 import Koa from "koa"
 import KoaRouter from "koa-router"
 import generateKoaHandler from "./generateKoaHandler"
@@ -9,7 +15,7 @@ export const buildRouter = (buildFn: RouteBuilderFn) => buildFn(builder)
 
 const builder = Object.freeze({
   builder: () => new KoaRouteBuilder(),
-  createValidator: utils.createValidator,
+  createValidator: utilsc.createValidator,
   v: Joi,
 })
 

@@ -7,7 +7,7 @@ import {
   ValidationError,
   utils,
 } from "@fp-app/framework"
-import Event from "@fp-app/framework/src/event"
+import { Event } from "@fp-app/framework-classic"
 import {
   Result,
   E,

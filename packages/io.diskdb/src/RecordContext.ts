@@ -1,4 +1,5 @@
 import * as FW from "@fp-app/framework"
+import * as FWC from "@fp-app/framework-classic"
 import { pipe, O, RT, T, TO } from "@fp-app/fp-ts-extensions"
 import * as PLF from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
@@ -132,10 +133,10 @@ export default class DiskRecordContext<T extends DBRecord>
 
 export class EventHandlingDiskRecordContext<T extends DBRecordWithEvents>
   extends DiskRecordContext<T>
-  implements FW.RecordContextWithEvents<T> {
-  private events: FW.Event[] = []
+  implements FWC.RecordContextWithEvents<T> {
+  private events: FWC.Event[] = []
   // Test with immutable approach.
-  readonly processEvents = (record: T, events: FW.Event[]) => {
+  readonly processEvents = (record: T, events: FWC.Event[]) => {
     this.registerChanged(record)
     this.events = this.events.concat(events)
   }
@@ -151,7 +152,7 @@ export class EventHandlingDiskRecordContext<T extends DBRecordWithEvents>
 
 interface DBRecordWithEvents {
   id: string
-  intGetAndClearEvents: () => FW.Event[]
+  intGetAndClearEvents: () => FWC.Event[]
 }
 
 const runSequentially = async <T>(...taskCreators: Array<T.Task<T>>): Promise<T[]> => {

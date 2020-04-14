@@ -1,6 +1,6 @@
 import TrainTrip, { TravelClassConfiguration, Price } from "@/TrainTrip/TrainTrip"
 import { TrainTripContext as TrainTripContextType } from "@/TrainTrip/usecases/types"
-import { configure, RecordNotFound } from "@fp-app/framework"
+import { RecordNotFound } from "@fp-app/framework"
 import * as diskdb from "@fp-app/io.diskdb"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { TravelClass } from "../Trip"
@@ -13,31 +13,29 @@ import { pipe } from "fp-ts/lib/pipeable"
 // Since we assume that saving a valid object, means restoring a valid object
 // we can assume data correctness and can skip normal validation and constructing.
 // until proven otherwise.
-const DiskDBContext = configure(
-  function TrainTripContext({ readContext, trainTrips }) {
-    let disposed = false
-    const save = () =>
-      trainTrips.intSave(
-        (i) => readContext.create(i.id, TrainTripToView(i)),
-        (i) => readContext.delete(i.id),
-      )
-    const dispose = () => (disposed = true)
-    return {
-      save: () => {
-        if (disposed) {
-          throw new Error("The context is already disposed")
-        }
-        return save()
-      },
-      trainTrips,
-      dispose,
-    } as TrainTripContextType
-  },
-  () => ({
-    readContext: TrainTripReadContext,
+type D = {
+  readContext: TrainTripReadContext
+  trainTrips: ReturnType<typeof trainTrips>
+}
+const DiskDBContext = function TrainTripContext({ readContext, trainTrips }: D) {
+  let disposed = false
+  const save = () =>
+    trainTrips.intSave(
+      (i) => readContext.create(i.id, TrainTripToView(i)),
+      (i) => readContext.delete(i.id),
+    )
+  const dispose = () => (disposed = true)
+  return {
+    save: () => {
+      if (disposed) {
+        throw new Error("The context is already disposed")
+      }
+      return save()
+    },
     trainTrips,
-  }),
-)
+    dispose,
+  } as TrainTripContextType
+}
 
 export function trainTrips() {
   return new diskdb.DiskRecordContext<TrainTrip>(

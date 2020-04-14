@@ -2,14 +2,15 @@
 import { Lens } from "monocle-ts"
 
 import {
-  Entity,
+  utils,
+  unit,
   ForbiddenError,
   InvalidStateError,
   ValidationError,
-  utils,
-  unit,
 } from "@fp-app/framework"
-import Event from "@fp-app/framework/src/event"
+import { Entity } from "@fp-app/framework-classic"
+import Event from "@fp-app/framework-classic/src/event"
+
 import {
   Result,
   E,
@@ -36,9 +37,13 @@ import {
   ok,
   success,
   mapLeft,
-  Either,
-  either,
 } from "@fp-app/fp-ts-extensions/src/Either"
+import {
+  captureEventsEither,
+  unwrapResultEither,
+  captureEvents,
+  unwrapResult,
+} from "./immutableToMutableTools"
 
 export default class TrainTrip extends Entity {
   /** the primary way to create a new TrainTrip */
@@ -471,35 +476,4 @@ export type TemplateId = ID
 export interface Price {
   amount: number
   currency: string
-}
-
-const captureEventsEither = <TE, TEvent extends Event, TArgs extends unknown[]>(
-  func: (...args: TArgs) => Either<TE, readonly TEvent[]>,
-  registerDomainEvent: (evt: Event) => void,
-) => (...args: TArgs) =>
-  either.map(func(...args), (evts) => evts.forEach(registerDomainEvent))
-
-const captureEvents = <TEvent extends Event, TArgs extends unknown[]>(
-  func: (...args: TArgs) => readonly TEvent[],
-  registerDomainEvent: (evt: Event) => void,
-) => (...args: TArgs) => func(...args).forEach(registerDomainEvent)
-
-const unwrapResultEither = <This, TE, T, T2, TArgs extends unknown[]>(
-  t: This,
-  func: (t: This) => (...args: TArgs) => Either<TE, readonly [T, T2]>,
-) => (...args: TArgs) =>
-  either.map(func(t)(...args), ([newT, r]) => {
-    // this unifies the FP and OO world right now
-    Object.assign(t, newT)
-    return r
-  })
-
-const unwrapResult = <This, T, T2, TArgs extends unknown[]>(
-  t: This,
-  func: (t: This) => (...args: TArgs) => readonly [T, T2],
-) => (...args: TArgs) => {
-  // this unifies the FP and OO world right now
-  const [newT, r] = func(t)(...args)
-  Object.assign(t, newT)
-  return r
 }

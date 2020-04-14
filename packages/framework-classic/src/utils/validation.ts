@@ -4,9 +4,9 @@ import {
   CombinedValidationError,
   FieldValidationError,
   ValidationError,
-} from "../errors"
+  utils,
+} from "@fp-app/framework"
 import { convert } from "@yeongjet/joi-to-json-schema"
-import { logger } from "./logger"
 
 const createValidator = <TOut, TIn = JsonValue>(
   schema: Joi.Schema,
@@ -24,7 +24,9 @@ export type JsonValue = number | boolean | string | unknown[] | Record<string, u
 const mapValidationResult = <TOut = unknown>(result: ValidationResult) =>
   pipe(
     E.fromErrorish(result),
-    E.do((x) => x.warning && logger.warn("Warning during validation: " + x.warning)),
+    E.do(
+      (x) => x.warning && utils.logger.warn("Warning during validation: " + x.warning),
+    ),
     E.map((x) => x.value as TOut),
     E.mapLeft(joiValidationErrorToCombinedValidationError),
   )

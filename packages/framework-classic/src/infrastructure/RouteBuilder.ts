@@ -1,7 +1,6 @@
 import fs from "fs"
-import { ErrorBase } from "../errors"
+import { DbError, ErrorBase } from "@fp-app/framework"
 import { ValidatorType, JsonValue } from "../utils/validation"
-import { DbError } from "./errors"
 import { NamedHandlerWithDependencies, requestType } from "./mediator"
 import { tuple } from "fp-ts/lib/function"
 import { promisify } from "util"

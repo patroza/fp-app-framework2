@@ -1,4 +1,4 @@
-import { benchLog, getLogger } from "../utils"
+import { utils } from "@fp-app/framework"
 import {
   requestInNewScopeType,
   requestInNewScopeKey,
@@ -8,7 +8,7 @@ import { pipe, TE, ReadonlyNonEmptyArray } from "@fp-app/fp-ts-extensions"
 import Event from "../event"
 import { configure } from "./configure"
 
-const logger = getLogger("executePostCommitHandlers")
+const logger = utils.getLogger("executePostCommitHandlers")
 
 const executePostCommitHandlers = configure(
   ({ executeIntegrationEvent }) => (eventsMap: eventsMapType) =>
@@ -26,7 +26,7 @@ async function tryProcessEvents(
 ) {
   for (const [evt, hndlrs] of eventsMap.entries()) {
     for (const pch of hndlrs) {
-      await benchLog(
+      await utils.benchLog(
         pipe(
           executeIntegrationEvent(pch, evt),
           TE.mapLeft((err) =>

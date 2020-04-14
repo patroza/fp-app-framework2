@@ -1,4 +1,5 @@
 import * as FW from "@fp-app/framework"
+import * as FWC from "@fp-app/framework-classic"
 import * as diskdb from "@fp-app/io.diskdb"
 import chalk from "chalk"
 import resolveEvent from "./resolveIntegrationEvent"
@@ -30,18 +31,18 @@ const createRoot = () => {
 
     request,
     setupRequestContext,
-  } = FW.createDependencyNamespace(namespace, RequestContextKey)
+  } = FWC.createDependencyNamespace(namespace, RequestContextKey)
 
   container.registerScopedF(
-    trainTrips as FW.Key<ReturnType<typeof trainTrips>>,
+    trainTrips as FWC.Key<ReturnType<typeof trainTrips>>,
     trainTrips,
   )
   container.registerScopedF(
-    (DiskDBContext as unknown) as FW.Key<ReturnType<typeof DiskDBContext>>,
+    (DiskDBContext as unknown) as FWC.Key<ReturnType<typeof DiskDBContext>>,
     DiskDBContext,
   )
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  container.registerPassthrough(FW.UOWKey, DiskDBContext as any)
+  container.registerPassthrough(FWC.UOWKey, DiskDBContext as any)
 
   container.registerSingletonC(TrainTripPublisherKey, TrainTripPublisherInMemory)
   container.registerSingletonC(TrainTripReadContext, TrainTripReadContext)
@@ -54,7 +55,7 @@ const createRoot = () => {
   })
 
   container.registerSingletonF(toolDeps, toolDeps)
-  container.registerSingletonF(FW.resolveEventKey, resolveEvent)
+  container.registerSingletonF(FWC.resolveEventKey, resolveEvent)
 
   // Prevent stack-overflow; as logger depends on requestcontext
   // tslint:disable-next-line:no-console

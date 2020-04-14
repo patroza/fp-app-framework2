@@ -1,4 +1,5 @@
-import { createCommandWithDeps, DbError } from "@fp-app/framework"
+import { DbError } from "@fp-app/framework"
+import { createCommandWithDeps } from "@fp-app/framework-classic"
 import { pipe, Do, TE, toVoid } from "@fp-app/fp-ts-extensions"
 import { defaultDependencies, sendCloudSyncKey } from "./types"
 import { wrap } from "../infrastructure/utils"

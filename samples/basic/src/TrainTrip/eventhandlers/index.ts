@@ -7,15 +7,13 @@ import {
 import { defaultDependencies, TrainTripPublisherKey } from "@/TrainTrip/usecases/types"
 import { getTrip } from "@/TrainTrip/infrastructure/api"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
+import { DbError, ApiError, InvalidStateError } from "@fp-app/framework"
 import {
   createDomainEventHandlerWithDeps,
   createIntegrationEventHandlerWithDeps,
   curryRequest,
-  DbError,
   requestKey,
-  ApiError,
-  InvalidStateError,
-} from "@fp-app/framework"
+} from "@fp-app/framework-classic"
 import { pipe, TE, Do, toVoid } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"

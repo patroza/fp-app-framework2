@@ -1,4 +1,4 @@
-import { Event } from "@fp-app/framework"
+import { Event } from "@fp-app/framework-classic"
 import { Either, either } from "fp-ts/lib/Either"
 
 export const captureEventsEither = <TE, TEvent extends Event, TArgs extends unknown[]>(

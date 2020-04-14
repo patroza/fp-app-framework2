@@ -2,15 +2,14 @@
 // TODO: Get rid of the "keys" as required concept.
 // TODO: There's obviously a lot of possibility to improve the API, and Implementation here ;-)
 import "reflect-metadata"
-import { setFunctionName } from "../utils"
 import {
+  utils,
   Constructor,
   Disposable,
   ConstructorFunction,
   Constructable,
   AnyConstructable,
-} from "../types"
-import { assert } from "../utils"
+} from "@fp-app/framework"
 import * as tc from "typechecker/edition-node-12"
 import { DependencyDefinitions, Dependencies } from "./configure"
 
@@ -78,7 +77,7 @@ export default class SimpleContainer {
     impl: WithDependenciesConfig<TDependencies, T>,
   ) {
     const factory = () => this.createFunctionInstance(impl)
-    setFunctionName(factory, impl.name || `f(${key.name}`)
+    utils.setFunctionName(factory, impl.name || `f(${key.name}`)
     this.registerFactoryF(key, factory, this.getDependencyScope)
   }
 
@@ -87,7 +86,7 @@ export default class SimpleContainer {
     impl: WithDependenciesConfig<TDependencies, T>,
   ) {
     const factory = () => this.createFunctionInstance(impl)
-    setFunctionName(factory, impl.name || `f(${key.name}`)
+    utils.setFunctionName(factory, impl.name || `f(${key.name}`)
     this.registerFactoryF(key, factory, this.getSingletonScope)
   }
 
@@ -97,7 +96,7 @@ export default class SimpleContainer {
   ) {
     if (!factory) {
       factory = () => this.createFunctionInstance(key)
-      setFunctionName(factory, key.name)
+      utils.setFunctionName(factory, key.name)
     }
 
     this.registerFactoryF(key, factory, this.getSingletonScope)
@@ -109,7 +108,7 @@ export default class SimpleContainer {
   ) {
     if (!factory) {
       factory = () => this.createFunctionInstance(key)
-      setFunctionName(factory, key.name)
+      utils.setFunctionName(factory, key.name)
     }
 
     this.registerFactoryF(key, factory, this.getDependencyScope)
@@ -120,7 +119,7 @@ export default class SimpleContainer {
     forKey: T,
     ...decorators: unknown[]
   ) {
-    decorators.forEach((x) => assert(x !== null, "decorator must not be null"))
+    decorators.forEach((x) => utils.assert(x !== null, "decorator must not be null"))
     const current = this.decorators.get(forKey) || []
     current.push(...decorators)
     this.decorators.set(forKey, current)
@@ -277,7 +276,7 @@ export default class SimpleContainer {
       }
       handler = anyDecoratedHandler
     })
-    setFunctionName(handler, `$<${name}>`)
+    utils.setFunctionName(handler, `$<${name}>`)
     return handler
   }
 }
@@ -285,7 +284,7 @@ export default class SimpleContainer {
 const fixFunctionNameFactoryWrapper = (key: any, factory: any) => () => {
   const instance = factory()
   if (!instance.name && typeof instance === "function") {
-    setFunctionName(instance, factory.name || key.name)
+    utils.setFunctionName(instance, factory.name || key.name)
   }
   return instance
 }
@@ -320,7 +319,7 @@ export function generateKey<T>(name: string): Key<T> {
     throw new Error(`${name} not implemented function`)
   }
   if (name) {
-    setFunctionName(f, name)
+    utils.setFunctionName(f, name)
   }
   return f as any
 }
@@ -336,7 +335,7 @@ export type UnpackKey<T> = T extends Key<infer X> ? X : never
  */
 export const inject = (...dependencyConstructors: any[]): ClassDecorator => {
   dependencyConstructors.forEach((dependencyConstructor) =>
-    assert.isNotNull({ dependencyConstructor }),
+    utils.assert.isNotNull({ dependencyConstructor }),
   )
   // NOTE: Must have a {..} scope here or the Decorators exhibit weird behaviors..
   return (target: any) => {
@@ -345,7 +344,7 @@ export const inject = (...dependencyConstructors: any[]): ClassDecorator => {
 }
 
 export const paramInject = (dependencyConstructor: any): ParameterDecorator => {
-  assert.isNotNull({ dependencyConstructor })
+  utils.assert.isNotNull({ dependencyConstructor })
   return (target: any, _: string | symbol, parameterIndex: number) => {
     if (!target[injectSymbol]) {
       target[injectSymbol] = []
@@ -357,7 +356,7 @@ export const paramInject = (dependencyConstructor: any): ParameterDecorator => {
 export const autoinject = (target: any) => {
   const metadata = Reflect.getMetadata("design:paramtypes", target) as any[]
   metadata.forEach((dependencyConstructor) =>
-    assert.isNotNull({ dependencyConstructor }),
+    utils.assert.isNotNull({ dependencyConstructor }),
   )
 
   // merge existing (ie placed by paraminject)

@@ -1,6 +1,5 @@
 import {
   combineValidationErrors,
-  createCommandWithDeps,
   DbError,
   ForbiddenError,
   InvalidStateError,
@@ -18,6 +17,7 @@ import { Do } from "fp-ts-contrib/lib/Do"
 import { getMonoid } from "fp-ts/lib/Array"
 import { wrap } from "../infrastructure/utils"
 import { flow } from "fp-ts/lib/function"
+import { createCommandWithDeps } from "@fp-app/framework-classic"
 
 const createCommand = createCommandWithDeps(() => ({
   trainTrips,

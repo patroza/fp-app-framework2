@@ -1,4 +1,5 @@
 import * as FW from "@fp-app/framework"
+import * as FWC from "@fp-app/framework-classic"
 import * as KH from "@fp-app/hosting.koa"
 import Koa from "koa"
 import bodyParser from "koa-bodyparser"
@@ -40,7 +41,7 @@ const startServer = async () => {
     .use(rootRouter.allowedMethods())
     .use(rootRouter.routes())
 
-  await FW.writeRouterSchema(rootMap)
+  await FWC.writeRouterSchema(rootMap)
 
   return app.listen(config.PORT, () => FW.utils.logger.log("server listening on 3535"))
 }

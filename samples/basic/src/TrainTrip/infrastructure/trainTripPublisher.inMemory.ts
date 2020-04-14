@@ -1,11 +1,11 @@
 import { TrainTripPublisher } from "@/TrainTrip/eventhandlers"
 import { TrainTripId } from "@/TrainTrip/TrainTrip"
+import { utils } from "@fp-app/framework"
 import {
-  utils,
   paramInject,
   requestInNewScopeKey,
   requestInNewScopeType,
-} from "@fp-app/framework"
+} from "@fp-app/framework-classic"
 import registerCloud from "../usecases/registerCloud"
 import { pipe, TE } from "@fp-app/fp-ts-extensions"
 

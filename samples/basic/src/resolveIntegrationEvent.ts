@@ -1,8 +1,9 @@
 import * as FW from "@fp-app/framework"
+import * as FWC from "@fp-app/framework-classic"
 import { CustomerRequestedChanges } from "./TrainTrip/eventhandlers/integration.events"
 import { O, t, E, pipe } from "@fp-app/fp-ts-extensions"
 
-const resolveEvent = (): FW.resolveEventType => (unknownEvent) => {
+const resolveEvent = (): FWC.resolveEventType => (unknownEvent) => {
   FW.utils.logger.log("Received integration event", unknownEvent)
   const parsedEvent = SupportedIntegrationEvents.decode(unknownEvent)
   return pipe(

@@ -8,9 +8,9 @@ import {
 } from "@fp-app/fp-ts-extensions"
 
 import Event from "../../event"
-import { getLogger } from "../../utils"
+import { utils } from "@fp-app/framework"
 
-const logger = getLogger("publish")
+const logger = utils.getLogger("publish")
 
 const publish = (
   getMany: <TInput extends Event>(

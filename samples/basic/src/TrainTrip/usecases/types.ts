@@ -1,11 +1,6 @@
 import TrainTrip, { Price } from "@/TrainTrip/TrainTrip"
-import {
-  ApiError,
-  generateKey,
-  RecordContext,
-  RequestContextBase,
-  UnitOfWork,
-} from "@fp-app/framework"
+import { ApiError, RecordContext, UnitOfWork } from "@fp-app/framework"
+import { generateKey, RequestContextBase } from "@fp-app/framework-classic"
 import { AsyncResult, RTE } from "@fp-app/fp-ts-extensions"
 import { TrainTripPublisher } from "../eventhandlers"
 import { sendCloudSyncFake, Template, TravelPlan } from "../infrastructure/api"

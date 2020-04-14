@@ -1,6 +1,5 @@
 import { AsyncResult, TE, pipe } from "@fp-app/fp-ts-extensions"
-import { benchLog, logger, using } from "../../utils"
-import { DbError } from "../errors"
+import { DbError, utils } from "@fp-app/framework"
 import { NamedRequestHandler } from "../mediator"
 import { requestTypeSymbol } from "../SimpleContainer"
 import { configure } from "../configure"
@@ -9,13 +8,13 @@ import { UOWKey } from "../context.base"
 const loggingDecorator = (): RequestDecorator => (request) => (key, input) => {
   const prefix = `${key.name} ${key[requestTypeSymbol]}`
   return () =>
-    benchLog(
+    utils.benchLog(
       () =>
-        using(logger.addToLoggingContext({ request: prefix }), async () => {
-          logger.log(`${prefix} input`, input)
+        utils.using(utils.logger.addToLoggingContext({ request: prefix }), async () => {
+          utils.logger.log(`${prefix} input`, input)
           const r = request(key, input)
           const result = await r()
-          logger.log(`${prefix} result`, result)
+          utils.logger.log(`${prefix} result`, result)
           return result
         }),
       prefix,

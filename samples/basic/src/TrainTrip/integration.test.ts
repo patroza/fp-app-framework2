@@ -1,14 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-jest.mock("@fp-app/framework/src/infrastructure/executePostCommitHandlers")
+jest.mock("@fp-app/framework-classic/src/infrastructure/executePostCommitHandlers")
 
 import { CustomerRequestedChangesDTO } from "@/resolveIntegrationEvent"
-import {
-  CombinedValidationError,
-  executePostCommitHandlers,
-  RecordNotFound,
-  utils,
-} from "@fp-app/framework"
+import { CombinedValidationError, RecordNotFound, utils } from "@fp-app/framework"
 import { E } from "@fp-app/fp-ts-extensions"
 import moment from "moment"
 import createRoot from "../root"
@@ -19,6 +14,7 @@ import getTrainTrip from "./usecases/getTrainTrip"
 import lockTrainTrip from "./usecases/lockTrainTrip"
 import registerCloud from "./usecases/registerCloud"
 import { Pax } from "./PaxDefinition"
+import { executePostCommitHandlers } from "@fp-app/framework-classic"
 
 let trainTripId: string
 let executePostCommitHandlersMock: jest.Mock<ReturnType<

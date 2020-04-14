@@ -4,7 +4,7 @@ import TrainTrip, {
   TravelClassConfiguration,
 } from "@/TrainTrip/TrainTrip"
 import { TrainTripContext as TrainTripContextType } from "@/TrainTrip/usecases/types"
-import { DomainEventHandler, Event, configure } from "@fp-app/framework"
+import { DomainEventHandler, Event, configure } from "@fp-app/framework-classic"
 import * as diskdb from "@fp-app/io.diskdb"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { TravelClass } from "../Trip"

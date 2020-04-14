@@ -1,4 +1,4 @@
-import { Event } from "@fp-app/framework"
+import { Event } from "@fp-app/framework-classic"
 
 // tslint:disable:max-classes-per-file
 

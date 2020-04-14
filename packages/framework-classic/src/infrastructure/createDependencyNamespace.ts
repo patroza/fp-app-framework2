@@ -3,8 +3,7 @@ import { createNamespace, getNamespace } from "cls-hooked"
 import format from "date-fns/format"
 import { EventEmitter } from "events"
 import Event from "../event"
-import { generateShortUuid, getLogger, removeElement, using } from "../utils"
-import { Constructor } from "../types"
+import { Constructor, utils } from "@fp-app/framework"
 import { loggingDecorator, uowDecorator } from "./decorators"
 import DomainEventHandler from "./domainEventHandler"
 import executePostCommitHandlers from "./executePostCommitHandlers"
@@ -25,7 +24,7 @@ import { processReceivedEvent } from "./pubsub"
 import SimpleContainer, { DependencyScope, Key } from "./SimpleContainer"
 import { O, pipe, RANE } from "@fp-app/fp-ts-extensions"
 
-const logger = getLogger("registry")
+const logger = utils.getLogger("registry")
 
 export default function createDependencyNamespace(
   namespace: string,
@@ -50,7 +49,7 @@ export default function createDependencyNamespace(
   const addToLoggingContext = (item: Record<string, unknown>) => {
     getLoggingScope().items.push(item)
     return {
-      dispose: () => removeElement(getLoggingScope().items, item),
+      dispose: () => utils.removeElement(getLoggingScope().items, item),
     }
   }
 
@@ -80,7 +79,7 @@ export default function createDependencyNamespace(
     ns.runPromise(() => {
       const currentContext = container.get(requestScopeKey)
       const { correllationId, id } = currentContext
-      return using(container.createScope(), () => {
+      return utils.using(container.createScope(), () => {
         const context = container.get(requestScopeKey)
         Object.assign(context, { correllationId: correllationId || id })
         logger.debug(chalk.magenta("Created child context"))
@@ -95,7 +94,7 @@ export default function createDependencyNamespace(
     ) => Promise<T>,
   ) =>
     ns.runPromise(() =>
-      using(container.createScope(), () => {
+      utils.using(container.createScope(), () => {
         getNamespace(namespace).set(loggingScopeKey, { items: [] })
         logger.debug(chalk.magenta("Created request context"))
         return cb(container.get(requestScopeKey), (emitter: EventEmitter) =>
@@ -126,7 +125,7 @@ export default function createDependencyNamespace(
       ),
   )
   container.registerScopedF(requestScopeKey, () => {
-    const id = generateShortUuid()
+    const id = utils.generateShortUuid()
     return { id, correllationId: id }
   })
   getRegisteredRequestAndEventHandlers().forEach((h) =>

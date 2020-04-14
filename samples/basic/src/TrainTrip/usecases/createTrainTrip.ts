@@ -2,7 +2,6 @@ import {
   ApiError,
   CombinedValidationError,
   combineValidationErrors,
-  createCommandWithDeps,
   InvalidStateError,
   toFieldError,
   ValidationError,
@@ -16,6 +15,7 @@ import { getTrip } from "@/TrainTrip/infrastructure/api"
 import { defaultDependencies } from "./types"
 import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import { getMonoid } from "fp-ts/lib/Array"
+import { createCommandWithDeps } from "@fp-app/framework-classic"
 
 const createCommand = createCommandWithDeps(() => ({
   getTrip,

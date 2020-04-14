@@ -1,8 +1,7 @@
 import { AsyncResult, ToolDeps, toolDeps, RTE, O } from "@fp-app/fp-ts-extensions"
 import chalk from "chalk"
 import Event from "../../event"
-import { assert, getLogger, setFunctionName, typedKeysOf } from "../../utils"
-import { Constructor } from "../../types"
+import { Constructor, utils } from "@fp-app/framework"
 import {
   registerDomainEventHandler,
   registerIntegrationEventHandler,
@@ -15,6 +14,8 @@ import {
   WithDependencies,
   WithDependenciesConfig,
 } from "../SimpleContainer"
+
+const { assert, getLogger, setFunctionName, typedKeysOf } = utils
 
 const logger = getLogger("registry")
 
