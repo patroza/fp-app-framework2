@@ -7,6 +7,7 @@ import {
   InvalidStateError,
   ValidationError,
   utils,
+  unit,
 } from "@fp-app/framework"
 import Event from "@fp-app/framework/src/event"
 import {
@@ -190,7 +191,7 @@ export const changeTravelClass = (_this: TrainTrip) =>
 const opportunityIdL = Lens.fromPath<TrainTrip>()(["opportunityId"])
 export const assignOpportunity = (_this: TrainTrip) => (opportunityId: string) => {
   _this = opportunityIdL.modify(() => opportunityId)(_this)
-  return tuple(_this, void 0 as void)
+  return tuple(_this, unit)
 }
 
 const del = (_this: TrainTrip) => () => {

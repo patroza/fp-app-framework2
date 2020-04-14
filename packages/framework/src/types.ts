@@ -9,3 +9,5 @@ export type Writeable<T> = { -readonly [P in keyof T]-?: T[P] }
 export interface Disposable {
   dispose: () => void
 }
+
+export const unit = void 0 as void

@@ -38,7 +38,7 @@ const handleEvents = <TEvents extends readonly Event[]>(events: TEvents) =>
         events.map((x) => PreCommit.handlers(x as any))[0],
         ...events.map((x) => PreCommit.handlers(x as any)).slice(1),
       )
-    : T.pure(void 0 as void)
+    : T.unit
 
 const handlePostCommitEvents = <TEvents extends readonly Event[]>(events: TEvents) =>
   events.length
@@ -46,4 +46,4 @@ const handlePostCommitEvents = <TEvents extends readonly Event[]>(events: TEvent
         events.map((x) => PostCommit.handlers(x as any))[0],
         ...events.map((x) => PostCommit.handlers(x as any)).slice(1),
       )
-    : T.pure(void 0 as void)
+    : T.unit

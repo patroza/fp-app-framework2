@@ -56,7 +56,7 @@ export const handlers = (evt: Events) => {
       if (events.length) {
         return T.raiseAbort(new Error("Does not currently support recursive events"))
       }
-      return T.pure(void 0 as void)
+      return T.unit
     })
   } else {
     return notImplemented(evt)
