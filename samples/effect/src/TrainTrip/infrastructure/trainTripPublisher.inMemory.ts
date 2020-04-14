@@ -42,7 +42,7 @@ export default class TrainTripPublisherInMemory {
     req: <R, E, A>(inp: T.Effect<R, E, A>) => T.Effect<unknown, E, A>,
   ) => {
     try {
-      this.logger.log(`Publishing TrainTrip to Cloud: ${trainTripId}: TODO`)
+      this.logger.log(`Publishing TrainTrip to Cloud: ${trainTripId}`)
       await T.runToPromise(req(RegisterCloud({ trainTripId })))
     } catch (err) {
       // TODO: really handle error

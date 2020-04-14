@@ -33,13 +33,17 @@ export default save
 export const saveT = tupled(save)
 
 const handleEvents = <TEvents extends readonly Event[]>(events: TEvents) =>
-  sequenceT(T.effect)(
-    events.map((x) => PreCommit.handlers(x as any))[0],
-    ...events.map((x) => PreCommit.handlers(x as any)).slice(1),
-  )
+  events.length
+    ? sequenceT(T.effect)(
+        events.map((x) => PreCommit.handlers(x as any))[0],
+        ...events.map((x) => PreCommit.handlers(x as any)).slice(1),
+      )
+    : T.pure(void 0 as void)
 
 const handlePostCommitEvents = <TEvents extends readonly Event[]>(events: TEvents) =>
-  sequenceT(T.effect)(
-    events.map((x) => PostCommit.handlers(x as any))[0],
-    ...events.map((x) => PostCommit.handlers(x as any)).slice(1),
-  )
+  events.length
+    ? sequenceT(T.effect)(
+        events.map((x) => PostCommit.handlers(x as any))[0],
+        ...events.map((x) => PostCommit.handlers(x as any)).slice(1),
+      )
+    : T.pure(void 0 as void)
