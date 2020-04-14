@@ -55,7 +55,7 @@ export const handlers = (evt: Events) => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const h = eventHandlers[evt.type as keyof typeof eventHandlers](evt as any)
     return T.effect.chain(h, (events) => {
-      if (events) {
+      if (events.length) {
         return T.raiseAbort(new Error("Does not currently support recursive events"))
       }
       return T.pure(void 0 as void)
