@@ -46,7 +46,7 @@ const DiskDBContext = configure(
 )
 
 export function trainTrips() {
-  return new diskdb.DiskRecordContext<TrainTrip>(
+  return new diskdb.EventHandlingDiskRecordContext<TrainTrip>(
     "trainTrip",
     serializeTrainTrip,
     deserializeDbTrainTrip,

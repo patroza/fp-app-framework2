@@ -1,4 +1,5 @@
 export { default as DiskRecordContext } from "./RecordContext"
+export * from "./RecordContext"
 export { default as ReadContext } from "./ReadContext"
 export * as utils from "./utils"
 

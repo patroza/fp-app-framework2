@@ -8,10 +8,8 @@ import { sequenceT } from "fp-ts/lib/Apply"
 // tslint:disable-next-line:max-classes-per-file
 export default class DiskRecordContext<T extends DBRecord>
   implements FW.RecordContext<T> {
-  private cache = new Map<string, CachedRecord<T>>()
-  private removals: T[] = []
-
-  private events: FW.Event[] = []
+  protected cache = new Map<string, CachedRecord<T>>()
+  protected removals: T[] = []
 
   constructor(
     private readonly type: string,
@@ -23,11 +21,6 @@ export default class DiskRecordContext<T extends DBRecord>
     this.cache.set(record.id, { version: 0, data: record })
   }
 
-  // Test with immutable approach.
-  readonly processEvents = (record: T, events: FW.Event[]) => {
-    this.registerChanged(record)
-    this.events = this.events.concat(events)
-  }
   readonly registerChanged = (record: T) => {
     const original = this.cache.get(record.id)
     FW.assertIsNotUndefined(original)
@@ -55,18 +48,6 @@ export default class DiskRecordContext<T extends DBRecord>
         this.cache.set(id, { version, data })
         return data
       }),
-    )
-  }
-
-  // Internal
-  readonly intGetAndClearEvents = () => {
-    const items = [...this.cache.values()].map((x) => x.data).concat(this.removals)
-    const evts = this.events
-    this.events = []
-    // TEMP for bwc.
-    return items.reduce(
-      (prev, cur) => prev.concat((cur as any).intGetAndClearEvents()),
-      evts,
     )
   }
 
@@ -147,6 +128,30 @@ export default class DiskRecordContext<T extends DBRecord>
     })
     this.cache.set(record.id, { version, data: record })
   }
+}
+
+export class EventHandlingDiskRecordContext<T extends DBRecordWithEvents>
+  extends DiskRecordContext<T>
+  implements FW.RecordContextWithEvents<T> {
+  private events: FW.Event[] = []
+  // Test with immutable approach.
+  readonly processEvents = (record: T, events: FW.Event[]) => {
+    this.registerChanged(record)
+    this.events = this.events.concat(events)
+  }
+  // Internal
+  readonly intGetAndClearEvents = () => {
+    const items = [...this.cache.values()].map((x) => x.data).concat(this.removals)
+    const evts = this.events
+    this.events = []
+    // TEMP for bwc.
+    return items.reduce((prev, cur) => prev.concat(cur.intGetAndClearEvents()), evts)
+  }
+}
+
+interface DBRecordWithEvents {
+  id: string
+  intGetAndClearEvents: () => FW.Event[]
 }
 
 const runSequentially = async <T>(...taskCreators: Array<T.Task<T>>): Promise<T[]> => {
