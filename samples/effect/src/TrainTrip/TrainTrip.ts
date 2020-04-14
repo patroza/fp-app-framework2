@@ -62,9 +62,10 @@ export default class TrainTrip extends Entity {
       currentTravelClassConfiguration,
       currentDate,
     )
+    const events = [new TrainTripCreated(t.id)] as const
     t.registerDomainEvent(new TrainTripCreated(t.id))
 
-    return t
+    return [t, events] as const
   }
 
   readonly opportunityId?: string
@@ -199,7 +200,7 @@ export const assignOpportunity = (_this: TrainTrip) => (opportunityId: string) =
   return tuple(_this, void 0 as void)
 }
 
-const del = (_this: TrainTrip) => () => {
+export const del = (_this: TrainTrip) => () => {
   return tuple(new TrainTripDeleted(_this.id))
 }
 
@@ -212,7 +213,7 @@ const currentTravelClassConfigurationL = Lens.fromPath<TrainTrip>()([
   "currentTravelClassConfiguration",
 ])
 
-const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
+export const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
   // This will clear all configurations upon trip update
   // TODO: Investigate a resolution mechanism to update existing configurations, depends on business case ;-)
   _this = travelClassConfigurationL.modify(() =>
@@ -240,7 +241,7 @@ const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
     () => currentTravelClassConfiguration || _this.travelClassConfiguration[0],
   )(_this)
 
-  return tuple(_this, void 0)
+  return tuple(_this, [] as Event[])
 }
 
 export const proposeChanges = (_this: TrainTrip) =>
@@ -384,6 +385,8 @@ const intChangeTravelClass = (_this: TrainTrip) => (
   _this = currentTravelClassConfigurationL.modify(() => slc)(_this)
   return ok([_this, events, true])
 }
+
+export const create = TrainTrip.create
 
 const confirmUserChangeAllowed = <This extends Pick<TrainTrip, "lockedAt" | "id">>(
   _this: This,

@@ -4,7 +4,7 @@ import TrainTrip, {
   TravelClassConfiguration,
 } from "@/TrainTrip/TrainTrip"
 import { TrainTripContext as TrainTripContextType } from "@/TrainTrip/usecases/types"
-import { DomainEventHandler, Event, configure } from "@fp-app/framework"
+import { DomainEventHandler, Event, configure, RecordNotFound } from "@fp-app/framework"
 import * as diskdb from "@fp-app/io.diskdb"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { TravelClass } from "../Trip"
@@ -12,6 +12,7 @@ import { TrainTripView } from "../usecases/GetTrainTrip"
 import TrainTripReadContext from "./TrainTripReadContext.disk"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import { T, F, O } from "@/meffect"
+import { pipe } from "fp-ts/lib/pipeable"
 
 // Since we assume that saving a valid object, means restoring a valid object
 // we can assume data correctness and can skip normal validation and constructing.
@@ -72,6 +73,17 @@ export const TrainTripContext = F.opaque<TrainTripContext>()(TrainTripContext_)
 export const { add, load, registerChanged, remove, save } = F.access(TrainTripContext)[
   TrainTripContextURI
 ]
+
+export const loadE = (id: string) =>
+  pipe(
+    load(id),
+    T.chain(
+      O.fold(
+        () => T.raiseError(new RecordNotFound("trainTrip", id)),
+        (x) => T.pure(x) as T.Effect<unknown, RecordNotFound, TrainTrip>,
+      ),
+    ),
+  )
 
 export const contextEnv = "@fp-app/effect/traintrip-context/ctx"
 
