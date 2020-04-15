@@ -4,14 +4,15 @@ module.exports = {
     "^.+\\.tsx?$": "ts-jest"
   },
   "moduleNameMapper": {
-    "^@/(.*)$": "<rootDir>/samples/basic/src/$1"
+    "^@c/(.*)$": "<rootDir>/samples/classic/src/$1",
+    "^@e/(.*)$": "<rootDir>/samples/effect/src/$1"
   },
   globals: {
     'ts-jest': {
       diagnostics: false
     }
   },
-  "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+  "testRegex": "(/__tests__/.*|(\\.|/)test)\\.(jsx?|tsx?)$",
   "testURL": "http://localhost:8110",
   "moduleFileExtensions": [
     "ts",

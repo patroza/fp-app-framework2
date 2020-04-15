@@ -2,16 +2,24 @@ module.exports = function (w) {
   process.env.TSC_WATCHFILE = "UseFsEventsWithFallbackDynamicPolling"
   return {
     files: [
-      '**/*.ts',
+      '**/src/**/*.ts',
+      '!**/bin/**/*.ts',
       '!**/*.d.ts',
       '!**/*.test.ts',
       '!**/node_modules',
+      '!node_modules/',
+      '!.git/',
     ],
 
     tests: [
       '**/*.test.ts',
       '!samples/experiment/**/*.test.ts',
       '!**/node_modules',
+      '!node_modules/',
+      '!.git/',
+    ],
+    filesWithNoCoverageCalculated: [
+      '**/*.spec.ts'
     ],
     // for node.js tests you need to set env property as well
     // https://wallabyjs.com/docs/integration/node.html

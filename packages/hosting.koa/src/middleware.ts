@@ -1,4 +1,5 @@
-import { utils, RequestContextBase } from "@fp-app/framework"
+import { utils } from "@fp-app/framework"
+import { RequestContextBase } from "@fp-app/framework-classic"
 import chalk from "chalk"
 import { EventEmitter } from "events"
 import Koa from "koa"

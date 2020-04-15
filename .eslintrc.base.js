@@ -38,6 +38,12 @@ module.exports =  {
     "@typescript-eslint/interface-name-prefix": "off",
     "@typescript-eslint/unbound-method": "warn",
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_"}],
+    "@typescript-eslint/no-empty-interface": [
+        "error",
+        {
+        "allowSingleExtends": true
+        }
+    ],
     // Place to specify ESLint rules. Can be used to overwrite rules specified from the extended configs
     // e.g. "@typescript-eslint/explicit-function-return-type": "off",
     "sort-destructure-keys/sort-destructure-keys": "error", // Mainly to sort render props

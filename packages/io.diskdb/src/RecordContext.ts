@@ -1,6 +1,7 @@
 import * as FW from "@fp-app/framework"
+import * as FWC from "@fp-app/framework-classic"
 import { pipe, O, RT, T, TO } from "@fp-app/fp-ts-extensions"
-import PLF from "proper-lockfile"
+import * as PLF from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
 import { flow } from "fp-ts/lib/function"
 import { sequenceT } from "fp-ts/lib/Apply"
@@ -8,10 +9,8 @@ import { sequenceT } from "fp-ts/lib/Apply"
 // tslint:disable-next-line:max-classes-per-file
 export default class DiskRecordContext<T extends DBRecord>
   implements FW.RecordContext<T> {
-  private cache = new Map<string, CachedRecord<T>>()
-  private removals: T[] = []
-
-  private events: FW.Event[] = []
+  protected cache = new Map<string, CachedRecord<T>>()
+  protected removals: T[] = []
 
   constructor(
     private readonly type: string,
@@ -23,8 +22,7 @@ export default class DiskRecordContext<T extends DBRecord>
     this.cache.set(record.id, { version: 0, data: record })
   }
 
-  // Test with immutable approach.
-  readonly processEvents = (record: T, events: FW.Event[]) => {
+  readonly registerChanged = (record: T) => {
     const original = this.cache.get(record.id)
     FW.assertIsNotUndefined(original)
     // Using Object.assign would mean that the object doesn't obey the immutability laws strictly.
@@ -32,7 +30,6 @@ export default class DiskRecordContext<T extends DBRecord>
     // This however makes the cache kind of useless; the same entity could exist between multiple load calls etc
     // however interestingly in practice that doesn't seem to occur anyway...
     this.cache.set(record.id, { version: original.version, data: record })
-    this.events = this.events.concat(events)
   }
 
   readonly remove = (record: T) => {
@@ -53,14 +50,6 @@ export default class DiskRecordContext<T extends DBRecord>
         return data
       }),
     )
-  }
-
-  // Internal
-  readonly intGetAndClearEvents = () => {
-    const items = [...this.cache.values()].map((x) => x.data).concat(this.removals)
-    const evts = this.events
-    this.events = []
-    return items.reduce((prev, cur) => prev.concat(cur.intGetAndClearEvents()), evts)
   }
 
   readonly intSave = (
@@ -142,6 +131,30 @@ export default class DiskRecordContext<T extends DBRecord>
   }
 }
 
+export class EventHandlingDiskRecordContext<T extends DBRecordWithEvents>
+  extends DiskRecordContext<T>
+  implements FWC.RecordContextWithEvents<T> {
+  private events: FWC.Event[] = []
+  // Test with immutable approach.
+  readonly processEvents = (record: T, events: FWC.Event[]) => {
+    this.registerChanged(record)
+    this.events = this.events.concat(events)
+  }
+  // Internal
+  readonly intGetAndClearEvents = () => {
+    const items = [...this.cache.values()].map((x) => x.data).concat(this.removals)
+    const evts = this.events
+    this.events = []
+    // TEMP for bwc.
+    return items.reduce((prev, cur) => prev.concat(cur.intGetAndClearEvents()), evts)
+  }
+}
+
+interface DBRecordWithEvents {
+  id: string
+  intGetAndClearEvents: () => FWC.Event[]
+}
+
 const runSequentially = async <T>(...taskCreators: Array<T.Task<T>>): Promise<T[]> => {
   if (taskCreators.length) {
     // taskSeq required to run sequentially!!
@@ -160,7 +173,6 @@ const tRunSequentially = flow(runSequentially, terminate)
 
 interface DBRecord {
   id: string
-  intGetAndClearEvents: () => FW.Event[]
 }
 interface SerializedDBRecord {
   version: number

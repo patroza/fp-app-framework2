@@ -10,24 +10,17 @@
     "emitDecoratorMetadata": true,
     "preserveSymlinks": true,
     "skipLibCheck": true,
-    "lib": [
-      "es2020"
-    ],
+    "lib": ["es2020"],
     "module": "commonjs",
     "outDir": "dist/ts",
     "paths": {
-      "*": [
-        "types/*"
-      ],
+      "*": ["types/*"]
     },
     "esModuleInterop": true,
     "removeComments": true,
     "sourceMap": true,
     "strict": true,
-    "target": "es2020"
+    "target": "es2019"
   },
-  "exclude": [
-    "dist",
-    "node_modules"
-  ]
+  "exclude": ["dist", "node_modules"]
 }

@@ -5,19 +5,21 @@ import {
   ConnectionException,
   CouldNotAquireDbLockException,
   DbError,
-  defaultErrorPassthrough,
   ErrorBase,
-  ErrorHandlerType,
   FieldValidationError,
   ForbiddenError,
   InvalidStateError,
-  NamedHandlerWithDependencies,
   OptimisticLockException,
   RecordNotFound,
-  requestType,
   ValidationError,
   utils,
 } from "@fp-app/framework"
+import {
+  defaultErrorPassthrough,
+  ErrorHandlerType,
+  NamedHandlerWithDependencies,
+  requestType,
+} from "@fp-app/framework-classic"
 import { Result, pipe, TE, E, trampoline, ToolDeps } from "@fp-app/fp-ts-extensions"
 
 export default function generateKoaHandler<
