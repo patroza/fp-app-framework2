@@ -1265,6 +1265,18 @@
   resolved "https://registry.yarnpkg.com/@matechs/koa/-/koa-0.0.5.tgz#b34f24a95bd3f973df316a7284eed55860721bad"
   integrity sha512-SZVHClglXwX0XSFzsiR1PFgPJm84vHI0Ecp+ooxTU5oF+Mjr/2Rh58Aq4n7VByUZ76FE1bxNjA0sFgHzvvJQzQ==
 
+"@matechs/test-jest@^0.0.27":
+  version "0.0.27"
+  resolved "https://registry.yarnpkg.com/@matechs/test-jest/-/test-jest-0.0.27.tgz#72de0e1343b0e3a4e3745c945cdeb8480885123e"
+  integrity sha512-J7OO/2W57tUy6mwGBLoOF6baCBxUTIst3Qp9UdyTn0eL9mhauR1LmHs1tABfp4P/qL8uTmYFTA3sfU92uwnxJg==
+  dependencies:
+    "@matechs/test" "^0.0.31"
+
+"@matechs/test@^0.0.31":
+  version "0.0.31"
+  resolved "https://registry.yarnpkg.com/@matechs/test/-/test-0.0.31.tgz#65f1d879b25d21f8d679562c661a8d2e667dc64e"
+  integrity sha512-XvN+a9f6cTAWrA/V8iU3VFgbDE/keQoUz+hHnfPpge2+bN8qPJyJZIsGYi9p8EzkkHSMM55AlBhjnRhY5k38/g==
+
 "@morphic-ts/adt@^0.7.0":
   version "0.7.0"
   resolved "https://registry.yarnpkg.com/@morphic-ts/adt/-/adt-0.7.0.tgz#83b3157188a9fe4e2232adc6be18a964676acc5e"
