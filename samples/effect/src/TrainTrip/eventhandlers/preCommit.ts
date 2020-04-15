@@ -23,7 +23,8 @@ const notImplemented = (evt: Events) =>
   })
 
 const eventHandlers = {
-  TrainTripStateChanged: OnTrainTripStateChanged,
+  //TrainTripStateChanged: OnTrainTripStateChanged,
+  TrainTripStateChanged: notImplemented,
 }
 
 export const handlers = <TEvent extends Events>(evt: TEvent) => {
