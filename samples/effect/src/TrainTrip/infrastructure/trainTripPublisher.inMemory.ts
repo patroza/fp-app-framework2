@@ -2,7 +2,7 @@ import { TrainTripId } from "@/TrainTrip/TrainTrip"
 import { utils } from "@fp-app/framework"
 import { F, T } from "@/meffect"
 import RegisterCloud from "../eventhandlers/RegisterCloud"
-import { provideRequestScoped } from "../router"
+import provideRequestScoped from "../provideRequestScoped"
 
 /**
  * Poor man's queue, great for testing. Do not use in production, or you may loose queued tasks on server restart
