@@ -1,7 +1,6 @@
 import {
   combineValidationErrors,
   toFieldError,
-  ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
 import { pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
@@ -10,7 +9,6 @@ import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { Do } from "fp-ts-contrib/lib/Do"
 import { getMonoid } from "fp-ts/lib/Array"
-import { flow } from "fp-ts/lib/function"
 import { T, liftEitherSuspended } from "@e/meffect"
 import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 import TrainTrip from "../TrainTrip"
@@ -60,11 +58,7 @@ const validateStateProposition = ({
   pipe(
     Do(E.getValidation(getMonoid<FieldValidationError>()))
       .sequenceS({
-        trainTripId: pipe(
-          validateId(trainTripId),
-          E.mapLeft(toFieldError("trainTripId")),
-          E.mapLeft(NA.of),
-        ),
+        trainTripId: E.right(trainTripId),
         travelClass: pipe(
           E.valueOrUndefined(travelClass, TravelClassDefinition.create),
           E.mapLeft(toFieldError("travelClass")),
@@ -84,10 +78,3 @@ const validateStateProposition = ({
       .return((r) => ({ ...r, locked })),
     E.mapLeft(combineValidationErrors),
   )
-
-const validateId = (id: string) =>
-  flow(
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    t.NonEmptyString.decode,
-    E.mapLeft((err) => new ValidationError(err.map((x) => x.message).join(","))),
-  )(id)

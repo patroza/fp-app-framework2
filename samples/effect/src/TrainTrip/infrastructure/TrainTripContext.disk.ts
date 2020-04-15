@@ -68,7 +68,8 @@ export const loadE = (id: string) =>
     load(id),
     T.chain(
       O.fold(
-        () => T.raiseError(new RecordNotFound("trainTrip", id)),
+        () =>
+          T.raiseError<RecordNotFound, TrainTrip>(new RecordNotFound("trainTrip", id)),
         (x) => T.pure(x),
       ),
     ),

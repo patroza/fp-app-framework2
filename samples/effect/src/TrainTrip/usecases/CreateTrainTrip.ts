@@ -1,10 +1,9 @@
 import {
   combineValidationErrors,
   toFieldError,
-  ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { Do, Result, pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
+import { Do, pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
@@ -54,15 +53,8 @@ const validateCreateTrainTripInfo = ({ pax, startDate, templateId }: Input) =>
           E.mapLeft(toFieldError("startDate")),
           E.mapLeft(NA.of),
         ),
-        templateId: pipe(
-          validateString(templateId),
-          E.mapLeft(toFieldError("templateId")),
-          E.mapLeft(NA.of),
-        ),
+        templateId: E.right(templateId),
       })
       .done(),
     E.mapLeft(combineValidationErrors),
   )
-// TODO
-const validateString = <T extends string>(str: string): Result<T, ValidationError> =>
-  str ? E.ok(str as T) : E.err(new ValidationError("not a valid str"))

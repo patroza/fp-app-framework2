@@ -1,11 +1,21 @@
 import * as TA from "@e/TrainTrip/infrastructure/api"
 import * as TTP from "@e/TrainTrip/infrastructure/trainTripPublisher.inMemory"
 import * as J from "@matechs/test-jest"
-import { effect as T, exit as E, managed as M } from "@matechs/effect"
-import { queueSpec } from "./specs/Queue"
+import { effect as T } from "@matechs/effect"
+import { queueSpec } from "./specs/Queue.spec"
+import { CreateTrainTripSpec } from "./specs/CreateTrainTrip.spec"
+import { GetTrainTripSpec } from "./specs/GetTrainTrip.spec"
+import { ChangeTrainTripSpec } from "./specs/ChangeTrainTrip.spec"
+import { DeleteTrainTripSpec } from "./specs/DeleteTrainTrip.spec"
 import { flow } from "fp-ts/lib/function"
 
-const integrationSuite = J.suite("Integration")(queueSpec)
+const integrationSuite = J.suite("Integration")(
+  CreateTrainTripSpec,
+  ChangeTrainTripSpec,
+  GetTrainTripSpec,
+  DeleteTrainTripSpec,
+  queueSpec,
+)
 
 J.run(integrationSuite)(
   flow(
