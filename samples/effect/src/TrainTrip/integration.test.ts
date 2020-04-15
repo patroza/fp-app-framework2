@@ -8,6 +8,7 @@ import { GetTrainTripSpec } from "./specs/GetTrainTrip.spec"
 import { ChangeTrainTripSpec } from "./specs/ChangeTrainTrip.spec"
 import { DeleteTrainTripSpec } from "./specs/DeleteTrainTrip.spec"
 import { flow } from "fp-ts/lib/function"
+import { initialize } from "@e/server"
 
 const integrationSuite = J.suite("Integration")(
   CreateTrainTripSpec,
@@ -17,13 +18,15 @@ const integrationSuite = J.suite("Integration")(
   queueSpec,
 )
 
-J.run(integrationSuite)(
-  flow(
-    TA.provideTripApi,
-    TTP.provideTrainTripPublisher,
-    T.provideR((r) => ({
-      ...r,
-      [TTP.contextEnv]: { ctx: new TTP.default() },
-    })),
+initialize().then(() =>
+  J.run(integrationSuite)(
+    flow(
+      TA.provideTripApi,
+      TTP.provideTrainTripPublisher,
+      T.provideR((r) => ({
+        ...r,
+        [TTP.contextEnv]: { ctx: new TTP.default() },
+      })),
+    ),
   ),
 )

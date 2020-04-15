@@ -1,4 +1,4 @@
-import p from "../src/server"
+import p, { initialize } from "../src/server"
 import { effect as T, managed as M, exit as E } from "@matechs/effect"
 import * as KOA from "@matechs/koa"
 // import { Do } from "fp-ts-contrib/lib/Do"
@@ -12,6 +12,7 @@ const program = pipe(
   p,
   // keep process waiting
   T.chainTap(() => T.never),
+  T.chain(() => T.fromPromise(initialize)),
   M.provideS(KOA.managedKoa(port)),
   T.fork,
 )
