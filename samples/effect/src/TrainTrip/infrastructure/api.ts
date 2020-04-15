@@ -12,17 +12,11 @@ import { E, F, T } from "@e/meffect"
 import { pipe } from "fp-ts/lib/pipeable"
 import { trampoline, ToolDeps, TE, RE, RTE } from "@fp-app/fp-ts-extensions"
 
-const getTrip = trampoline(
-  (_: ToolDeps<ApiError | InvalidStateError>) => ({
-    getTemplate,
-  }: {
-    getTemplate: getTemplateType
-  }) =>
-    TE.compose(
-      TE.chain(pipe(getTemplate, _.RTE.liftErr)),
-      TE.chain(toTrip(getTemplate)),
-    ),
-)
+const getTrip = ({ getTemplate }: { getTemplate: getTemplateType }) =>
+  TE.compose(
+    TE.chain(pipe(getTemplate, RTE.liftErr<ApiError | InvalidStateError>())),
+    TE.chain(toTrip(getTemplate)),
+  )
 
 const TripApiURI = "@fp-app/effect/trip-api"
 const TripApi_ = F.define({
@@ -51,8 +45,7 @@ export const provideTripApi = F.implement(TripApi)({
   },
 })
 
-// would be great to merge here also the dependency configuration
-// and the trampoline
+// TODO: consider switching to Do and get rid of "trampoline"
 const toTrip = trampoline(
   (_: ToolDeps<ApiError | InvalidStateError>) => (getTemplate: getTemplateType) => (
     tpl: Template,

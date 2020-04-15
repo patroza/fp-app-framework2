@@ -20,7 +20,7 @@ import {
   NamedHandlerWithDependencies,
   requestType,
 } from "@fp-app/framework-classic"
-import { Result, pipe, TE, E, trampoline, ToolDeps } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, RTE, TE, E } from "@fp-app/fp-ts-extensions"
 
 export default function generateKoaHandler<
   TDeps,
@@ -40,33 +40,31 @@ export default function generateKoaHandler<
 ) {
   // DbError, because request handler is enhanced with it (decorator)
   // E2 because the validator enhances it.
-  const generateTask = trampoline(
-    (_: ToolDeps<DbError | E | E2>) => (ctx: Koa.Context) => {
-      const input: I = { ...ctx.request.body, ...ctx.request.query, ...ctx.params }
-      const handleRequest = (i: I) => request(handler, i)
-      const shouldHandleError = handleErrorOrPassthrough(ctx)
-      const handleError = handleDefaultError(ctx)
+  const generateTask = (ctx: Koa.Context) => {
+    const input: I = { ...ctx.request.body, ...ctx.request.query, ...ctx.params }
+    const handleRequest = (i: I) => request(handler, i)
+    const shouldHandleError = handleErrorOrPassthrough(ctx)
+    const handleError = handleDefaultError(ctx)
 
-      return pipe(
-        TE.ok(input),
-        TE.chain(pipe(validate, E.toTaskEither)),
-        TE.chain(pipe(handleRequest, _.RTE.liftErr)),
-        TE.bimap(
-          (err) => (shouldHandleError(err) ? handleError(err) : undefined),
-          (result) => {
-            if (responseTransform) {
-              ctx.body = responseTransform(result, ctx)
-            } else {
-              ctx.body = result
-            }
-            if (ctx.method === "POST" && result) {
-              ctx.status = 201
-            }
-          },
-        ),
-      )
-    },
-  )
+    return pipe(
+      TE.ok(input),
+      TE.chain(pipe(validate, E.toTaskEither)),
+      TE.chain(pipe(handleRequest, RTE.liftErr<DbError | E | E2>())),
+      TE.bimap(
+        (err) => (shouldHandleError(err) ? handleError(err) : undefined),
+        (result) => {
+          if (responseTransform) {
+            ctx.body = responseTransform(result, ctx)
+          } else {
+            ctx.body = result
+          }
+          if (ctx.method === "POST" && result) {
+            ctx.status = 201
+          }
+        },
+      ),
+    )
+  }
   return async (ctx: Koa.Context) => {
     try {
       const task = generateTask(ctx)

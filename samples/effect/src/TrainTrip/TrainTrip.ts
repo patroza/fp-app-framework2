@@ -12,8 +12,6 @@ import {
   Result,
   E,
   pipe,
-  trampoline,
-  ToolDeps,
   t,
   decodeErrors,
   convertCoolLens,
@@ -46,12 +44,38 @@ interface TrainTrip {
   readonly createdAt: Date
 }
 
+const create = (
+  trip: TripWithSelectedTravelClass,
+  { pax, startDate }: { startDate: FutureDate; pax: PaxDefinition },
+  currentDate: Date,
+): readonly [TrainTrip, readonly Event[]] => {
+  const travelClassConfiguration = trip.travelClasses.map((x) =>
+    unsafeUnwrap(TravelClassConfiguration.create(x)),
+  )
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const currentTravelClassConfiguration = travelClassConfiguration.find(
+    (x) => x.travelClass.name === trip.currentTravelClass.name,
+  )!
+
+  const t: TrainTrip = {
+    id: utils.generateUuid(),
+    pax,
+    startDate,
+    travelClassConfiguration,
+    currentTravelClassConfiguration,
+    createdAt: currentDate,
+  }
+  const events = [new TrainTripCreated(t.id)] as const
+
+  return [t, events] as const
+}
+
 const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | "id">>(
   tt: This,
 ) =>
   Do(E.either)
     .do(confirmUserChangeAllowed(tt))
-    .let("result", intChangePax(pax)(tt))
+    .let("result", pipe(tt, intChangePax(pax)))
     .return(({ result: [tt, events, changed] }) =>
       tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
     )
@@ -63,20 +87,24 @@ const changeStartDate = (startDate: FutureDate) => <
 ) =>
   Do(E.either)
     .do(confirmUserChangeAllowed(tt))
-    .let("result", intChangeStartDate(startDate)(tt))
+    .let("result", pipe(tt, intChangeStartDate(startDate)))
     .return(({ result: [tt, events, changed] }) =>
       tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
     )
 
-const changeTravelClass = (travelClass: TravelClassDefinition) =>
-  trampoline((_: ToolDeps<ForbiddenError | InvalidStateError>) => (tt: TrainTrip) =>
-    Do(E.either)
-      .do(pipe(confirmUserChangeAllowed(tt), _.E.liftErr))
-      .bind("result", intChangeTravelClass(travelClass)(tt))
-      .return(({ result: [tt, events, changed] }) =>
-        tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
+const changeTravelClass = (travelClass: TravelClassDefinition) => (tt: TrainTrip) =>
+  Do(E.either)
+    .do(
+      pipe(
+        tt,
+        confirmUserChangeAllowed,
+        E.liftErr<ForbiddenError | InvalidStateError>(),
       ),
-  )
+    )
+    .bind("result", pipe(tt, intChangeTravelClass(travelClass)))
+    .return(({ result: [tt, events, changed] }) =>
+      tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
+    )
 
 const opportunityIdL = Lens.fromPath<TrainTrip>()(["opportunityId"])
 const assignOpportunity = (opportunityId: string) => (tt: TrainTrip) => {
@@ -125,20 +153,19 @@ const updateTrip = (trip: Trip) => (tt: TrainTrip) => {
   return tuple(tt, [] as Event[])
 }
 
-const proposeChanges = (state: StateProposition) =>
-  trampoline(
-    (_: ToolDeps<ValidationError | InvalidStateError | ForbiddenError>) => (
-      tt: TrainTrip,
-    ) =>
-      Do(E.either)
-        .do(pipe(confirmUserChangeAllowed(tt), _.E.liftErr))
-        .bind("result", applyDefinedChanges(state)(tt))
-        // TODO: push the events out as return
-        //E.map(x => [...createChangeEvents(tt)(x)]),
-        .return(({ result: [tt, events, changed] }) =>
-          tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
-        ),
-  )
+const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
+  Do(E.either)
+    .do(
+      pipe(
+        tt,
+        confirmUserChangeAllowed,
+        E.liftErr<ValidationError | InvalidStateError | ForbiddenError>(),
+      ),
+    )
+    .bind("result", pipe(tt, applyDefinedChanges(state)))
+    .return(({ result: [tt, events, changed] }) =>
+      tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
+    )
 
 // TODO: we have to return the object from each map
 // TODO: convert back from Imperative to Functional.
@@ -219,8 +246,6 @@ const intChangeStartDate = (startDate: FutureDate) => <
   if (startDate.toISOString() === tt.startDate.toISOString()) {
     return tuple(tt, events, false)
   }
-  // TODO: return just the boolean, and apply the change at the caller?
-  // TODO: other business logic
   tt = startDateL.modify(() => startDate)(tt)
   return tuple(tt, events, true)
 }
@@ -234,7 +259,6 @@ const intChangePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax"
     return tuple(tt, events, false)
   }
   tt = paxL.modify(() => pax)(tt)
-  // TODO: other business logic
   return tuple(tt, events, true)
 }
 
@@ -253,32 +277,6 @@ const intChangeTravelClass = (travelClass: TravelClassDefinition) => (
   }
   tt = currentTravelClassConfigurationL.modify(() => slc)(tt)
   return ok([tt, events, true])
-}
-
-const create = (
-  trip: TripWithSelectedTravelClass,
-  { pax, startDate }: { startDate: FutureDate; pax: PaxDefinition },
-  currentDate: Date,
-): readonly [TrainTrip, readonly Event[]] => {
-  const travelClassConfiguration = trip.travelClasses.map((x) =>
-    unsafeUnwrap(TravelClassConfiguration.create(x)),
-  )
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const currentTravelClassConfiguration = travelClassConfiguration.find(
-    (x) => x.travelClass.name === trip.currentTravelClass.name,
-  )!
-
-  const t: TrainTrip = {
-    id: utils.generateUuid(),
-    pax,
-    startDate,
-    travelClassConfiguration,
-    currentTravelClassConfiguration,
-    createdAt: currentDate,
-  }
-  const events = [new TrainTripCreated(t.id)] as const
-
-  return [t, events] as const
 }
 
 const confirmUserChangeAllowed = <This extends Pick<TrainTrip, "lockedAt" | "id">>(
