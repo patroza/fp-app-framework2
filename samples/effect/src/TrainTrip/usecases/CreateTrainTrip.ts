@@ -15,7 +15,7 @@ import save from "../infrastructure/saveTrainTrip"
 
 const CreateTrainTrip = (input: Input) =>
   Do(T.effect)
-    .bind("preferences", liftEitherSuspended(validateCreateTrainTripInfo)(input))
+    .bind("preferences", pipe(input, liftEitherSuspended(validateCreateTrainTripInfo)))
     .bindL("trip", ({ preferences }) => API.get(preferences.templateId))
     // TODO: new Date, should be a date service.. // T.sync(() => new Date())
     .letL("result", ({ preferences, trip }) =>

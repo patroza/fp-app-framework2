@@ -19,10 +19,10 @@ import { O } from "ts-toolbelt"
 const ChangeTrainTrip = (input: Input) =>
   T.asUnit(
     Do(T.effect)
-      .bind("proposal", liftEitherSuspended(validateStateProposition)(input))
+      .bind("proposal", pipe(input, liftEitherSuspended(validateStateProposition)))
       .bindL("trainTrip", ({ proposal }) => TC.loadE(proposal.trainTripId))
       .bindL("result", ({ proposal, trainTrip }) =>
-        pipe(TrainTrip.proposeChanges(trainTrip)(proposal), T.fromEither),
+        pipe(trainTrip, TrainTrip.proposeChanges(proposal), T.fromEither),
       )
       .doL(({ result: [tt, evt] }) => STT.save(tt, evt))
       .done(),

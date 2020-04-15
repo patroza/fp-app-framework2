@@ -146,11 +146,11 @@ export const conditional = <TInput, TOutput, TErrorOutput>(
   return resultCreator(input)
 }
 
-export const liftLeft = <TE>() => <T, TE2 extends TE>(e: () => Either<TE2, T>) =>
-  e as () => Either<TE, T>
+export const liftLeft = <TE>() => <T, TE2 extends TE>(e: Either<TE2, T>) =>
+  e as Either<TE, T>
 
-export const liftRight = <T>() => <T2 extends T, TE>(e: () => Either<TE, T2>) =>
-  e as () => Either<TE, T>
+export const liftRight = <T>() => <T2 extends T, TE>(e: Either<TE, T2>) =>
+  e as Either<TE, T>
 
 export const liftErr = liftLeft
 

@@ -50,7 +50,7 @@ export const trampolineE = <TErr, TOut, TArgs extends readonly any[]>(
 
 export type ToolDeps<TE> = {
   E: {
-    liftErr: <T, TE2 extends TE>(e: () => E.Either<TE2, T>) => () => E.Either<TE, T>
+    liftErr: <T, TE2 extends TE>(e: E.Either<TE2, T>) => E.Either<TE, T>
     startWith: <T>(i: T) => E.Either<TE, T>
   }
   RE: {
@@ -60,9 +60,7 @@ export type ToolDeps<TE> = {
     //startWith: <T>(i: T) => RE.ReaderEither<TE, T>
   }
   TE: {
-    liftErr: <T, TE2 extends TE>(
-      e: () => TE.TaskEither<TE2, T>,
-    ) => () => TE.TaskEither<TE, T>
+    liftErr: <T, TE2 extends TE>(e: TE.TaskEither<TE2, T>) => TE.TaskEither<TE, T>
     startWith: <T>(i: T) => TE.TaskEither<TE, T>
   }
   RTE: {

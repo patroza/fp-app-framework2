@@ -65,8 +65,8 @@ export const traverse = <T, E>(results: AsyncResult<T, E>[]): AsyncResult<T[], E
   return traverseM(results, (x) => x)
 }
 
-export const liftLeft = <TE>() => <T, TE2 extends TE>(e: () => TaskEither<TE2, T>) =>
-  e as () => TaskEither<TE, T>
+export const liftLeft = <TE>() => <T, TE2 extends TE>(e: TaskEither<TE2, T>) =>
+  e as TaskEither<TE, T>
 // flow(e, TE.mapLeft(liftType<TE>()))
 
 export const liftErr = liftLeft

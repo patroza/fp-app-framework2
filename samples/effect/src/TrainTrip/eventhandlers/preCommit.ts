@@ -1,5 +1,5 @@
 import TrainTrip, { Events, TrainTripStateChanged } from "@e/TrainTrip/TrainTrip"
-import { Do } from "@fp-app/fp-ts-extensions"
+import { Do, pipe } from "@fp-app/fp-ts-extensions"
 import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 import * as API from "@e/TrainTrip/infrastructure/api"
 import { T } from "@e/meffect"
@@ -32,7 +32,7 @@ const OnTrainTripStateChanged = (event: TrainTripStateChanged) =>
       API.get(trainTrip.currentTravelClassConfiguration.travelClass.templateId),
     )
     .bindL("result", ({ trainTrip, trip }) =>
-      T.sync(() => TrainTrip.updateTrip(trainTrip)(trip)),
+      T.sync(() => pipe(trainTrip, TrainTrip.updateTrip(trip))),
     )
     .doL(({ result: [tt] }) => TC.registerChanged(tt))
     .return(({ result: [, events] }) => events)

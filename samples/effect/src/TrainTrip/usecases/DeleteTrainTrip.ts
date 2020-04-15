@@ -10,7 +10,7 @@ const DeleteTrainTrip = (input: Input) =>
   T.asUnit(
     Do(T.effect)
       .bind("trainTrip", TC.loadE(input.trainTripId))
-      .bindL("result", ({ trainTrip }) => T.sync(TrainTrip.del(trainTrip)))
+      .bindL("result", ({ trainTrip }) => T.sync(() => TrainTrip.del(trainTrip)))
       .doL(({ result, trainTrip }) => save(trainTrip, result, "delete"))
       .done(),
   )

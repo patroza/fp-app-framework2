@@ -17,6 +17,7 @@ import {
   t,
   decodeErrors,
   convertCoolLens,
+  Do,
 } from "@fp-app/fp-ts-extensions"
 import isEqual from "lodash/fp/isEqual"
 import FutureDate from "./FutureDate"
@@ -28,9 +29,6 @@ import { flow, tuple } from "fp-ts/lib/function"
 import {
   err,
   unsafeUnwrap,
-  mapStatic,
-  map,
-  chain,
   ok,
   success,
   mapLeft,
@@ -48,65 +46,45 @@ interface TrainTrip {
   readonly createdAt: Date
 }
 
-// changePax = (pax: PaxDefinition) =>
-//   pipe(
-//     this.confirmUserChangeAllowed(),
-//     mapStatic(pax),
-//     map(this.intChangePax),
-//     map(this.createChangeEvents),
-//   )
+const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | "id">>(
+  tt: This,
+) =>
+  Do(E.either)
+    .do(confirmUserChangeAllowed(tt))
+    .let("result", intChangePax(pax)(tt))
+    .return(({ result: [tt, events, changed] }) =>
+      tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
+    )
 
-const changeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">>(
-  _this: This,
-) => (startDate: FutureDate) =>
-  pipe(
-    confirmUserChangeAllowed(_this)(),
-    mapStatic(startDate),
-    map(intChangeStartDate(_this)),
-    map(([_this, events, changed]) =>
-      tuple(_this, events.concat([...createChangeEvents(_this)(changed)])),
-    ),
-  )
+const changeStartDate = (startDate: FutureDate) => <
+  This extends Pick<TrainTrip, "startDate" | "id">
+>(
+  tt: This,
+) =>
+  Do(E.either)
+    .do(confirmUserChangeAllowed(tt))
+    .let("result", intChangeStartDate(startDate)(tt))
+    .return(({ result: [tt, events, changed] }) =>
+      tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
+    )
 
-const changeTravelClass = (_this: TrainTrip) =>
-  trampoline(
-    (_: ToolDeps<ForbiddenError | InvalidStateError>) => (
-      travelClass: TravelClassDefinition,
-    ) =>
-      pipe(
-        confirmUserChangeAllowed(_this)(),
-        mapStatic(travelClass),
-        chain(pipe(intChangeTravelClass(_this), _.RE.liftErr)),
-        map(([_this, events, changed]) =>
-          tuple(_this, events.concat([...createChangeEvents(_this)(changed)])),
-        ),
+const changeTravelClass = (travelClass: TravelClassDefinition) =>
+  trampoline((_: ToolDeps<ForbiddenError | InvalidStateError>) => (tt: TrainTrip) =>
+    Do(E.either)
+      .do(pipe(confirmUserChangeAllowed(tt), _.E.liftErr))
+      .bind("result", intChangeTravelClass(travelClass)(tt))
+      .return(({ result: [tt, events, changed] }) =>
+        tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
       ),
   )
-// ALT
-// changeTravelClass: Tramp<
-//   TravelClassDefinition,
-//   void,
-//   ForbiddenError | InvalidStateError
-// > = trampolineE(_ => travelClass =>
-//   pipe(
-//     this.confirmUserChangeAllowed(),
-//     mapStatic(travelClass),
-//     chain(_.E.liftErr(this.intChangeTravelClass)),
-//     map(this.createChangeEvents),
-//   ),
-// )
-//// End Separate sample; not used other than testing
-////////////
 
 const opportunityIdL = Lens.fromPath<TrainTrip>()(["opportunityId"])
-const assignOpportunity = (_this: TrainTrip) => (opportunityId: string) => {
-  _this = opportunityIdL.modify(() => opportunityId)(_this)
-  return tuple(_this, [] as Event[])
+const assignOpportunity = (opportunityId: string) => (tt: TrainTrip) => {
+  tt = opportunityIdL.modify(() => opportunityId)(tt)
+  return tuple(tt, [] as Event[])
 }
 
-const del = (_this: TrainTrip) => () => {
-  return tuple(new TrainTripDeleted(_this.id))
-}
+const del = (tt: TrainTrip) => tuple(new TrainTripDeleted(tt.id))
 
 const travelClassL = Lens.fromPath<TravelClassConfiguration>()(["travelClass"])
 const travelClassConfigurationL = Lens.fromPath<TrainTrip>()([
@@ -117,177 +95,164 @@ const currentTravelClassConfigurationL = Lens.fromPath<TrainTrip>()([
   "currentTravelClassConfiguration",
 ])
 
-const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
+const updateTrip = (trip: Trip) => (tt: TrainTrip) => {
   // This will clear all configurations upon trip update
   // TODO: Investigate a resolution mechanism to update existing configurations, depends on business case ;-)
-  _this = travelClassConfigurationL.modify(() =>
+  tt = travelClassConfigurationL.modify(() =>
     trip.travelClasses.map((x) => {
-      const existing = _this.travelClassConfiguration.find(
+      const existing = tt.travelClassConfiguration.find(
         (y) => y.travelClass.name === x.name,
       )
       return existing
         ? travelClassL.modify(() => x)(existing)
         : unsafeUnwrap(TravelClassConfiguration.create(x))
     }),
-  )(_this)
+  )(tt)
   // unsafeUnwrap(TravelClassConfiguration.create(x)
   // vs:
   // w.travelClassConfiguration = trip.travelClasses.map(x =>
   //   const existing = this.travelClassConfiguration.find(y => y.travelClass.name === x.name)
   //   return { ...existing, travelClass: x }
   // }
-  const currentTravelClassConfiguration = _this.travelClassConfiguration.find(
-    (x) =>
-      _this.currentTravelClassConfiguration.travelClass.name === x.travelClass.name,
+  const currentTravelClassConfiguration = tt.travelClassConfiguration.find(
+    (x) => tt.currentTravelClassConfiguration.travelClass.name === x.travelClass.name,
   )
   // TODO: use NonEmptyArray?
-  _this = currentTravelClassConfigurationL.modify(
-    () => currentTravelClassConfiguration || _this.travelClassConfiguration[0],
-  )(_this)
+  tt = currentTravelClassConfigurationL.modify(
+    () => currentTravelClassConfiguration || tt.travelClassConfiguration[0],
+  )(tt)
 
-  return tuple(_this, [] as Event[])
+  return tuple(tt, [] as Event[])
 }
 
-const proposeChanges = (_this: TrainTrip) =>
+const proposeChanges = (state: StateProposition) =>
   trampoline(
     (_: ToolDeps<ValidationError | InvalidStateError | ForbiddenError>) => (
-      state: StateProposition,
+      tt: TrainTrip,
     ) =>
-      pipe(
-        confirmUserChangeAllowed(_this)(),
-        mapStatic(state),
-        chain(pipe(applyDefinedChanges(_this), _.RE.liftErr)),
+      Do(E.either)
+        .do(pipe(confirmUserChangeAllowed(tt), _.E.liftErr))
+        .bind("result", applyDefinedChanges(state)(tt))
         // TODO: push the events out as return
-        //E.map(x => [...createChangeEvents(_this)(x)]),
-        map(([_this, events, changed]) =>
-          tuple(_this, events.concat([...createChangeEvents(_this)(changed)])),
+        //E.map(x => [...createChangeEvents(tt)(x)]),
+        .return(({ result: [tt, events, changed] }) =>
+          tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
         ),
-      ),
-    // ALT1
-    // pipe(
-    //   ok(state),
-    //   chainTee(this.confirmUserChangeAllowed),
-    //   chain(liftE(this.applyDefinedChanges)),
-    //   map(this.createChangeEvents),
-    // )
-    // ALT2
-    // pipe(
-    //   this.confirmUserChangeAllowed(),
-    //   chain(liftErr(() => this.applyDefinedChanges(state))),
-    //   map(this.createChangeEvents),
-    // )
   )
 
 // TODO: we have to return the object from each map
 // TODO: convert back from Imperative to Functional.
-const applyDefinedChanges = (_this: TrainTrip) => ({
+const applyDefinedChanges = ({
   locked,
   pax,
   startDate,
   travelClass,
-}: StateProposition): E.Either<
-  InvalidStateError | ValidationError,
-  [TrainTrip, Event[], boolean]
-> => {
+}: StateProposition) => (
+  tt: TrainTrip,
+): E.Either<InvalidStateError | ValidationError, [TrainTrip, Event[], boolean]> => {
   // TODO: use do?
   let events: Event[] = []
   let changed = false
   if (startDate !== undefined) {
-    const r = intChangeStartDate(_this)(startDate)
-    _this = r[0]
+    const r = pipe(tt, intChangeStartDate(startDate))
+    tt = r[0]
     events = events.concat(r[1])
     if (r[2]) {
       changed = true
     }
   }
   if (pax !== undefined) {
-    const r = intChangePax(_this)(pax)
-    _this = r[0]
+    const r = pipe(tt, intChangePax(pax))
+    tt = r[0]
     events = events.concat(r[1])
     if (r[2]) {
       changed = true
     }
   }
   if (travelClass !== undefined) {
-    const rEither = intChangeTravelClass(_this)(travelClass)
+    const rEither = pipe(tt, intChangeTravelClass(travelClass))
     if (E.isErr(rEither)) {
       return rEither
     }
     const r = rEither.right
-    _this = r[0]
+    tt = r[0]
     events = events.concat(r[1])
     if (r[2]) {
       changed = true
     }
   }
   if (locked !== undefined) {
-    if (_this.lockedAt && !locked) {
+    if (tt.lockedAt && !locked) {
       return E.left(new ValidationError("Cannot unlock a locked"))
     }
     if (locked) {
       // TODO: Date should be moved up.
-      const r = lock(_this)(new Date())
-      _this = r[0]
+      const r = pipe(tt, lock(new Date()))
+      tt = r[0]
       events = events.concat(r[1])
       if (r[2]) {
         changed = true
       }
     }
   }
-  return ok(tuple(_this, events, changed))
+  return ok(tuple(tt, events, changed))
 }
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
-const lock = (_this: TrainTrip) => (currentDate: Date) => {
-  if (_this.lockedAt) {
-    return tuple(_this, [], false)
+const lock = (currentDate: Date) => (tt: TrainTrip) => {
+  if (tt.lockedAt) {
+    return tuple(tt, [], false)
   }
-  _this = lockedAtL.modify(() => currentDate)(_this)
-  const events: Event[] = [new TrainTripStateChanged(_this.id)]
-  return tuple(_this, events, true)
+  tt = lockedAtL.modify(() => currentDate)(tt)
+  const events: Event[] = [new TrainTripStateChanged(tt.id)]
+  return tuple(tt, events, true)
 }
 
 const startDateL = convertCoolLens(
   Lens.fromPath<Pick<TrainTrip, "startDate">>()(["startDate"]),
 )
-const intChangeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">>(
-  _this: This,
-) => (startDate: FutureDate) => {
+const intChangeStartDate = (startDate: FutureDate) => <
+  This extends Pick<TrainTrip, "startDate">
+>(
+  tt: This,
+) => {
   const events: Event[] = []
-  if (startDate.toISOString() === _this.startDate.toISOString()) {
-    return tuple(_this, events, false)
+  if (startDate.toISOString() === tt.startDate.toISOString()) {
+    return tuple(tt, events, false)
   }
   // TODO: return just the boolean, and apply the change at the caller?
   // TODO: other business logic
-  _this = startDateL.modify(() => startDate)(_this)
-  return tuple(_this, events, true)
+  tt = startDateL.modify(() => startDate)(tt)
+  return tuple(tt, events, true)
 }
 
-const paxL = Lens.fromPath<TrainTrip>()(["pax"])
-const intChangePax = (_this: TrainTrip) => (pax: PaxDefinition) => {
+const paxL = convertCoolLens(Lens.fromPath<Pick<TrainTrip, "pax">>()(["pax"]))
+const intChangePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax">>(
+  tt: This,
+) => {
   const events: Event[] = []
-  if (isEqual(_this.pax, pax)) {
-    return tuple(_this, events, false)
+  if (isEqual(tt.pax, pax)) {
+    return tuple(tt, events, false)
   }
-  _this = paxL.modify(() => pax)(_this)
+  tt = paxL.modify(() => pax)(tt)
   // TODO: other business logic
-  return tuple(_this, events, true)
+  return tuple(tt, events, true)
 }
 
-const intChangeTravelClass = (_this: TrainTrip) => (
-  travelClass: TravelClassDefinition,
+const intChangeTravelClass = (travelClass: TravelClassDefinition) => (
+  tt: TrainTrip,
 ): Result<[TrainTrip, Event[], boolean], InvalidStateError> => {
-  const slc = _this.travelClassConfiguration.find(
+  const slc = tt.travelClassConfiguration.find(
     (x) => x.travelClass.name === travelClass,
   )
   if (!slc) {
     return err(new InvalidStateError(`${travelClass} not available currently`))
   }
   const events: Event[] = []
-  if (_this.currentTravelClassConfiguration === slc) {
-    return ok([_this, events, false])
+  if (tt.currentTravelClassConfiguration === slc) {
+    return ok([tt, events, false])
   }
-  _this = currentTravelClassConfigurationL.modify(() => slc)(_this)
-  return ok([_this, events, true])
+  tt = currentTravelClassConfigurationL.modify(() => slc)(tt)
+  return ok([tt, events, true])
 }
 
 const create = (
@@ -317,19 +282,20 @@ const create = (
 }
 
 const confirmUserChangeAllowed = <This extends Pick<TrainTrip, "lockedAt" | "id">>(
-  _this: This,
-) => (): Result<void, ForbiddenError> =>
-  isLocked(_this)
-    ? err(new ForbiddenError(`No longer allowed to change TrainTrip ${_this.id}`))
+  tt: This,
+): Result<void, ForbiddenError> =>
+  isLocked(tt)
+    ? err(new ForbiddenError(`No longer allowed to change TrainTrip ${tt.id}`))
     : success()
 
-const isLocked = <This extends Pick<TrainTrip, "lockedAt">>(_this: This) =>
-  Boolean(_this.lockedAt)
+const isLocked = <This extends Pick<TrainTrip, "lockedAt">>(tt: This) =>
+  Boolean(tt.lockedAt)
 
 const TrainTrip = {
   create,
   isLocked,
   changeStartDate,
+  changePax,
   changeTravelClass,
   proposeChanges,
   assignOpportunity,
@@ -339,11 +305,11 @@ const TrainTrip = {
 
 export default TrainTrip
 
-const createChangeEvents = <This extends Pick<TrainTrip, "id">>(_this: This) =>
-  function* (changed: boolean) {
-    yield new UserInputReceived(_this.id)
+const createChangeEvents = (changed: boolean) =>
+  function* <This extends Pick<TrainTrip, "id">>(tt: This) {
+    yield new UserInputReceived(tt.id)
     if (changed) {
-      yield new TrainTripStateChanged(_this.id)
+      yield new TrainTripStateChanged(tt.id)
     }
   }
 
