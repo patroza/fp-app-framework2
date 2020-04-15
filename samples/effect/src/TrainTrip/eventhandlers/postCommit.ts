@@ -41,20 +41,6 @@ const OnTrainTripStateChanged = (evt: TrainTripStateChanged) =>
 const OnUserInputReceived = (evt: UserInputReceived) =>
   TTP.registerIfPending(evt.trainTripId)
 
-// This is a command like RegisterCloud and should run in it's own env
-// const createIntegrationCommandEventHandler = createIntegrationEventHandlerWithDeps(
-//   () => ({
-//     request: requestKey,
-//     ...defaultDependencies,
-//   }),
-// )
-
-// createIntegrationCommandEventHandler<CustomerRequestedChanges, void, DbError>(
-//   /* on */ CustomerRequestedChanges,
-//   "LockTrainTrip",
-//   curryRequest(lockTrainTrip),
-// )
-
 const eventHandlers = {
   TrainTripStateChanged: OnTrainTripStateChanged,
   TrainTripCreated: OnTrainTripCreated,

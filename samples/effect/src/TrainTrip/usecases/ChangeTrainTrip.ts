@@ -16,6 +16,7 @@ import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
 import TrainTrip from "../TrainTrip"
 import { createPrimitiveValidator } from "@/utils"
 import * as STT from "../infrastructure/saveTrainTrip"
+import { O } from "ts-toolbelt"
 
 const ChangeTrainTrip = (input: Input) =>
   T.asUnit(
@@ -41,7 +42,11 @@ export const Input = t.type(
   },
   "GetTrainTripInput",
 )
-export interface Input extends t.TypeOf<typeof Input> {}
+export interface Input
+  extends O.Optional<
+    t.TypeOf<typeof Input>,
+    "pax" | "startDate" | "travelClass" | "locked"
+  > {}
 
 export const validatePrimitives = createPrimitiveValidator<Input, typeof Input>(Input)
 
