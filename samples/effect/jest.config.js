@@ -4,7 +4,7 @@ module.exports = {
     "^.+\\.tsx?$": "ts-jest",
   },
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/src/$1",
+    "^@e/(.*)$": "<rootDir>/src/$1",
   },
   watchPathIgnorePatterns: ["data/*", "router-schema.json"],
   globals: {

@@ -1,14 +1,14 @@
-import TrainTrip, { Price } from "@/TrainTrip/TrainTrip"
+import TrainTrip, { Price } from "@e/TrainTrip/TrainTrip"
 import {
   createTravelPlanType,
   getTemplateType,
   getTravelPlanType,
-} from "@/TrainTrip/usecases/types"
+} from "@e/TrainTrip/usecases/types"
 import { ApiError, InvalidStateError, RecordNotFound, utils } from "@fp-app/framework"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
 import Trip, { TravelClass, TripWithSelectedTravelClass } from "../Trip"
-import { E, F, T } from "@/meffect"
+import { E, F, T } from "@e/meffect"
 import { pipe } from "fp-ts/lib/pipeable"
 import { trampoline, ToolDeps, TE, RE, RTE } from "@fp-app/fp-ts-extensions"
 

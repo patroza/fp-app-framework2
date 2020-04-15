@@ -3,8 +3,8 @@ import { effect as T, managed as M, exit as E } from "@matechs/effect"
 import * as KOA from "@matechs/koa"
 // import { Do } from "fp-ts-contrib/lib/Do"
 import { pipe } from "fp-ts/lib/pipeable"
-import * as TA from "@/TrainTrip/infrastructure/api"
-import * as TTP from "@/TrainTrip/infrastructure/trainTripPublisher.inMemory"
+import * as TA from "@e/TrainTrip/infrastructure/api"
+import * as TTP from "@e/TrainTrip/infrastructure/trainTripPublisher.inMemory"
 
 const port = 3535
 

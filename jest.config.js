@@ -4,7 +4,8 @@ module.exports = {
     "^.+\\.tsx?$": "ts-jest"
   },
   "moduleNameMapper": {
-    "^@/(.*)$": "<rootDir>/samples/classic/src/$1"
+    "^@c/(.*)$": "<rootDir>/samples/classic/src/$1",
+    "^@e/(.*)$": "<rootDir>/samples/effect/src/$1"
   },
   globals: {
     'ts-jest': {

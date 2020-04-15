@@ -3,7 +3,7 @@ import { createCommandWithDeps } from "@fp-app/framework-classic"
 import { pipe, Do, TE, toVoid } from "@fp-app/fp-ts-extensions"
 import { defaultDependencies, sendCloudSyncKey } from "./types"
 import { wrap } from "../infrastructure/utils"
-import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
+import { trainTrips } from "@c/TrainTrip/infrastructure/TrainTripContext.disk"
 
 const createCommand = createCommandWithDeps(() => ({
   trainTrips,

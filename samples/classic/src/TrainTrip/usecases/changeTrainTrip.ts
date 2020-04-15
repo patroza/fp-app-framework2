@@ -8,7 +8,7 @@ import {
   FieldValidationError,
 } from "@fp-app/framework"
 import { pipe, E, NA, t, TE, toVoid } from "@fp-app/fp-ts-extensions"
-import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
+import { trainTrips } from "@c/TrainTrip/infrastructure/TrainTripContext.disk"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"

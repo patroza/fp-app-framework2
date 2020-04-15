@@ -1,4 +1,4 @@
-import TrainTrip, { Price } from "@/TrainTrip/TrainTrip"
+import TrainTrip, { Price } from "@e/TrainTrip/TrainTrip"
 import { ApiError, RecordContext, UnitOfWork } from "@fp-app/framework"
 import { AsyncResult, RTE } from "@fp-app/fp-ts-extensions"
 //import { TrainTripPublisher } from "../eventhandlers"

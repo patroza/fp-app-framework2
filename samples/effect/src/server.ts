@@ -2,7 +2,7 @@ import { effect as T } from "@matechs/effect"
 import * as KOA from "@matechs/koa"
 // import { Do } from "fp-ts-contrib/lib/Do"
 import { sequenceT } from "fp-ts/lib/Apply"
-import trainTripR from "@/TrainTrip/router"
+import trainTripR from "@e/TrainTrip/router"
 import { utils } from "@fp-app/framework"
 
 const getHelloWorldRoute = KOA.route(

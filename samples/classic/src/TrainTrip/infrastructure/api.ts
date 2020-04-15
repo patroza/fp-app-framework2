@@ -1,9 +1,9 @@
-import TrainTrip, { Price } from "@/TrainTrip/TrainTrip"
+import TrainTrip, { Price } from "@c/TrainTrip/TrainTrip"
 import {
   createTravelPlanType,
   getTemplateType,
   getTravelPlanType,
-} from "@/TrainTrip/usecases/types"
+} from "@c/TrainTrip/usecases/types"
 import { ApiError, InvalidStateError, RecordNotFound, utils } from "@fp-app/framework"
 import { pipe, TE, E, trampoline, ToolDeps, RTE, RE } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"

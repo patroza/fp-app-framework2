@@ -8,10 +8,10 @@ import { Do, Result, pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
-import * as API from "@/TrainTrip/infrastructure/api"
+import * as API from "@e/TrainTrip/infrastructure/api"
 import { getMonoid } from "fp-ts/lib/Array"
-import { T, liftEitherSuspended } from "@/meffect"
-import { createPrimitiveValidator } from "@/utils"
+import { T, liftEitherSuspended } from "@e/meffect"
+import { createPrimitiveValidator } from "@e/utils"
 import save from "../infrastructure/saveTrainTrip"
 
 const CreateTrainTrip = (input: Input) =>

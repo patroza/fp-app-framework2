@@ -2,8 +2,8 @@ import TrainTrip, {
   isLocked,
   Price,
   TravelClassConfiguration,
-} from "@/TrainTrip/TrainTrip"
-import { TrainTripContext as TrainTripContextType } from "@/TrainTrip/usecases/types"
+} from "@c/TrainTrip/TrainTrip"
+import { TrainTripContext as TrainTripContextType } from "@c/TrainTrip/usecases/types"
 import { DomainEventHandler, Event, configure } from "@fp-app/framework-classic"
 import * as diskdb from "@fp-app/io.diskdb"
 import TravelClassDefinition from "../TravelClassDefinition"

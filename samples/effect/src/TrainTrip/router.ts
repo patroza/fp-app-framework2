@@ -9,7 +9,7 @@ import * as GetTrainTrip from "./usecases/GetTrainTrip"
 import * as CreateTrainTrip from "./usecases/CreateTrainTrip"
 import * as ChangeTrainTrip from "./usecases/ChangeTrainTrip"
 import * as DeleteTrainTrip from "./usecases/DeleteTrainTrip"
-import { joinData, handleErrors } from "@/requestHelpers"
+import { joinData, handleErrors } from "@e/requestHelpers"
 import provideRequestScoped from "./provideRequestScoped"
 
 const getTrainTrip = KOA.route(

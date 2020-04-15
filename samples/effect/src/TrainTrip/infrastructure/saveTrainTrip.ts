@@ -1,11 +1,11 @@
 import TrainTrip from "../TrainTrip"
 import { Event } from "@fp-app/framework"
 import { Do } from "fp-ts-contrib/lib/Do"
-import { T } from "@/meffect"
+import { T } from "@e/meffect"
 import * as PreCommit from "../eventhandlers/preCommit"
 import * as PostCommit from "../eventhandlers/postCommit"
 import { sequenceT } from "fp-ts/lib/Apply"
-import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
+import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 import { tupled } from "fp-ts/lib/function"
 
 export const save = (

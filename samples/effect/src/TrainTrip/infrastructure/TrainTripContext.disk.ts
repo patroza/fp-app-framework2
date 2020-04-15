@@ -1,5 +1,5 @@
-import TrainTrip, { TravelClassConfiguration, Price } from "@/TrainTrip/TrainTrip"
-import { TrainTripContext as TrainTripContextType } from "@/TrainTrip/usecases/types"
+import TrainTrip, { TravelClassConfiguration, Price } from "@e/TrainTrip/TrainTrip"
+import { TrainTripContext as TrainTripContextType } from "@e/TrainTrip/usecases/types"
 import { RecordNotFound } from "@fp-app/framework"
 import * as diskdb from "@fp-app/io.diskdb"
 import TravelClassDefinition from "../TravelClassDefinition"
@@ -7,7 +7,7 @@ import { TravelClass } from "../Trip"
 import { TrainTripView } from "../usecases/GetTrainTrip"
 import TrainTripReadContext from "./TrainTripReadContext.disk"
 import PaxDefinition, { Pax } from "../PaxDefinition"
-import { T, F, O } from "@/meffect"
+import { T, F, O } from "@e/meffect"
 import { pipe } from "fp-ts/lib/pipeable"
 
 // Since we assume that saving a valid object, means restoring a valid object
@@ -69,7 +69,7 @@ export const loadE = (id: string) =>
     T.chain(
       O.fold(
         () => T.raiseError(new RecordNotFound("trainTrip", id)),
-        (x) => T.pure(x) as T.Effect<unknown, RecordNotFound, TrainTrip>,
+        (x) => T.pure(x),
       ),
     ),
   )

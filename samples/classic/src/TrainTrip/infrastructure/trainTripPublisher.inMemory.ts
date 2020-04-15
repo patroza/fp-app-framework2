@@ -1,5 +1,5 @@
-import { TrainTripPublisher } from "@/TrainTrip/eventhandlers"
-import { TrainTripId } from "@/TrainTrip/TrainTrip"
+import { TrainTripPublisher } from "@c/TrainTrip/eventhandlers"
+import { TrainTripId } from "@c/TrainTrip/TrainTrip"
 import { utils } from "@fp-app/framework"
 import {
   paramInject,

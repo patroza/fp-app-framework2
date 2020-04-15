@@ -1,8 +1,8 @@
 import { Do } from "@fp-app/fp-ts-extensions"
-import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
+import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 import { t } from "@fp-app/fp-ts-extensions"
-import { createPrimitiveValidator } from "@/utils"
-import { T } from "@/meffect"
+import { createPrimitiveValidator } from "@e/utils"
+import { T } from "@e/meffect"
 import TrainTrip from "../TrainTrip"
 import save from "../infrastructure/saveTrainTrip"
 

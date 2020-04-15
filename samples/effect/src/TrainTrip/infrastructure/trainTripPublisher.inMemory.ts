@@ -1,6 +1,6 @@
-import { TrainTripId } from "@/TrainTrip/TrainTrip"
+import { TrainTripId } from "@e/TrainTrip/TrainTrip"
 import { utils } from "@fp-app/framework"
-import { F, T } from "@/meffect"
+import { F, T } from "@e/meffect"
 import RegisterCloud from "../eventhandlers/RegisterCloud"
 import provideRequestScoped from "../provideRequestScoped"
 

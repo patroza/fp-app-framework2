@@ -1,8 +1,8 @@
-import TrainTrip, { Events, TrainTripStateChanged } from "@/TrainTrip/TrainTrip"
+import TrainTrip, { Events, TrainTripStateChanged } from "@e/TrainTrip/TrainTrip"
 import { Do } from "@fp-app/fp-ts-extensions"
-import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
-import * as API from "@/TrainTrip/infrastructure/api"
-import { T } from "@/meffect"
+import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
+import * as API from "@e/TrainTrip/infrastructure/api"
+import { T } from "@e/meffect"
 
 // import { U } from "ts-toolbelt"
 

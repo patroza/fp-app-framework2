@@ -3,9 +3,9 @@ import {
   TrainTripStateChanged,
   UserInputReceived,
   Events,
-} from "@/TrainTrip/TrainTrip"
-import { T } from "@/meffect"
-import * as TTP from "@/TrainTrip/infrastructure/trainTripPublisher.inMemory"
+} from "@e/TrainTrip/TrainTrip"
+import { T } from "@e/meffect"
+import * as TTP from "@e/TrainTrip/infrastructure/trainTripPublisher.inMemory"
 
 // Domain Events should primarily be used to be turned into Integration Event (Post-Commit, call other service)
 // There may be other small reasons to use it, like to talk to an external system Pre-Commit.

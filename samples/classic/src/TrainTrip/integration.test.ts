@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 jest.mock("@fp-app/framework-classic/src/infrastructure/executePostCommitHandlers")
 
-import { CustomerRequestedChangesDTO } from "@/resolveIntegrationEvent"
+import { CustomerRequestedChangesDTO } from "@c/resolveIntegrationEvent"
 import { CombinedValidationError, RecordNotFound, utils } from "@fp-app/framework"
 import { E } from "@fp-app/fp-ts-extensions"
 import moment from "moment"

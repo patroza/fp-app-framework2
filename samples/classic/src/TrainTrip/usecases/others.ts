@@ -12,7 +12,7 @@ import FutureDate from "../FutureDate"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { defaultDependencies } from "./types"
 import { wrap } from "../infrastructure/utils"
-import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
+import { trainTrips } from "@c/TrainTrip/infrastructure/TrainTripContext.disk"
 
 const createCommand = createCommandWithDeps(() => ({
   trainTrips,

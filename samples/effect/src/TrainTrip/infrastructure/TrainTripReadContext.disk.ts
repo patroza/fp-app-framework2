@@ -1,6 +1,6 @@
 import { ReadContext as RC } from "@fp-app/io.diskdb"
 import { TrainTripView } from "../usecases/GetTrainTrip"
-import { T, F, O } from "@/meffect"
+import { T, F, O } from "@e/meffect"
 
 export default class TrainTripReadContext extends RC<TrainTripView> {
   constructor() {

@@ -2,7 +2,7 @@ import { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
 import * as RC from "../infrastructure/TrainTripReadContext.disk"
 import { t } from "@fp-app/fp-ts-extensions"
-import { createPrimitiveValidator } from "@/utils"
+import { createPrimitiveValidator } from "@e/utils"
 
 const GetTrainTrip = (input: Input) => RC.read(input.trainTripId)
 

@@ -1,8 +1,8 @@
 import { Do, toVoid } from "@fp-app/fp-ts-extensions"
-import { T } from "@/meffect"
-import * as TC from "@/TrainTrip/infrastructure/TrainTripContext.disk"
-import * as API from "@/TrainTrip/infrastructure/api"
-import TrainTrip from "@/TrainTrip/TrainTrip"
+import { T } from "@e/meffect"
+import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
+import * as API from "@e/TrainTrip/infrastructure/api"
+import TrainTrip from "@e/TrainTrip/TrainTrip"
 import { saveT } from "../infrastructure/saveTrainTrip"
 
 const RegisterCloud = (input: Input) =>

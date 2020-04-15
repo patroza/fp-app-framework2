@@ -3,10 +3,10 @@ import {
   TrainTripId,
   TrainTripStateChanged,
   UserInputReceived,
-} from "@/TrainTrip/TrainTrip"
-import { defaultDependencies, TrainTripPublisherKey } from "@/TrainTrip/usecases/types"
-import { getTrip } from "@/TrainTrip/infrastructure/api"
-import { trainTrips } from "@/TrainTrip/infrastructure/TrainTripContext.disk"
+} from "@c/TrainTrip/TrainTrip"
+import { defaultDependencies, TrainTripPublisherKey } from "@c/TrainTrip/usecases/types"
+import { getTrip } from "@c/TrainTrip/infrastructure/api"
+import { trainTrips } from "@c/TrainTrip/infrastructure/TrainTripContext.disk"
 import { DbError, ApiError, InvalidStateError } from "@fp-app/framework"
 import {
   createDomainEventHandlerWithDeps,
