@@ -15,6 +15,7 @@ import {
   decodeErrors,
   convertCoolLens,
   Do,
+  O,
 } from "@fp-app/fp-ts-extensions"
 import isEqual from "lodash/fp/isEqual"
 import FutureDate from "./FutureDate"
@@ -30,7 +31,7 @@ import {
   success,
   mapLeft,
 } from "@fp-app/fp-ts-extensions/src/Either"
-import { T } from "@e/meffect"
+import { T, liftEitherSuspended } from "@e/meffect"
 
 import * as API from "@e/TrainTrip/infrastructure/api"
 
@@ -156,11 +157,6 @@ const updateTrip = (trip: Trip) => (tt: TrainTrip) => {
 }
 
 type ApplyChangesError = ValidationError | InvalidStateError
-const updateTemplate = (tt: TrainTrip) =>
-  Do(T.effect)
-    .bind("trip", API.get(tt.currentTravelClassConfiguration.travelClass.templateId))
-    .bindL("result2", ({ trip }) => T.sync(() => TrainTrip.updateTrip(trip)(tt)))
-    .return(({ result2 }) => result2)
 
 /*
   This might seem like a fair choice. Things just got a lot more clear,
@@ -179,17 +175,18 @@ const updateTemplate = (tt: TrainTrip) =>
 */
 const proposeChangesE = (state: StateProposition) => (tt: TrainTrip) =>
   Do(T.effect)
-    .bind(
-      "result",
-      T.suspended(() => T.fromEither(proposeChanges(state)(tt))),
-    )
+    .bind("result", pipe(tt, liftEitherSuspended(proposeChanges(state))))
     .bindL("result2", ({ result: [tt, , changed] }) =>
-      changed ? updateTemplate(tt) : T.pure(null),
+      changed ? T.effect.map(updateTemplate(tt), O.some) : T.pure(O.none),
     )
     .return(({ result, result2 }) =>
-      result2
-        ? tuple(result2[0], [...result[1], ...result2[1]])
-        : tuple(result[0], result[1]),
+      pipe(
+        result2,
+        O.fold(
+          () => tuple(result[0], result[1]),
+          (v) => tuple(v[0], [...result[1], ...v[1]]),
+        ),
+      ),
     )
 
 const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
@@ -205,6 +202,12 @@ const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
     .return(({ result: [tt, events, changed] }) =>
       tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const, changed),
     )
+
+const updateTemplate = (tt: TrainTrip) =>
+  T.effect.chain(
+    API.get(tt.currentTravelClassConfiguration.travelClass.templateId),
+    (trip) => T.sync(() => pipe(tt, TrainTrip.updateTrip(trip))),
+  )
 
 // TODO: we can do this better somehow..
 const applyDefinedChanges = ({
