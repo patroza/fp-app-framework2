@@ -88,8 +88,8 @@ const create = (
   - Unit testing is more involving. Instead of strapping a basic environment,
     you must strap a more complex environment or mock more.
 */
-const proposeChangesE = (state: StateProposition) =>
-  pipe(liftEitherSuspended(proposeChanges(state)), handleUpdateTemplate)
+const proposeChangesE = (state: StateProposition) => (tt: TrainTrip) =>
+  pipe(tt, liftEitherSuspended(proposeChanges(state)), handleUpdateTemplate)
 
 const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
   Do(E.either)
@@ -105,8 +105,8 @@ const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
       tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const, changed),
     )
 
-const changePaxE = (pax: PaxDefinition) =>
-  pipe(liftEitherSuspended(changePax(pax)), handleUpdateTemplate)
+const changePaxE = (pax: PaxDefinition) => (tt: TrainTrip) =>
+  pipe(tt, liftEitherSuspended(changePax(pax)), handleUpdateTemplate)
 
 const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | "id">>(
   tt: This,
@@ -118,8 +118,8 @@ const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | 
       tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const, changed),
     )
 
-const changeStartDateE = (startDate: FutureDate) =>
-  pipe(liftEitherSuspended(changeStartDate(startDate)), handleUpdateTemplate)
+const changeStartDateE = (startDate: FutureDate) => (tt: TrainTrip) =>
+  pipe(tt, liftEitherSuspended(changeStartDate(startDate)), handleUpdateTemplate)
 
 const changeStartDate = (startDate: FutureDate) => <
   This extends Pick<TrainTrip, "startDate" | "id">
@@ -133,8 +133,8 @@ const changeStartDate = (startDate: FutureDate) => <
       tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const, changed),
     )
 
-const changeTravelClassE = (travelClass: TravelClassDefinition) =>
-  pipe(liftEitherSuspended(changeTravelClass(travelClass)), handleUpdateTemplate)
+const changeTravelClassE = (travelClass: TravelClassDefinition) => (tt: TrainTrip) =>
+  pipe(tt, liftEitherSuspended(changeTravelClass(travelClass)), handleUpdateTemplate)
 
 const changeTravelClass = (travelClass: TravelClassDefinition) => (tt: TrainTrip) =>
   Do(E.either)
@@ -243,10 +243,10 @@ const currentTravelClassConfigurationL = Lens.fromPath<TrainTrip>()([
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 
 const handleUpdateTemplate = <R, E, TEvents extends readonly Events[]>(
-  inp: (tt: TrainTrip) => T.Effect<R, E, [TrainTrip, TEvents, boolean]>,
-) => (tt: TrainTrip) =>
+  inp: T.Effect<R, E, [TrainTrip, TEvents, boolean]>,
+) =>
   Do(T.effect)
-    .bind("result", inp(tt))
+    .bind("result", inp)
     .bindL("result2", ({ result: [tt, , changed] }) =>
       changed ? T.effect.map(updateTemplate(tt), O.some) : T.pure(O.none),
     )
