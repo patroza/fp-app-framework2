@@ -1,7 +1,7 @@
 import * as J from "@matechs/test-jest"
 import { effect as T } from "@matechs/effect"
 import { Do } from "fp-ts-contrib/lib/Do"
-import executeReceived from "../queueReceiver"
+import executeReceived from "../eventhandlers/external"
 
 import * as H from "./helpers.spec"
 

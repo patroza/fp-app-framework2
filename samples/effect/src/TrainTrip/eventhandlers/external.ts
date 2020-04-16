@@ -1,10 +1,9 @@
 import { t, E, Do } from "@fp-app/fp-ts-extensions"
-import ChangeTrainTrip from "./usecases/ChangeTrainTrip"
+import ChangeTrainTrip from "../usecases/ChangeTrainTrip"
+import RegisterCloud from "./RegisterCloud"
 import { T, liftEitherSuspended } from "@e/meffect"
 import * as FW from "@fp-app/framework"
-import provideRequestScoped from "./provideRequestScoped"
-
-// TODO: RegisterCloud should be added here?
+import provideRequestScoped from "../provideRequestScoped"
 
 const executeReceived = (unknownEvent: unknown) =>
   T.asUnit(
@@ -21,9 +20,9 @@ const parseEvent = liftEitherSuspended((unknownEvent: unknown) =>
   E.either.map(SupportedIntegrationEvents.decode(unknownEvent), (a) => a as Events),
 )
 
-const SomeOtherEvent = t.type({
-  type: t.keyof({ SomeOther: null }),
-  payload: t.type({}),
+export const RegisterOnCloud = t.type({
+  type: t.literal("RegisterOnCloud"),
+  trainTripId: t.NonEmptyString,
 })
 
 export const CustomerRequestedChanges = t.type({
@@ -31,7 +30,7 @@ export const CustomerRequestedChanges = t.type({
   type: t.literal("CustomerRequestedChanges"),
 })
 
-const SupportedIntegrationEvents = t.union([CustomerRequestedChanges, SomeOtherEvent])
+const SupportedIntegrationEvents = t.union([CustomerRequestedChanges, RegisterOnCloud])
 
 export interface CustomerRequestedChanges
   extends t.TypeOf<typeof CustomerRequestedChanges> {}
@@ -41,6 +40,7 @@ const OnCustomerRequestedChanges = ({ trainTripId }: CustomerRequestedChanges) =
 
 export const eventHandlers = {
   CustomerRequestedChanges: OnCustomerRequestedChanges,
+  RegisterOnCloud: RegisterCloud,
 }
 
 type Unsupported = { type: "unsupported" }
