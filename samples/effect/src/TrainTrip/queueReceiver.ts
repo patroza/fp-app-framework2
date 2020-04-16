@@ -57,7 +57,7 @@ const notImplemented = (evt: Events) =>
     console.log(`${evt.type} domain event not implemented`)
   })
 
-export const handlers = (evt: Events) => {
+export const handlers = <TEvent extends Events>(evt: TEvent) => {
   const keys = Object.keys(eventHandlers)
   if (keys.includes(evt.type)) {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
