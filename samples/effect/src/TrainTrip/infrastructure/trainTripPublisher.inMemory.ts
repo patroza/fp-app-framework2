@@ -3,7 +3,6 @@ import { utils } from "@fp-app/framework"
 import { F, T } from "@e/meffect"
 import executeReceived from "../eventhandlers/external"
 import * as API from "@e/TrainTrip/infrastructure/api"
-import * as TTP from "@e/TrainTrip/infrastructure/trainTripPublisher.inMemory"
 
 /**
  * Poor man's queue, great for testing. Do not use in production, or you may loose queued tasks on server restart
@@ -55,7 +54,7 @@ export default class TrainTripPublisherInMemory {
   }
 }
 
-type RequiredDeps = TTP.TrainTripPublisher & API.TripApi
+type RequiredDeps = TrainTripPublisher & API.TripApi
 
 // TODO: This inherits everything from the global scope
 // and the current request-scope. It should be fine to pick up
@@ -98,12 +97,21 @@ export interface Context {
 export const env = {
   [TrainTripPublisherURI]: {
     register: (id: string) =>
-      T.accessM((r: Context & RequiredDeps) =>
-        T.pure(r[contextEnv].ctx.register(id, r)),
+      T.accessM((r: Context) =>
+        T.pure(
+          // todo; fix
+          r[contextEnv].ctx.register(id, (r as unknown) as Context & RequiredDeps),
+        ),
       ),
     registerIfPending: (id: string) =>
-      T.accessM((r: Context & RequiredDeps) =>
-        T.pure(r[contextEnv].ctx.registerIfPending(id, r)),
+      T.accessM((r: Context) =>
+        T.pure(
+          r[contextEnv].ctx.registerIfPending(
+            id,
+            // todo; fix
+            (r as unknown) as Context & RequiredDeps,
+          ),
+        ),
       ),
   },
 }
