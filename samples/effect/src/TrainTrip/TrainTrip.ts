@@ -76,7 +76,7 @@ const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | 
     .do(confirmUserChangeAllowed(tt))
     .let("result", pipe(tt, intChangePax(pax)))
     .return(({ result: [tt, events, changed] }) =>
-      tuple(tt, [...events, ...createChangeEvents(changed)(tt)]),
+      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const),
     )
 
 const changeStartDate = (startDate: FutureDate) => <
@@ -165,7 +165,7 @@ const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
     )
     .bind("result", pipe(tt, applyDefinedChanges(state)))
     .return(({ result: [tt, events, changed] }) =>
-      tuple(tt, [...events, ...createChangeEvents(changed)(tt)]),
+      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const),
     )
 
 // TODO: we can do this better somehow..

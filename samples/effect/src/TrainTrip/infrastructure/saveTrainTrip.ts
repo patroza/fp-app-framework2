@@ -7,9 +7,9 @@ import { sequenceT } from "fp-ts/lib/Apply"
 import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 import { tupled } from "fp-ts/lib/function"
 
-export const save = (
+export const save = <TEvents extends readonly Events[]>(
   tt: TrainTrip,
-  events: readonly Events[],
+  events: TEvents,
   method: "change" | "delete" | "add" = "change",
 ) =>
   Do(T.effect)
