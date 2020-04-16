@@ -263,7 +263,7 @@ const handleUpdateTemplate = <R, E, TEvents extends readonly Events[]>(
 const updateTemplate = (tt: TrainTrip) =>
   T.effect.chain(
     API.get(tt.currentTravelClassConfiguration.travelClass.templateId),
-    (trip) => T.sync(() => pipe(tt, TrainTrip.updateTrip(trip))),
+    (trip) => T.sync(() => pipe(tt, updateTrip(trip))),
   )
 
 // TODO: we can do this better somehow..
