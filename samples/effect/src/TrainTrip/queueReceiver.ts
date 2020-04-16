@@ -36,12 +36,6 @@ const SupportedIntegrationEvents = t.union([CustomerRequestedChanges, SomeOtherE
 export interface CustomerRequestedChanges
   extends t.TypeOf<typeof CustomerRequestedChanges> {}
 
-// createIntegrationCommandEventHandler<CustomerRequestedChanges, void, DbError>(
-//   /* on */ CustomerRequestedChanges,
-//   "LockTrainTrip",
-//   curryRequest(lockTrainTrip),
-// )
-
 const OnCustomerRequestedChanges = ({ trainTripId }: CustomerRequestedChanges) =>
   ChangeTrainTrip({ trainTripId, locked: true })
 

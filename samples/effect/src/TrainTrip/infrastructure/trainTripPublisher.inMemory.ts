@@ -57,10 +57,6 @@ export default class TrainTripPublisherInMemory {
   }
 }
 
-// export interface IntegrationEventCommands {
-//   registerCloud: typeof registerCloud
-// }
-
 const CLOUD_PUBLISH_DELAY = 10 * 1000
 
 const TrainTripPublisherURI = "@fp-app/effect/traintrip-publisher"
