@@ -380,7 +380,10 @@ export type Events =
 const createEvent = <TO>(t: t.TypeC<any>) => ({
   ...t,
   create: (trainTripId: string) =>
-    (({ trainTripId, type: t.props.type.name } as unknown) as TO),
+    (({
+      trainTripId,
+      type: t.props.type.name.substring(1, t.props.type.name.length - 1),
+    } as unknown) as TO),
 })
 
 const TrainTripCreated_ = t.type({
