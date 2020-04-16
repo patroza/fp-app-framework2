@@ -1,5 +1,4 @@
-import TrainTrip from "../TrainTrip"
-import { Event } from "@fp-app/framework"
+import TrainTrip, { Events } from "../TrainTrip"
 import { Do } from "fp-ts-contrib/lib/Do"
 import { T } from "@e/meffect"
 import * as PreCommit from "../eventhandlers/preCommit"
@@ -10,7 +9,7 @@ import { tupled } from "fp-ts/lib/function"
 
 export const save = (
   tt: TrainTrip,
-  events: readonly Event[],
+  events: readonly Events[],
   method: "change" | "delete" | "add" = "change",
 ) =>
   Do(T.effect)
@@ -32,7 +31,7 @@ export default save
 
 export const saveT = tupled(save)
 
-const handleEvents = <TEvents extends readonly Event[]>(events: TEvents) =>
+const handleEvents = <TEvents extends readonly Events[]>(events: TEvents) =>
   events.length
     ? sequenceT(T.effect)(
         events.map((x) => PreCommit.handlers(x as any))[0],
@@ -40,7 +39,7 @@ const handleEvents = <TEvents extends readonly Event[]>(events: TEvents) =>
       )
     : T.unit
 
-const handlePostCommitEvents = <TEvents extends readonly Event[]>(events: TEvents) =>
+const handlePostCommitEvents = <TEvents extends readonly Events[]>(events: TEvents) =>
   events.length
     ? sequenceT(T.effect)(
         events.map((x) => PostCommit.handlers(x as any))[0],

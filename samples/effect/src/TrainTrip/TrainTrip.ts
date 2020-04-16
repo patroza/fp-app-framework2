@@ -152,13 +152,15 @@ const updateTrip = (trip: Trip) => (tt: TrainTrip) => {
   return tuple(tt, [] as const)
 }
 
+type ApplyChangesError = ValidationError | InvalidStateError
+
 const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
   Do(E.either)
     .do(
       pipe(
         tt,
         confirmUserChangeAllowed,
-        E.liftErr<ValidationError | InvalidStateError | ForbiddenError>(),
+        E.liftErr<ApplyChangesError | ForbiddenError>(),
       ),
     )
     .bind("result", pipe(tt, applyDefinedChanges(state)))
@@ -166,77 +168,78 @@ const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
       tuple(tt, [...events, ...createChangeEvents(changed)(tt)]),
     )
 
-// TODO: we have to return the object from each map
-// TODO: convert back from Imperative to Functional.
+// TODO: we can do this better somehow..
 const applyDefinedChanges = ({
   locked,
   pax,
   startDate,
   travelClass,
-}: StateProposition) => (tt: TrainTrip) => {
-  const computeStartdate = () => {
-    if (startDate !== undefined) {
-      return pipe(tt, intChangeStartDate(startDate))
-    }
-    return [tt, [], false] as const
-  }
-  const sd = computeStartdate()
-  tt = sd[0]
-  const computePax = () => {
-    if (pax !== undefined) {
-      return pipe(tt, intChangePax(pax))
-    }
-    return [tt, [], false] as const
-  }
-  const px = computePax()
-  tt = px[0]
-  const computeTraveClass = () => {
-    if (travelClass !== undefined) {
-      return pipe(tt, intChangeTravelClass(travelClass))
-    }
-    return E.right([tt, [], false] as const)
-  }
-  const tcE = computeTraveClass()
-  if (E.isErr(tcE)) {
-    return E.left(tcE.left)
-  }
-  const tc = tcE.right
-  tt = tc[0]
+}: StateProposition) => (tt: TrainTrip) =>
+  Do(E.either)
+    .bind("tt", pipe(E.right({ value: tt }), E.liftErr<ApplyChangesError>()))
+    .bindL("startDate", ({ tt }) => {
+      if (startDate !== undefined) {
+        const [newTT, events, changed] = pipe(tt.value, intChangeStartDate(startDate))
+        tt.value = newTT
+        return E.right([events, changed] as const)
+      }
+      return E.right(tuple([] as const, false))
+    })
+    .bindL("pax", ({ tt }) => {
+      if (pax !== undefined) {
+        const [newTT, events, changed] = pipe(tt.value, intChangePax(pax))
+        tt.value = newTT
+        return E.right([events, changed] as const)
+      }
+      return E.right(tuple([] as const, false))
+    })
+    .bindL("travelClass", ({ tt }) => {
+      if (travelClass !== undefined) {
+        return Do(E.either)
+          .bind("r", pipe(tt.value, intChangeTravelClass(travelClass)))
+          .return(({ r }) => {
+            const [newTT, events, changed] = r
+            tt.value = newTT
+            return tuple(events, changed)
+          })
+      }
+      return E.right(tuple([] as const, false))
+    })
+    .bindL("locked", ({ tt }) => {
+      if (locked !== undefined) {
+        if (tt.value.lockedAt && !locked) {
+          return E.left(new ValidationError("Cannot unlock a locked"))
+        }
+        const [newTT, events, changed] = pipe(tt.value, intLock(new Date()))
+        tt.value = newTT
+        return E.right(tuple(events, changed))
+      }
+      return E.right(tuple([] as const, false))
+    })
+    .return(({ locked, pax, startDate, travelClass, tt }) => {
+      const r = tuple(
+        tt.value,
+        [...startDate[0], ...pax[0], ...travelClass[0], ...locked[0]] as const,
+        startDate[1] || pax[1] || travelClass[1] || locked[1],
+      )
+      return r
+    })
 
-  const computeLocked = () => {
-    // TODO: this should be in the lock method instead
-    if (tt.lockedAt && !locked) {
-      return E.left(new ValidationError("Cannot unlock a locked"))
-    }
-    if (locked) {
-      // TODO: Date should be moved up.
-      return E.right(pipe(tt, lock(new Date())))
-    }
-    return E.right([tt, [], false] as const)
-  }
-  const lkE = computeLocked()
-  if (E.isErr(lkE)) {
-    return E.left(lkE.left)
-  }
-  const lk = lkE.right
-  tt = lk[0]
-
-  return ok(
-    tuple(
-      tt,
-      [...sd[1], ...px[1], ...tc[1], ...lk[1]] as const,
-      sd[2] || px[2] || tc[2] || lk[2],
-    ),
-  )
-}
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 const lock = (currentDate: Date) => (tt: TrainTrip) => {
+  const [newTT, events, changed] = intLock(currentDate)(tt)
+  if (changed) {
+    return tuple(newTT, [...events, TrainTripStateChanged.create(tt.id)])
+  }
+  return tuple(tt, events, changed)
+}
+
+const intLock = (currentDate: Date) => (tt: TrainTrip) => {
   if (tt.lockedAt) {
-    return tuple(tt, [], false)
+    return tuple(tt, noEvents(), false)
   }
   tt = lockedAtL.modify(() => currentDate)(tt)
-  const events = [TrainTripStateChanged.create(tt.id)] as const
-  return tuple(tt, events, true)
+  return tuple(tt, noEvents(), true)
 }
 
 const startDateL = convertCoolLens(
@@ -298,6 +301,7 @@ const TrainTrip = {
   isLocked,
   changeStartDate,
   changePax,
+  lock,
   changeTravelClass,
   proposeChanges,
   assignOpportunity,
