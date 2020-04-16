@@ -73,6 +73,41 @@ const create = (
   return tuple(t, events)
 }
 
+/*
+  This might seem like a fair choice. Things just got a lot more clear,
+  when we propose changes, we will also require to update templates - if change have occurred.
+  The crux is in:
+  - We now have to maintain this behavior for each involved method 
+    - proposeChanges
+    - change* functions.
+  - The real issue starts happening once you have nested objects that require such behaviors
+    the dependencies will ripple through all callsites.
+    HOWEVER - THAT IS WHERE M-EFFECT is so strong - the dependencies are still pushed all the way outward!
+    without call sites having to pass down the dependencies manual. Which is exactly one of the things domain events try to resolve..
+    .. WOW. actually ;-)
+  - Unit testing is more involving. Instead of strapping a basic environment,
+    you must strap a more complex environment or mock more.
+*/
+const proposeChangesE = (state: StateProposition) =>
+  pipe(liftEitherSuspended(proposeChanges(state)), handleUpdateTemplate)
+
+const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
+  Do(E.either)
+    .do(
+      pipe(
+        tt,
+        confirmUserChangeAllowed,
+        E.liftErr<ApplyChangesError | ForbiddenError>(),
+      ),
+    )
+    .bind("result", pipe(tt, applyDefinedChanges(state)))
+    .return(({ result: [tt, events, changed] }) =>
+      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const, changed),
+    )
+
+const changePaxE = (pax: PaxDefinition) =>
+  pipe(liftEitherSuspended(changePax(pax)), handleUpdateTemplate)
+
 const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | "id">>(
   tt: This,
 ) =>
@@ -80,8 +115,11 @@ const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | 
     .do(confirmUserChangeAllowed(tt))
     .let("result", pipe(tt, intChangePax(pax)))
     .return(({ result: [tt, events, changed] }) =>
-      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const),
+      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const, changed),
     )
+
+const changeStartDateE = (startDate: FutureDate) =>
+  pipe(liftEitherSuspended(changeStartDate(startDate)), handleUpdateTemplate)
 
 const changeStartDate = (startDate: FutureDate) => <
   This extends Pick<TrainTrip, "startDate" | "id">
@@ -92,8 +130,11 @@ const changeStartDate = (startDate: FutureDate) => <
     .do(confirmUserChangeAllowed(tt))
     .let("result", pipe(tt, intChangeStartDate(startDate)))
     .return(({ result: [tt, events, changed] }) =>
-      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const),
+      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const, changed),
     )
+
+const changeTravelClassE = (travelClass: TravelClassDefinition) =>
+  pipe(liftEitherSuspended(changeTravelClass(travelClass)), handleUpdateTemplate)
 
 const changeTravelClass = (travelClass: TravelClassDefinition) => (tt: TrainTrip) =>
   Do(E.either)
@@ -106,25 +147,26 @@ const changeTravelClass = (travelClass: TravelClassDefinition) => (tt: TrainTrip
     )
     .bind("result", pipe(tt, intChangeTravelClass(travelClass)))
     .return(({ result: [tt, events, changed] }) =>
-      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const),
+      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const, changed),
     )
 
-const opportunityIdL = Lens.fromPath<TrainTrip>()(["opportunityId"])
+const del = (tt: TrainTrip) => tuple(TrainTripDeleted.create(tt.id))
+
+const lock = (currentDate: Date) => (tt: TrainTrip) => {
+  const [newTT, events, changed] = intLock(currentDate)(tt)
+  if (changed) {
+    return tuple(newTT, [...events, createChangeEvents(changed)(tt)] as const)
+  }
+  return tuple(tt, events)
+}
+
+/*******************
+ * For Events
+ */
 const assignOpportunity = (opportunityId: string) => (tt: TrainTrip) => {
   tt = opportunityIdL.modify(() => opportunityId)(tt)
   return tuple(tt, [] as const)
 }
-
-const del = (tt: TrainTrip) => tuple(TrainTripDeleted.create(tt.id))
-
-const travelClassL = Lens.fromPath<TravelClassConfiguration>()(["travelClass"])
-const travelClassConfigurationL = Lens.fromPath<TrainTrip>()([
-  "travelClassConfiguration",
-])
-
-const currentTravelClassConfigurationL = Lens.fromPath<TrainTrip>()([
-  "currentTravelClassConfiguration",
-])
 
 const updateTrip = (trip: Trip) => (tt: TrainTrip) => {
   // This will clear all configurations upon trip update
@@ -156,26 +198,28 @@ const updateTrip = (trip: Trip) => (tt: TrainTrip) => {
   return tuple(tt, [] as const)
 }
 
-type ApplyChangesError = ValidationError | InvalidStateError
+/*******************
+ * Private
+ */
 
-/*
-  This might seem like a fair choice. Things just got a lot more clear,
-  when we propose changes, we will also require to update templates - if change have occurred.
-  The crux is in:
-  - We now have to maintain this behavior for each involved method 
-    - proposeChanges
-    - change* functions.
-  - The real issue starts happening once you have nested objects that require such behaviors
-    the dependencies will ripple through all callsites.
-    HOWEVER - THAT IS WHERE M-EFFECT is so strong - the dependencies are still pushed all the way outward!
-    without call sites having to pass down the dependencies manual. Which is exactly one of the things domain events try to resolve..
-    .. WOW. actually ;-)
-  - Unit testing is more involving. Instead of strapping a basic environment,
-    you must strap a more complex environment or mock more.
-*/
-const proposeChangesE = (state: StateProposition) => (tt: TrainTrip) =>
+const opportunityIdL = Lens.fromPath<TrainTrip>()(["opportunityId"])
+
+const travelClassL = Lens.fromPath<TravelClassConfiguration>()(["travelClass"])
+const travelClassConfigurationL = Lens.fromPath<TrainTrip>()([
+  "travelClassConfiguration",
+])
+
+const currentTravelClassConfigurationL = Lens.fromPath<TrainTrip>()([
+  "currentTravelClassConfiguration",
+])
+
+const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
+
+const handleUpdateTemplate = <R, E, TEvents extends readonly Events[]>(
+  inp: (tt: TrainTrip) => T.Effect<R, E, [TrainTrip, TEvents, boolean]>,
+) => (tt: TrainTrip) =>
   Do(T.effect)
-    .bind("result", pipe(tt, liftEitherSuspended(proposeChanges(state))))
+    .bind("result", inp(tt))
     .bindL("result2", ({ result: [tt, , changed] }) =>
       changed ? T.effect.map(updateTemplate(tt), O.some) : T.pure(O.none),
     )
@@ -184,23 +228,9 @@ const proposeChangesE = (state: StateProposition) => (tt: TrainTrip) =>
         result2,
         O.fold(
           () => tuple(result[0], result[1]),
-          (v) => tuple(v[0], [...result[1], ...v[1]]),
+          (v) => tuple(v[0], [...result[1], ...v[1]] as const),
         ),
       ),
-    )
-
-const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
-  Do(E.either)
-    .do(
-      pipe(
-        tt,
-        confirmUserChangeAllowed,
-        E.liftErr<ApplyChangesError | ForbiddenError>(),
-      ),
-    )
-    .bind("result", pipe(tt, applyDefinedChanges(state)))
-    .return(({ result: [tt, events, changed] }) =>
-      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const, changed),
     )
 
 const updateTemplate = (tt: TrainTrip) =>
@@ -210,6 +240,7 @@ const updateTemplate = (tt: TrainTrip) =>
   )
 
 // TODO: we can do this better somehow..
+type ApplyChangesError = ValidationError | InvalidStateError
 const applyDefinedChanges = ({
   locked,
   pax,
@@ -268,15 +299,6 @@ const applyDefinedChanges = ({
       return r
     })
 
-const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
-const lock = (currentDate: Date) => (tt: TrainTrip) => {
-  const [newTT, events, changed] = intLock(currentDate)(tt)
-  if (changed) {
-    return tuple(newTT, [...events, createChangeEvents(changed)(tt)] as const)
-  }
-  return tuple(tt, events)
-}
-
 const intLock = (currentDate: Date) => (tt: TrainTrip) => {
   if (tt.lockedAt) {
     return tuple(tt, noEvents(), false)
@@ -301,7 +323,6 @@ const intChangeStartDate = (startDate: FutureDate) => <
 }
 
 const noEvents = () => [] as const
-
 const paxL = convertCoolLens(Lens.fromPath<Pick<TrainTrip, "pax">>()(["pax"]))
 const intChangePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax">>(
   tt: This,
@@ -341,16 +362,22 @@ const isLocked = <This extends Pick<TrainTrip, "lockedAt">>(tt: This) =>
 
 const TrainTrip = {
   create,
+
+  proposeChangesE,
+  changeStartDateE,
+  changeTravelClassE,
+  changePaxE,
+
+  updateTrip,
+  assignOpportunity,
   isLocked,
+
+  proposeChanges,
+  del,
   changeStartDate,
+  changeTravelClass,
   changePax,
   lock,
-  changeTravelClass,
-  proposeChanges,
-  proposeChangesE,
-  assignOpportunity,
-  del,
-  updateTrip,
 }
 
 export default TrainTrip
