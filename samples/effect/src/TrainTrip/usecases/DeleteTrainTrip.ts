@@ -11,7 +11,7 @@ const DeleteTrainTrip = (input: Input) =>
     Do(T.effect)
       .bind("trainTrip", TC.loadE(input.trainTripId))
       .bindL("result", ({ trainTrip }) => T.sync(() => TrainTrip.del(trainTrip)))
-      .doL(({ result, trainTrip }) => save(trainTrip, result, "delete"))
+      .doL(({ result: [tt, events] }) => save(tt, events, "delete"))
       .done(),
   )
 

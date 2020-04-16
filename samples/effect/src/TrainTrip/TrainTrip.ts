@@ -150,7 +150,7 @@ const changeTravelClass = (travelClass: TravelClassDefinition) => (tt: TrainTrip
       tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const, changed),
     )
 
-const del = (tt: TrainTrip) => tuple(TrainTripDeleted.create(tt.id))
+const del = (tt: TrainTrip) => tuple(tt, tuple(TrainTripDeleted.create(tt.id)))
 
 const lock = (currentDate: Date) => (tt: TrainTrip) => {
   const [newTT, events, changed] = intLock(currentDate)(tt)
@@ -159,6 +159,9 @@ const lock = (currentDate: Date) => (tt: TrainTrip) => {
   }
   return tuple(tt, events)
 }
+
+const isLocked = <This extends Pick<TrainTrip, "lockedAt">>(tt: This) =>
+  Boolean(tt.lockedAt)
 
 /*******************
  * For Events
@@ -197,6 +200,30 @@ const updateTrip = (trip: Trip) => (tt: TrainTrip) => {
 
   return tuple(tt, [] as const)
 }
+
+/**** publish */
+
+const TrainTrip = {
+  create,
+
+  proposeChangesE,
+  changeStartDateE,
+  changeTravelClassE,
+  changePaxE,
+
+  updateTrip,
+  assignOpportunity,
+  isLocked,
+
+  proposeChanges,
+  del,
+  changeStartDate,
+  changeTravelClass,
+  changePax,
+  lock,
+}
+
+export default TrainTrip
 
 /*******************
  * Private
@@ -356,31 +383,6 @@ const confirmUserChangeAllowed = <This extends Pick<TrainTrip, "lockedAt" | "id"
   isLocked(tt)
     ? err(new ForbiddenError(`No longer allowed to change TrainTrip ${tt.id}`))
     : success()
-
-const isLocked = <This extends Pick<TrainTrip, "lockedAt">>(tt: This) =>
-  Boolean(tt.lockedAt)
-
-const TrainTrip = {
-  create,
-
-  proposeChangesE,
-  changeStartDateE,
-  changeTravelClassE,
-  changePaxE,
-
-  updateTrip,
-  assignOpportunity,
-  isLocked,
-
-  proposeChanges,
-  del,
-  changeStartDate,
-  changeTravelClass,
-  changePax,
-  lock,
-}
-
-export default TrainTrip
 
 const createChangeEvents = (changed: boolean) => {
   return function* <This extends Pick<TrainTrip, "id">>(tt: This) {
