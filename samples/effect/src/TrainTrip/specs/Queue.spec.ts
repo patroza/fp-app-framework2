@@ -1,21 +1,17 @@
+/* eslint-disable jest/no-standalone-expect */
 import * as J from "@matechs/test-jest"
 import { effect as T } from "@matechs/effect"
 import { Do } from "fp-ts-contrib/lib/Do"
-import executeReceived from "../eventhandlers/external"
+import executeReceived from "../queueRouter"
+import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 
 import * as H from "./helpers.spec"
+import provideRequestScoped from "../provideRequestScoped"
 
-export const queueSpec = J.testM(
-  "queue",
+const CustomerRequestedChanges = J.testM(
+  "CustomerRequestedChanges",
   Do(T.effect)
-    .bind(
-      "trainTripId",
-      H.createTrainTrip({
-        templateId: "template-id1",
-        startDate: "2020-12-01",
-        pax: { adults: 0, children: 6, babies: 0, infants: 0, teenagers: 0 },
-      }),
-    )
+    .bind("trainTripId", H.createDefaultTrip)
     .bindL("trainTrip", ({ trainTripId }) => H.getTrainTrip(trainTripId))
     .doL(({ trainTripId }) =>
       executeReceived({ trainTripId, type: "CustomerRequestedChanges" }),
@@ -25,4 +21,26 @@ export const queueSpec = J.testM(
       J.assert.equal(trainTrip.allowUserModification, true)
       J.assert.equal(trainTripAfter.allowUserModification, false)
     }),
+)
+
+const RegisterOnCloud = J.testM(
+  "RegisterOnCloud",
+  Do(T.effect)
+    .bind("trainTripId", H.createDefaultTrip)
+    .bindL("trainTrip", ({ trainTripId }) =>
+      provideRequestScoped(TC.loadE(trainTripId)),
+    )
+    .doL(({ trainTripId }) => executeReceived({ trainTripId, type: "RegisterOnCloud" }))
+    .bindL("trainTripAfter", ({ trainTripId }) =>
+      provideRequestScoped(TC.loadE(trainTripId)),
+    )
+    .return(({ trainTrip, trainTripAfter }) => {
+      J.assert.equal(trainTrip.opportunityId, undefined)
+      expect(trainTripAfter.opportunityId).toEqual(expect.any(String))
+    }),
+)
+
+export const queueSpec = J.suite("QueueRouter")(
+  CustomerRequestedChanges,
+  RegisterOnCloud,
 )

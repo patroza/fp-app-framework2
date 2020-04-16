@@ -1,7 +1,7 @@
 import { TrainTripId } from "@e/TrainTrip/TrainTrip"
 import { utils } from "@fp-app/framework"
 import { F, T } from "@e/meffect"
-import executeReceived from "../eventhandlers/external"
+import executeReceived from "@e/TrainTrip/queueRouter"
 import * as API from "@e/TrainTrip/infrastructure/api"
 
 /**
@@ -97,18 +97,18 @@ export interface Context {
 export const env = {
   [TrainTripPublisherURI]: {
     register: (id: string) =>
+      // Workaround for in-process fake queue
       T.accessM((r: Context) =>
         T.pure(
-          // todo; fix
           r[contextEnv].ctx.register(id, (r as unknown) as Context & RequiredDeps),
         ),
       ),
     registerIfPending: (id: string) =>
       T.accessM((r: Context) =>
         T.pure(
+          // Workaround for in-process fake queue
           r[contextEnv].ctx.registerIfPending(
             id,
-            // todo; fix
             (r as unknown) as Context & RequiredDeps,
           ),
         ),
