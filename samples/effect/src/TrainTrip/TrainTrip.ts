@@ -64,9 +64,9 @@ const create = (
     currentTravelClassConfiguration,
     createdAt: currentDate,
   }
-  const events = [TrainTripCreated.create(t.id)] as const
+  const events = tuple(TrainTripCreated.create(t.id))
 
-  return [t, events] as const
+  return tuple(t, events)
 }
 
 const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | "id">>(
@@ -231,7 +231,7 @@ const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 const lock = (currentDate: Date) => (tt: TrainTrip) => {
   const [newTT, events, changed] = intLock(currentDate)(tt)
   if (changed) {
-    return tuple(newTT, [...events, TrainTripStateChanged.create(tt.id)], true)
+    return tuple(newTT, [...events, createChangeEvents(changed)(tt)] as const)
   }
   return tuple(tt, events)
 }
