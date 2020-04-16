@@ -7,7 +7,6 @@ import {
   ValidationError,
   utils,
 } from "@fp-app/framework"
-import { Event } from "@fp-app/framework-classic"
 import {
   Result,
   E,
@@ -48,7 +47,7 @@ const create = (
   trip: TripWithSelectedTravelClass,
   { pax, startDate }: { startDate: FutureDate; pax: PaxDefinition },
   currentDate: Date,
-): readonly [TrainTrip, readonly Event[]] => {
+): readonly [TrainTrip, readonly [TrainTripCreated]] => {
   const travelClassConfiguration = trip.travelClasses.map((x) =>
     unsafeUnwrap(TravelClassConfiguration.create(x)),
   )
@@ -65,7 +64,7 @@ const create = (
     currentTravelClassConfiguration,
     createdAt: currentDate,
   }
-  const events = [new TrainTripCreated(t.id)] as const
+  const events = [TrainTripCreated.create(t.id)] as const
 
   return [t, events] as const
 }
@@ -77,7 +76,7 @@ const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | 
     .do(confirmUserChangeAllowed(tt))
     .let("result", pipe(tt, intChangePax(pax)))
     .return(({ result: [tt, events, changed] }) =>
-      tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
+      tuple(tt, [...events, ...createChangeEvents(changed)(tt)]),
     )
 
 const changeStartDate = (startDate: FutureDate) => <
@@ -89,7 +88,7 @@ const changeStartDate = (startDate: FutureDate) => <
     .do(confirmUserChangeAllowed(tt))
     .let("result", pipe(tt, intChangeStartDate(startDate)))
     .return(({ result: [tt, events, changed] }) =>
-      tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
+      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const),
     )
 
 const changeTravelClass = (travelClass: TravelClassDefinition) => (tt: TrainTrip) =>
@@ -103,16 +102,16 @@ const changeTravelClass = (travelClass: TravelClassDefinition) => (tt: TrainTrip
     )
     .bind("result", pipe(tt, intChangeTravelClass(travelClass)))
     .return(({ result: [tt, events, changed] }) =>
-      tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
+      tuple(tt, [...events, ...createChangeEvents(changed)(tt)] as const),
     )
 
 const opportunityIdL = Lens.fromPath<TrainTrip>()(["opportunityId"])
 const assignOpportunity = (opportunityId: string) => (tt: TrainTrip) => {
   tt = opportunityIdL.modify(() => opportunityId)(tt)
-  return tuple(tt, [] as Event[])
+  return tuple(tt, [] as const)
 }
 
-const del = (tt: TrainTrip) => tuple(new TrainTripDeleted(tt.id))
+const del = (tt: TrainTrip) => tuple(TrainTripDeleted.create(tt.id))
 
 const travelClassL = Lens.fromPath<TravelClassConfiguration>()(["travelClass"])
 const travelClassConfigurationL = Lens.fromPath<TrainTrip>()([
@@ -150,7 +149,7 @@ const updateTrip = (trip: Trip) => (tt: TrainTrip) => {
     () => currentTravelClassConfiguration || tt.travelClassConfiguration[0],
   )(tt)
 
-  return tuple(tt, [] as Event[])
+  return tuple(tt, [] as const)
 }
 
 const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
@@ -164,7 +163,7 @@ const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
     )
     .bind("result", pipe(tt, applyDefinedChanges(state)))
     .return(({ result: [tt, events, changed] }) =>
-      tuple(tt, events.concat([...createChangeEvents(changed)(tt)])),
+      tuple(tt, [...events, ...createChangeEvents(changed)(tt)]),
     )
 
 // TODO: we have to return the object from each map
@@ -174,55 +173,61 @@ const applyDefinedChanges = ({
   pax,
   startDate,
   travelClass,
-}: StateProposition) => (
-  tt: TrainTrip,
-): E.Either<InvalidStateError | ValidationError, [TrainTrip, Event[], boolean]> => {
-  // TODO: use do?
-  let events: Event[] = []
-  let changed = false
-  if (startDate !== undefined) {
-    const r = pipe(tt, intChangeStartDate(startDate))
-    tt = r[0]
-    events = events.concat(r[1])
-    if (r[2]) {
-      changed = true
+}: StateProposition) => (tt: TrainTrip) => {
+  const computeStartdate = () => {
+    if (startDate !== undefined) {
+      return pipe(tt, intChangeStartDate(startDate))
     }
+    return [tt, [], false] as const
   }
-  if (pax !== undefined) {
-    const r = pipe(tt, intChangePax(pax))
-    tt = r[0]
-    events = events.concat(r[1])
-    if (r[2]) {
-      changed = true
+  const sd = computeStartdate()
+  tt = sd[0]
+  const computePax = () => {
+    if (pax !== undefined) {
+      return pipe(tt, intChangePax(pax))
     }
+    return [tt, [], false] as const
   }
-  if (travelClass !== undefined) {
-    const rEither = pipe(tt, intChangeTravelClass(travelClass))
-    if (E.isErr(rEither)) {
-      return rEither
+  const px = computePax()
+  tt = px[0]
+  const computeTraveClass = () => {
+    if (travelClass !== undefined) {
+      return pipe(tt, intChangeTravelClass(travelClass))
     }
-    const r = rEither.right
-    tt = r[0]
-    events = events.concat(r[1])
-    if (r[2]) {
-      changed = true
-    }
+    return E.right([tt, [], false] as const)
   }
-  if (locked !== undefined) {
+  const tcE = computeTraveClass()
+  if (E.isErr(tcE)) {
+    return E.left(tcE.left)
+  }
+  const tc = tcE.right
+  tt = tc[0]
+
+  const computeLocked = () => {
+    // TODO: this should be in the lock method instead
     if (tt.lockedAt && !locked) {
       return E.left(new ValidationError("Cannot unlock a locked"))
     }
     if (locked) {
       // TODO: Date should be moved up.
-      const r = pipe(tt, lock(new Date()))
-      tt = r[0]
-      events = events.concat(r[1])
-      if (r[2]) {
-        changed = true
-      }
+      return E.right(pipe(tt, lock(new Date())))
     }
+    return E.right([tt, [], false] as const)
   }
-  return ok(tuple(tt, events, changed))
+  const lkE = computeLocked()
+  if (E.isErr(lkE)) {
+    return E.left(lkE.left)
+  }
+  const lk = lkE.right
+  tt = lk[0]
+
+  return ok(
+    tuple(
+      tt,
+      [...sd[1], ...px[1], ...tc[1], ...lk[1]] as const,
+      sd[2] || px[2] || tc[2] || lk[2],
+    ),
+  )
 }
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 const lock = (currentDate: Date) => (tt: TrainTrip) => {
@@ -230,7 +235,7 @@ const lock = (currentDate: Date) => (tt: TrainTrip) => {
     return tuple(tt, [], false)
   }
   tt = lockedAtL.modify(() => currentDate)(tt)
-  const events: Event[] = [new TrainTripStateChanged(tt.id)]
+  const events = [TrainTripStateChanged.create(tt.id)] as const
   return tuple(tt, events, true)
 }
 
@@ -242,41 +247,40 @@ const intChangeStartDate = (startDate: FutureDate) => <
 >(
   tt: This,
 ) => {
-  const events: Event[] = []
   if (startDate.toISOString() === tt.startDate.toISOString()) {
-    return tuple(tt, events, false)
+    return tuple(tt, noEvents(), false)
   }
   tt = startDateL.modify(() => startDate)(tt)
-  return tuple(tt, events, true)
+  return tuple(tt, noEvents(), true)
 }
+
+const noEvents = () => [] as const
 
 const paxL = convertCoolLens(Lens.fromPath<Pick<TrainTrip, "pax">>()(["pax"]))
 const intChangePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax">>(
   tt: This,
 ) => {
-  const events: Event[] = []
   if (isEqual(tt.pax, pax)) {
-    return tuple(tt, events, false)
+    return tuple(tt, noEvents(), false)
   }
   tt = paxL.modify(() => pax)(tt)
-  return tuple(tt, events, true)
+  return tuple(tt, noEvents(), true)
 }
 
 const intChangeTravelClass = (travelClass: TravelClassDefinition) => (
   tt: TrainTrip,
-): Result<[TrainTrip, Event[], boolean], InvalidStateError> => {
+) => {
   const slc = tt.travelClassConfiguration.find(
     (x) => x.travelClass.name === travelClass,
   )
   if (!slc) {
     return err(new InvalidStateError(`${travelClass} not available currently`))
   }
-  const events: Event[] = []
   if (tt.currentTravelClassConfiguration === slc) {
-    return ok([tt, events, false])
+    return ok(tuple(tt, noEvents(), false))
   }
   tt = currentTravelClassConfigurationL.modify(() => slc)(tt)
-  return ok([tt, events, true])
+  return ok(tuple(tt, noEvents(), true))
 }
 
 const confirmUserChangeAllowed = <This extends Pick<TrainTrip, "lockedAt" | "id">>(
@@ -305,9 +309,9 @@ export default TrainTrip
 
 const createChangeEvents = (changed: boolean) =>
   function* <This extends Pick<TrainTrip, "id">>(tt: This) {
-    yield new UserInputReceived(tt.id)
+    yield UserInputReceived.create(tt.id)
     if (changed) {
-      yield new TrainTripStateChanged(tt.id)
+      yield TrainTripStateChanged.create(tt.id)
     }
   }
 
@@ -369,33 +373,43 @@ export type Events =
   | TrainTripDeleted
   | UserInputReceived
 
-export class TrainTripCreated extends Event {
-  readonly type = "TrainTripCreated"
-  constructor(readonly trainTripId: TrainTripId) {
-    super()
-  }
-}
+const createEvent = <TO>(t: t.TypeC<any>) => ({
+  ...t,
+  create: (trainTripId: string) =>
+    (({ trainTripId, type: t.props.type.name } as unknown) as TO),
+})
 
-export class UserInputReceived extends Event {
-  readonly type = "UserInputReceived"
-  constructor(readonly trainTripId: TrainTripId) {
-    super()
-  }
-}
+const TrainTripCreated_ = t.type({
+  trainTripId: t.string,
+  type: t.literal("TrainTripCreated"),
+})
 
-export class TrainTripStateChanged extends Event {
-  readonly type = "TrainTripStateChanged"
-  constructor(readonly trainTripId: TrainTripId) {
-    super()
-  }
-}
+export const TrainTripCreated = createEvent<TrainTripCreated>(TrainTripCreated_)
+export interface TrainTripCreated extends t.TypeOf<typeof TrainTripCreated_> {}
 
-export class TrainTripDeleted extends Event {
-  readonly type = "TrainTripDeleted"
-  constructor(readonly trainTripId: TrainTripId) {
-    super()
-  }
-}
+const UserInputReceived_ = t.type({
+  trainTripId: t.string,
+  type: t.literal("UserInputReceived"),
+})
+export const UserInputReceived = createEvent<UserInputReceived>(UserInputReceived_)
+export interface UserInputReceived extends t.TypeOf<typeof UserInputReceived_> {}
+
+const TrainTripStateChanged_ = t.type({
+  trainTripId: t.string,
+  type: t.literal("TrainTripStateChanged"),
+})
+export const TrainTripStateChanged = createEvent<TrainTripStateChanged>(
+  UserInputReceived_,
+)
+export interface TrainTripStateChanged
+  extends t.TypeOf<typeof TrainTripStateChanged_> {}
+
+const TrainTripDeleted_ = t.type({
+  trainTripId: t.string,
+  type: t.literal("TrainTripDeleted"),
+})
+export const TrainTripDeleted = createEvent<TrainTripDeleted>(TrainTripDeleted_)
+export interface TrainTripDeleted extends t.TypeOf<typeof TrainTripDeleted_> {}
 
 export interface StateProposition {
   locked?: boolean
