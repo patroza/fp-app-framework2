@@ -3,6 +3,7 @@ import { utils } from "@fp-app/framework"
 import { F, T } from "@e/meffect"
 import executeReceived from "@e/TrainTrip/queueRouter"
 import * as API from "@e/TrainTrip/infrastructure/api"
+import { AsyncRT } from "@matechs/effect/lib/effect"
 
 /**
  * Poor man's queue, great for testing. Do not use in production, or you may loose queued tasks on server restart
@@ -34,7 +35,7 @@ export default class TrainTripPublisherInMemory {
 
   private tryPublishTrainTrip = async (
     trainTripId: string,
-    req: <E, A>(inp: T.Effect<RequiredDeps, E, A>) => T.Effect<{}, E, A>,
+    req: <E, A>(inp: T.Effect<RequiredDeps, E, A>) => T.Effect<AsyncRT, E, A>,
   ) => {
     try {
       this.logger.log(`Publishing TrainTrip to Cloud: ${trainTripId}`)
@@ -54,7 +55,7 @@ export default class TrainTripPublisherInMemory {
   }
 }
 
-type RequiredDeps = TrainTripPublisher & API.TripApi
+type RequiredDeps = AsyncRT & TrainTripPublisher & API.TripApi
 
 // TODO: This inherits everything from the global scope
 // and the current request-scope. It should be fine to pick up
@@ -67,15 +68,15 @@ type RequiredDeps = TrainTripPublisher & API.TripApi
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const requestInNewScope = (r: RequiredDeps) => <E, A>(
   inp: T.Effect<RequiredDeps, E, A>,
-) => T.provideS({ ...r })(inp) as T.Effect<{}, E, A>
+) => T.provide({ ...r })(inp) as T.Effect<AsyncRT, E, A>
 
 const CLOUD_PUBLISH_DELAY = 10 * 1000
 
 const TrainTripPublisherURI = "@fp-app/effect/traintrip-publisher"
 const TrainTripPublisher_ = F.define({
   [TrainTripPublisherURI]: {
-    register: F.fn<(id: string) => T.UIO<void>>(),
-    registerIfPending: F.fn<(id: string) => T.UIO<void>>(),
+    register: F.fn<(id: string) => T.Io<void>>(),
+    registerIfPending: F.fn<(id: string) => T.Io<void>>(),
   },
 })
 export interface TrainTripPublisher extends F.TypeOf<typeof TrainTripPublisher_> {}

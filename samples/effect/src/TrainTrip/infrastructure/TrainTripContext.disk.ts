@@ -48,11 +48,11 @@ export function trainTrips() {
 const TrainTripContextURI = "@fp-app/effect/traintrip-context"
 const TrainTripContext_ = F.define({
   [TrainTripContextURI]: {
-    add: F.fn<(tt: TrainTrip) => T.UIO<void>>(),
-    load: F.fn<(id: string) => T.UIO<O.Option<TrainTrip>>>(),
-    remove: F.fn<(tt: TrainTrip) => T.UIO<void>>(),
-    save: F.fn<() => T.UIO<void>>(),
-    registerChanged: F.fn<(tt: TrainTrip) => T.UIO<void>>(),
+    add: F.fn<(tt: TrainTrip) => T.Io<void>>(),
+    load: F.fn<(id: string) => T.Io<O.Option<TrainTrip>>>(),
+    remove: F.fn<(tt: TrainTrip) => T.Io<void>>(),
+    save: F.fn<() => T.Io<void>>(),
+    registerChanged: F.fn<(tt: TrainTrip) => T.Io<void>>(),
   },
 })
 export interface TrainTripContext extends F.TypeOf<typeof TrainTripContext_> {}

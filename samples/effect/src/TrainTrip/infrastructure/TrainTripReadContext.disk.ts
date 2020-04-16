@@ -11,7 +11,7 @@ export default class TrainTripReadContext extends RC<TrainTripView> {
 const ReadContextURI = "@fp-app/effect/traintrip-read-context"
 const ReadContext_ = F.define({
   [ReadContextURI]: {
-    read: F.fn<(id: string) => T.UIO<O.Option<TrainTripView>>>(),
+    read: F.fn<(id: string) => T.Io<O.Option<TrainTripView>>>(),
   },
 })
 export interface ReadContext extends F.TypeOf<typeof ReadContext_> {}

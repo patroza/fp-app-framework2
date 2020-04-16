@@ -24,9 +24,8 @@ J.run(integrationSuite)(
   flow(
     TA.provideTripApi,
     TTP.provideTrainTripPublisher,
-    T.provideR((r) => ({
-      ...r,
+    T.provide({
       [TTP.contextEnv]: { ctx: new TTP.default() },
-    })),
+    }),
   ),
 )
