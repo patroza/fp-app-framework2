@@ -181,7 +181,7 @@ const applyDefinedChanges = ({
       if (startDate !== undefined) {
         const [newTT, events, changed] = pipe(tt.value, intChangeStartDate(startDate))
         tt.value = newTT
-        return E.right([events, changed] as const)
+        return E.right(tuple(events, changed))
       }
       return E.right(tuple([] as const, false))
     })
@@ -189,7 +189,7 @@ const applyDefinedChanges = ({
       if (pax !== undefined) {
         const [newTT, events, changed] = pipe(tt.value, intChangePax(pax))
         tt.value = newTT
-        return E.right([events, changed] as const)
+        return E.right(tuple(events, changed))
       }
       return E.right(tuple([] as const, false))
     })
@@ -210,9 +210,11 @@ const applyDefinedChanges = ({
         if (tt.value.lockedAt && !locked) {
           return E.left(new ValidationError("Cannot unlock a locked"))
         }
-        const [newTT, events, changed] = pipe(tt.value, intLock(new Date()))
-        tt.value = newTT
-        return E.right(tuple(events, changed))
+        if (locked) {
+          const [newTT, events, changed] = pipe(tt.value, intLock(new Date()))
+          tt.value = newTT
+          return E.right(tuple(events, changed))
+        }
       }
       return E.right(tuple([] as const, false))
     })
@@ -229,9 +231,9 @@ const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 const lock = (currentDate: Date) => (tt: TrainTrip) => {
   const [newTT, events, changed] = intLock(currentDate)(tt)
   if (changed) {
-    return tuple(newTT, [...events, TrainTripStateChanged.create(tt.id)])
+    return tuple(newTT, [...events, TrainTripStateChanged.create(tt.id)], true)
   }
-  return tuple(tt, events, changed)
+  return tuple(tt, events)
 }
 
 const intLock = (currentDate: Date) => (tt: TrainTrip) => {
@@ -311,13 +313,14 @@ const TrainTrip = {
 
 export default TrainTrip
 
-const createChangeEvents = (changed: boolean) =>
-  function* <This extends Pick<TrainTrip, "id">>(tt: This) {
+const createChangeEvents = (changed: boolean) => {
+  return function* <This extends Pick<TrainTrip, "id">>(tt: This) {
     yield UserInputReceived.create(tt.id)
     if (changed) {
       yield TrainTripStateChanged.create(tt.id)
     }
   }
+}
 
 const Options = t.readonly(
   t.type({
@@ -406,7 +409,7 @@ const TrainTripStateChanged_ = t.type({
   type: t.literal("TrainTripStateChanged"),
 })
 export const TrainTripStateChanged = createEvent<TrainTripStateChanged>(
-  UserInputReceived_,
+  TrainTripStateChanged_,
 )
 export interface TrainTripStateChanged
   extends t.TypeOf<typeof TrainTripStateChanged_> {}

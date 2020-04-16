@@ -54,7 +54,7 @@ type Events = CustomerRequestedChanges | Unsupported
 
 const notImplemented = (evt: Events) =>
   T.sync(() => {
-    console.log(`${evt.type} domain event not implemented`)
+    console.log(`${evt.type} queue event not implemented`)
   })
 
 export const handlers = <TEvent extends Events>(evt: TEvent) => {

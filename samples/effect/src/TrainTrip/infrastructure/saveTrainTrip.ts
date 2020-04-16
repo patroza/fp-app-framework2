@@ -34,15 +34,15 @@ export const saveT = tupled(save)
 const handleEvents = <TEvents extends readonly Events[]>(events: TEvents) =>
   events.length
     ? sequenceT(T.effect)(
-        events.map((x) => PreCommit.handlers(x as any))[0],
-        ...events.map((x) => PreCommit.handlers(x as any)).slice(1),
+        PreCommit.handlers(events[0]),
+        ...events.slice(1).map((x) => PreCommit.handlers(x)),
       )
     : T.unit
 
 const handlePostCommitEvents = <TEvents extends readonly Events[]>(events: TEvents) =>
   events.length
     ? sequenceT(T.effect)(
-        events.map((x) => PostCommit.handlers(x as any))[0],
-        ...events.map((x) => PostCommit.handlers(x as any)).slice(1),
+        PostCommit.handlers(events[0]),
+        ...events.slice(1).map((x) => PostCommit.handlers(x)),
       )
     : T.unit
