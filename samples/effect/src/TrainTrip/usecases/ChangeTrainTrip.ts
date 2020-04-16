@@ -22,7 +22,7 @@ const ChangeTrainTrip = (input: Input) =>
       .bind("proposal", pipe(input, liftEitherSuspended(validateStateProposition)))
       .bindL("trainTrip", ({ proposal }) => TC.loadE(proposal.trainTripId))
       .bindL("result", ({ proposal, trainTrip }) =>
-        pipe(trainTrip, TrainTrip.proposeChanges(proposal), T.fromEither),
+        pipe(trainTrip, TrainTrip.proposeChangesE(proposal)),
       )
       .doL(({ result: [tt, evt] }) => STT.save(tt, evt))
       .done(),

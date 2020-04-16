@@ -18,24 +18,8 @@ const provideRequestScoped = <R, E, A>(
   T.provideR((r: R & TTP.TrainTripPublisher & API.TripApi) => {
     const readContext = createLazy(() => new TrainTripReadContext())
     const ctx = createLazy(() => {
-      //   // TODO: Finish the domain event handlers.
-      //   const eventHandler = new DomainEventHandler(
-      //     (evt) =>
-      //       TE.tryCatch(
-      //         () => T.runToPromise(T.provideAll(env)(PreCommit.handlers(evt as any))),
-      //         (err) => err as Error,
-      //       ),
-      //     (evt) =>
-      //       TE.tryCatch(
-      //         () => T.runToPromise(T.provideAll(env)(PostCommit.handlers(evt as any))),
-      //         (err) => err as Error,
-      //       ),
-      //   )
       const trainTrips = TTC.trainTrips()
       return DiskDBContext({
-        // // TODO
-        // // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // eventHandler: eventHandler as any,
         readContext: readContext.value,
         trainTrips,
       })
