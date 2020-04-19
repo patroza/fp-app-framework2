@@ -77,30 +77,28 @@ export const loadE = (id: string) =>
 
 export const contextEnv = "@fp-app/effect/traintrip-context/ctx"
 
-export interface Context {
+export interface TTCContext {
   [contextEnv]: {
     ctx: TrainTripContextType
   }
 }
 
-// TODO: move back into F.implement
-export const env = {
+export const provideTrainTripContext = F.implement(TrainTripContext)({
   [TrainTripContextURI]: {
     add: (tt: TrainTrip) =>
-      T.accessM((r: Context) => T.pure(r[contextEnv].ctx.trainTrips.add(tt))),
+      T.accessM((r: TTCContext) => T.pure(r[contextEnv].ctx.trainTrips.add(tt))),
     load: (id: string) =>
-      T.accessM((r: Context) => T.encaseTask(r[contextEnv].ctx.trainTrips.load(id))),
+      T.accessM((r: TTCContext) => T.encaseTask(r[contextEnv].ctx.trainTrips.load(id))),
     remove: (tt: TrainTrip) =>
-      T.accessM((r: Context) => T.pure(r[contextEnv].ctx.trainTrips.remove(tt))),
-    save: () => T.accessM((r: Context) => T.encaseTask(r[contextEnv].ctx.save)),
+      T.accessM((r: TTCContext) => T.pure(r[contextEnv].ctx.trainTrips.remove(tt))),
+    save: () => T.accessM((r: TTCContext) => T.encaseTask(r[contextEnv].ctx.save)),
 
     registerChanged: (tt: TrainTrip) =>
-      T.accessM((r: Context) =>
+      T.accessM((r: TTCContext) =>
         T.sync(() => r[contextEnv].ctx.trainTrips.registerChanged(tt)),
       ),
   },
-}
-export const provideTrainTripContext = F.implement(TrainTripContext)(env)
+})
 
 export default DiskDBContext
 

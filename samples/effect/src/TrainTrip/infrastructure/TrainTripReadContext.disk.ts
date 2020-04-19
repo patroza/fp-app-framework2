@@ -22,7 +22,7 @@ export const { read } = F.access(ReadContext)[ReadContextURI]
 
 export const contextEnv = "@fp-app/effect/traintrip-read-context/ctx"
 
-export interface Context {
+export interface RCContext {
   [contextEnv]: {
     ctx: TrainTripReadContext
   }
@@ -32,7 +32,7 @@ export interface Context {
 export const env = {
   [ReadContextURI]: {
     read: (id: string) =>
-      T.accessM((r: Context) => T.encaseTask(r[contextEnv].ctx.read(id))),
+      T.accessM((r: RCContext) => T.encaseTask(r[contextEnv].ctx.read(id))),
   },
 }
 

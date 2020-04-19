@@ -2,11 +2,9 @@ import { effect as T } from "@matechs/effect"
 import TrainTripReadContext, * as RC from "./infrastructure/TrainTripReadContext.disk"
 import DiskDBContext, * as TTC from "./infrastructure/TrainTripContext.disk"
 import { createLazy } from "@fp-app/framework/src/utils"
-import { pipe } from "@fp-app/fp-ts-extensions"
+import { combineProviders } from "@matechs/prelude"
 
-const provideRequestScoped = () => <S, R, E, A>(
-  i: T.Effect<S, R & RequestScoped, E, A>,
-): T.Effect<S, R, E, A> => {
+const provideRequestScoped = () => {
   const readContext = createLazy(() => new TrainTripReadContext())
   const ctx = createLazy(() => {
     const trainTrips = TTC.trainTrips()
@@ -28,10 +26,12 @@ const provideRequestScoped = () => <S, R, E, A>(
         return ctx.value
       },
     },
-  } as RC.Context & TTC.Context
-  return pipe(i, TTC.provideTrainTripContext, RC.provideReadContext, T.provide(env))
+  } as RC.RCContext & TTC.TTCContext
+  return combineProviders()
+    .with(TTC.provideTrainTripContext)
+    .with(RC.provideReadContext)
+    .with(T.provide(env))
+    .done()
 }
-
-type RequestScoped = RC.ReadContext & TTC.TrainTripContext
 
 export default provideRequestScoped
