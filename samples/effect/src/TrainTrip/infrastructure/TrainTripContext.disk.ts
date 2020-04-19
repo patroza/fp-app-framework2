@@ -70,7 +70,7 @@ export const loadE = (id: string) =>
       O.fold(
         () =>
           T.raiseError<RecordNotFound, TrainTrip>(new RecordNotFound("trainTrip", id)),
-        (x) => T.pure(x),
+        T.pure,
       ),
     ),
   )
@@ -86,13 +86,14 @@ export interface TTCContext {
 export const provideTrainTripContext = F.implement(TrainTripContext)({
   [TrainTripContextURI]: {
     add: (tt: TrainTrip) =>
-      T.accessM((r: TTCContext) => T.pure(r[contextEnv].ctx.trainTrips.add(tt))),
+      T.accessM((r: TTCContext) => T.sync(() => r[contextEnv].ctx.trainTrips.add(tt))),
     load: (id: string) =>
       T.accessM((r: TTCContext) => T.encaseTask(r[contextEnv].ctx.trainTrips.load(id))),
     remove: (tt: TrainTrip) =>
-      T.accessM((r: TTCContext) => T.pure(r[contextEnv].ctx.trainTrips.remove(tt))),
+      T.accessM((r: TTCContext) =>
+        T.sync(() => r[contextEnv].ctx.trainTrips.remove(tt)),
+      ),
     save: () => T.accessM((r: TTCContext) => T.encaseTask(r[contextEnv].ctx.save)),
-
     registerChanged: (tt: TrainTrip) =>
       T.accessM((r: TTCContext) =>
         T.sync(() => r[contextEnv].ctx.trainTrips.registerChanged(tt)),

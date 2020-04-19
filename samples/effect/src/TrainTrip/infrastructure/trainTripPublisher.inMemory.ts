@@ -99,14 +99,14 @@ export const provideTrainTripPublisher = F.implement(TrainTripPublisher)({
     register: (id: string) =>
       // Workaround for in-process fake queue
       T.accessM((r: Context) =>
-        T.pure(
+        T.sync(() =>
           r[contextEnv].ctx.register(id, (r as unknown) as Context & RequiredDeps),
         ),
       ),
     registerIfPending: (id: string) =>
       T.accessM((r: Context) =>
-        T.pure(
-          // Workaround for in-process fake queue
+        // Workaround for in-process fake queue
+        T.sync(() =>
           r[contextEnv].ctx.registerIfPending(
             id,
             (r as unknown) as Context & RequiredDeps,
