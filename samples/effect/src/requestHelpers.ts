@@ -16,10 +16,10 @@ import {
 import { completed } from "@matechs/effect/lib/effect"
 import { pipe } from "fp-ts/lib/pipeable"
 
-export const handleErrors = <R, E extends ErrorBase, A>(eff: T.Effect<R, E, A>) =>
+export const handleErrors = <S, R, E extends ErrorBase, A>(eff: T.Effect<S, R, E, A>) =>
   pipe(eff, mapErrorToHTTP, captureError)
 
-export const captureError = <R, E, A>(inp: T.Effect<R, E, A>) =>
+export const captureError = <S, R, E, A>(inp: T.Effect<S, R, E, A>) =>
   T.foldExit((cause) => {
     if (cause._tag !== "Abort") {
       return completed(cause)
@@ -34,7 +34,7 @@ export const captureError = <R, E, A>(inp: T.Effect<R, E, A>) =>
       console.error("Unknown error ocurred", cause.abortedWith)
       return T.raiseAbort(cause.abortedWith)
     }
-  }, T.pure)(inp) as T.Effect<R, E & KOA.RouteError<unknown>, A>
+  }, T.pure)(inp) as T.Effect<S, R, E & KOA.RouteError<unknown>, A>
 
 export const mapErrorToHTTP = T.mapError((err: ErrorBase) => {
   const { message } = err

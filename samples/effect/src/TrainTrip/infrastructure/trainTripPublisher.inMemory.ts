@@ -34,7 +34,7 @@ export default class TrainTripPublisherInMemory {
 
   private tryPublishTrainTrip = async (
     trainTripId: string,
-    req: <E, A>(inp: T.Effect<RequiredDeps, E, A>) => T.Effect<{}, E, A>,
+    req: <E, A>(inp: T.AsyncRE<RequiredDeps, E, A>) => T.AsyncRE<{}, E, A>,
   ) => {
     try {
       this.logger.log(`Publishing TrainTrip to Cloud: ${trainTripId}`)
@@ -66,16 +66,16 @@ type RequiredDeps = TrainTripPublisher & API.TripApi
 // probably should build an own total scope like we do for the Router!
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const requestInNewScope = (r: RequiredDeps) => <E, A>(
-  inp: T.Effect<RequiredDeps, E, A>,
-) => T.provideS({ ...r })(inp) as T.Effect<{}, E, A>
+  inp: T.AsyncRE<RequiredDeps, E, A>,
+) => T.provide(r)(inp)
 
 const CLOUD_PUBLISH_DELAY = 10 * 1000
 
 const TrainTripPublisherURI = "@fp-app/effect/traintrip-publisher"
 const TrainTripPublisher_ = F.define({
   [TrainTripPublisherURI]: {
-    register: F.fn<(id: string) => T.UIO<void>>(),
-    registerIfPending: F.fn<(id: string) => T.UIO<void>>(),
+    register: F.fn<(id: string) => T.Sync<void>>(),
+    registerIfPending: F.fn<(id: string) => T.Sync<void>>(),
   },
 })
 export interface TrainTripPublisher extends F.TypeOf<typeof TrainTripPublisher_> {}

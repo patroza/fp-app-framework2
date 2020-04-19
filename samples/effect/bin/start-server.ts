@@ -13,7 +13,7 @@ const program = pipe(
   // keep process waiting
   T.chainTap(() => T.never),
   T.chain(() => T.fromPromise(initialize)),
-  M.provideS(KOA.managedKoa(port)),
+  M.provide(KOA.managedKoa(port)),
   T.fork,
 )
 
@@ -23,10 +23,9 @@ T.run(
     KOA.provideKoa,
     TA.provideTripApi,
     TTP.provideTrainTripPublisher,
-    T.provideR((r) => ({
-      ...r,
+    T.provide<TTP.Context>({
       [TTP.contextEnv]: { ctx: new TTP.default() },
-    })),
+    }),
   ),
   E.fold(
     (server) => {

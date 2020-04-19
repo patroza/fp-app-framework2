@@ -29,7 +29,7 @@ const getTrainTrip = KOA.route(
           : KOA.routeResponse(404, null),
       ),
     handleErrors,
-    provideRequestScoped,
+    provideRequestScoped(),
   ),
 )
 
@@ -47,7 +47,7 @@ const createTrainTrip = KOA.route(
       .bindL("result", ({ input }) => CreateTrainTrip.default(input))
       .return(({ result }) => KOA.routeResponse(200, result)),
     handleErrors,
-    provideRequestScoped,
+    provideRequestScoped(),
   ),
 )
 
@@ -65,7 +65,7 @@ const changeTrainTrip = KOA.route(
       .bindL("result", ({ input }) => ChangeTrainTrip.default(input))
       .return(({ result }) => KOA.routeResponse(200, result)),
     handleErrors,
-    provideRequestScoped,
+    provideRequestScoped(),
   ),
 )
 
@@ -82,7 +82,7 @@ const deleteTrainTrip = KOA.route(
       .bindL("result", ({ input }) => DeleteTrainTrip.default(input))
       .return(({ result }) => KOA.routeResponse(200, result)),
     handleErrors,
-    provideRequestScoped,
+    provideRequestScoped(),
   ),
 )
 

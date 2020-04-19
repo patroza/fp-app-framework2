@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // export * from "fp-ts/lib/Either"
 
-import { Either } from "fp-ts/lib/Either"
+import { Either } from "@matechs/prelude/lib/either"
 import { pipe } from "fp-ts/lib/pipeable"
 
-import * as E from "fp-ts/lib/Either"
+import * as E from "@matechs/prelude/lib/either"
 import * as RE from "fp-ts/lib/ReaderEither"
 import * as TE from "fp-ts/lib/TaskEither"
 
@@ -15,7 +15,6 @@ import { tuple, flow } from "fp-ts/lib/function"
 export * from "fp-ts/lib/Either"
 
 import { pipe as _pipe } from "lodash/fp"
-import { sequenceT } from "fp-ts/lib/Apply"
 
 export type Result<TSuccess, TError> = Either<TError, TSuccess>
 const err = E.left
@@ -103,8 +102,8 @@ export function ifError(defaultVal: any) {
   }
 }
 
-export const sequence = <T, E>(results: Result<T, E>[]): Result<T[], E> =>
-  sequenceT(E.either)(results[0], ...results.slice(1))
+// export const sequence = <T, E>(results: Result<T, E>[]): Result<T[], E> =>
+//   sequenceT(E.either)(results[0], ...results.slice(1))
 
 // keeps all errors
 export const resultAll = <T, E>(results: Result<T, E>[]): Result<T[], E[]> => {

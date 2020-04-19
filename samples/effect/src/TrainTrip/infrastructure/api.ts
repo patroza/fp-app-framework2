@@ -22,9 +22,11 @@ const TripApiURI = "@fp-app/effect/trip-api"
 const TripApi_ = F.define({
   [TripApiURI]: {
     get: F.fn<
-      (id: string) => T.IO<ApiError | InvalidStateError, TripWithSelectedTravelClass>
+      (
+        id: string,
+      ) => T.AsyncE<ApiError | InvalidStateError, TripWithSelectedTravelClass>
     >(),
-    sendCloudSync: F.fn<(tt: TrainTrip) => T.IO<ApiError, string>>(),
+    sendCloudSync: F.fn<(tt: TrainTrip) => T.AsyncE<ApiError, string>>(),
   },
 })
 

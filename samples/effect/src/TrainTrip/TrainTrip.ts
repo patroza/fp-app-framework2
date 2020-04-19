@@ -242,8 +242,8 @@ const currentTravelClassConfigurationL = Lens.fromPath<TrainTrip>()([
 
 const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 
-const handleUpdateTemplate = <R, E, TEvents extends readonly Events[]>(
-  inp: T.Effect<R, E, [TrainTrip, TEvents, boolean]>,
+const handleUpdateTemplate = <S, R, E, TEvents extends readonly Events[]>(
+  inp: T.Effect<S, R, E, [TrainTrip, TEvents, boolean]>,
 ) =>
   Do(T.effect)
     .bind("result", inp)

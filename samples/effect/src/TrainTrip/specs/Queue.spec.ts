@@ -7,6 +7,7 @@ import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 
 import * as H from "./helpers.spec"
 import provideRequestScoped from "../provideRequestScoped"
+import { pipe } from "@fp-app/fp-ts-extensions"
 
 const CustomerRequestedChanges = J.testM(
   "CustomerRequestedChanges",
@@ -28,11 +29,11 @@ const RegisterOnCloud = J.testM(
   Do(T.effect)
     .bind("trainTripId", H.createDefaultTrip)
     .bindL("trainTrip", ({ trainTripId }) =>
-      provideRequestScoped(TC.loadE(trainTripId)),
+      pipe(TC.loadE(trainTripId), provideRequestScoped()),
     )
     .doL(({ trainTripId }) => executeReceived({ trainTripId, type: "RegisterOnCloud" }))
     .bindL("trainTripAfter", ({ trainTripId }) =>
-      provideRequestScoped(TC.loadE(trainTripId)),
+      pipe(TC.loadE(trainTripId), provideRequestScoped()),
     )
     .return(({ trainTrip, trainTripAfter }) => {
       J.assert.equal(trainTrip.opportunityId, undefined)

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { pipe } from "fp-ts/lib/pipeable"
+import { pipe } from "@matechs/prelude"
 
 import { ReadonlyNonEmptyArray } from "fp-ts/lib/ReadonlyNonEmptyArray"
 import { AsyncResult } from "./TaskEither"
@@ -10,7 +10,7 @@ export * from "./general"
 
 import * as TE from "./TaskEither"
 import * as E from "./Either"
-import * as O from "fp-ts/lib/Option"
+import * as O from "./Option"
 import * as RE from "./ReaderEither"
 import * as T from "fp-ts/lib/Task"
 import * as TO from "./TaskOption"
