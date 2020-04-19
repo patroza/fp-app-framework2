@@ -4,6 +4,7 @@
 import { Either } from "@matechs/prelude/lib/either"
 import { pipe } from "fp-ts/lib/pipeable"
 
+import * as A from "fp-ts/lib/Array"
 import * as E from "@matechs/prelude/lib/either"
 import * as RE from "fp-ts/lib/ReaderEither"
 import * as TE from "fp-ts/lib/TaskEither"
@@ -102,8 +103,7 @@ export function ifError(defaultVal: any) {
   }
 }
 
-// export const sequence = <T, E>(results: Result<T, E>[]): Result<T[], E> =>
-//   sequenceT(E.either)(results[0], ...results.slice(1))
+export const sequenceArray = A.array.sequence(E.either)
 
 // keeps all errors
 export const resultAll = <T, E>(results: Result<T, E>[]): Result<T[], E[]> => {

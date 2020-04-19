@@ -1,7 +1,6 @@
 import { effect as T } from "@matechs/effect"
 import * as KOA from "@matechs/koa"
 // import { Do } from "fp-ts-contrib/lib/Do"
-import { sequenceT } from "fp-ts/lib/Apply"
 import trainTripR from "@e/TrainTrip/router"
 import { utils } from "@fp-app/framework"
 import * as diskdb from "@fp-app/io.diskdb"
@@ -16,7 +15,7 @@ const getHelloWorldRoute = KOA.route(
   ),
 )
 
-const mainR = sequenceT(T.effect)(getHelloWorldRoute)
+const mainR = T.sequenceT(getHelloWorldRoute)
 
 interface RequestInfo {
   id: string
@@ -45,9 +44,9 @@ const requestInfoMW = KOA.middleware((ctx, next) => {
   })
 })
 
-const middlewares = sequenceT(T.effect)(requestInfoMW)
+const middlewares = T.sequenceT(requestInfoMW)
 
-const program = sequenceT(T.effect)(mainR, trainTripR, middlewares)
+const program = T.sequenceT(mainR, trainTripR, middlewares)
 
 export const initialize = async () => {
   if (!(await diskdb.utils.exists("./data"))) {

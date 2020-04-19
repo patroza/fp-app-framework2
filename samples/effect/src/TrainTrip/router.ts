@@ -2,7 +2,6 @@ import { effect as T } from "@matechs/effect"
 import * as KOA from "@matechs/koa"
 import * as O from "fp-ts/lib/Option"
 // import { Do } from "fp-ts-contrib/lib/Do"
-import { sequenceT } from "fp-ts/lib/Apply"
 import { pipe } from "fp-ts/lib/pipeable"
 import { Do } from "fp-ts-contrib/lib/Do"
 import * as GetTrainTrip from "./usecases/GetTrainTrip"
@@ -86,7 +85,7 @@ const deleteTrainTrip = KOA.route(
   ),
 )
 
-const routes = sequenceT(T.effect)(
+const routes = T.sequenceT(
   createTrainTrip,
   getTrainTrip,
   changeTrainTrip,
