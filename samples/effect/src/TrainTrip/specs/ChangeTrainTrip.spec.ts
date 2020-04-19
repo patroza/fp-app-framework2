@@ -1,14 +1,13 @@
 /* eslint-disable jest/no-standalone-expect */
 import * as J from "@matechs/test-jest"
 import { effect as T } from "@matechs/effect"
-import { Do } from "fp-ts-contrib/lib/Do"
 
 import * as H from "./helpers.spec"
 import { ForbiddenError, ValidationError } from "@fp-app/framework"
 
 export const ChangeStartDate = J.testM(
   "ChangeStartDate",
-  Do(T.effect)
+  T.Do()
     .bind("trainTripId", H.createDefaultTrip)
     .bindL("trainTrip", ({ trainTripId }) => H.getTrainTrip(trainTripId))
     .doL(({ trainTripId }) =>
@@ -29,7 +28,7 @@ export const ChangeStartDate = J.testM(
 
 export const ChangePax = J.testM(
   "ChangePax",
-  Do(T.effect)
+  T.Do()
     .bind("trainTripId", H.createDefaultTrip)
     .bindL("trainTrip", ({ trainTripId }) => H.getTrainTrip(trainTripId))
     .doL(({ trainTripId }) =>
@@ -59,7 +58,7 @@ export const ChangePax = J.testM(
 
 export const ChangeLocked = J.testM(
   "ChangeLocked",
-  Do(T.effect)
+  T.Do()
     .bind("trainTripId", H.createDefaultTrip)
     .bindL("trainTrip", ({ trainTripId }) => H.getTrainTrip(trainTripId))
     .doL(({ trainTripId }) =>
@@ -86,7 +85,7 @@ export const ChangeLocked = J.testM(
 
 export const ChangeTravelClass = J.testM(
   "ChangeTravelClass",
-  Do(T.effect)
+  T.Do()
     .bind("trainTripId", H.createDefaultTrip)
     .bindL("trainTrip", ({ trainTripId }) => H.getTrainTrip(trainTripId))
     .bindL("result", ({ trainTripId }) =>

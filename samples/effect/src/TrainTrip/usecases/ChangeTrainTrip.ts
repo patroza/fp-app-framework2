@@ -18,7 +18,7 @@ import { O } from "ts-toolbelt"
 
 const ChangeTrainTrip = (input: Input) =>
   T.asUnit(
-    Do(T.effect)
+    T.Do()
       .bind("proposal", pipe(input, liftEitherSuspended(validateStateProposition)))
       .bindL("trainTrip", ({ proposal }) => TC.loadE(proposal.trainTripId))
       .bindL("result", ({ proposal, trainTrip }) =>

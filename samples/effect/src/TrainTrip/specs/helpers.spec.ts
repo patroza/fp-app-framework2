@@ -1,5 +1,4 @@
 import { effect as T } from "@matechs/effect"
-import { Do } from "fp-ts-contrib/lib/Do"
 import * as CreateTrainTrip from "../usecases/CreateTrainTrip"
 import * as DeleteTrainTrip from "../usecases/DeleteTrainTrip"
 import * as GetTrainTrip from "../usecases/GetTrainTrip"
@@ -23,7 +22,7 @@ export const checkError = <S, R, E, A>(e: T.Effect<S, R, E, A>) =>
 
 export const createTrainTrip = (inp: unknown) =>
   pipe(
-    Do(T.effect)
+    T.Do()
       .bind("input", T.fromEither(CreateTrainTrip.validatePrimitives(inp)))
       .bindL("trainTripId", ({ input }) => CreateTrainTrip.default(input))
       .return((r) => r.trainTripId),
@@ -39,7 +38,7 @@ export const createDefaultTrip = createTrainTrip({
 export const changeTrainTrip = (inp: unknown) =>
   pipe(
     T.asUnit(
-      Do(T.effect)
+      T.Do()
         .bind("input", T.fromEither(ChangeTrainTrip.validatePrimitives(inp)))
         .doL(({ input }) => ChangeTrainTrip.default(input))
         .done(),
@@ -49,7 +48,7 @@ export const changeTrainTrip = (inp: unknown) =>
 
 export const deleteTrainTrip = (trainTripId: string) =>
   pipe(
-    Do(T.effect)
+    T.Do()
       .bind("input", T.fromEither(DeleteTrainTrip.validatePrimitives({ trainTripId })))
       .bindL("result", ({ input }) => DeleteTrainTrip.default(input))
       .return((r) => r.result),
@@ -58,7 +57,7 @@ export const deleteTrainTrip = (trainTripId: string) =>
 
 export const getTrainTripO = (trainTripId: string) =>
   pipe(
-    Do(T.effect)
+    T.Do()
       .bind("input", T.fromEither(GetTrainTrip.validatePrimitives({ trainTripId })))
       .bindL("result", ({ input }) => GetTrainTrip.default(input))
       .return((r) => r.result),

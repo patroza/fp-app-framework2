@@ -3,7 +3,6 @@ import * as KOA from "@matechs/koa"
 import * as O from "fp-ts/lib/Option"
 // import { Do } from "fp-ts-contrib/lib/Do"
 import { pipe } from "fp-ts/lib/pipeable"
-import { Do } from "fp-ts-contrib/lib/Do"
 import * as GetTrainTrip from "./usecases/GetTrainTrip"
 import * as CreateTrainTrip from "./usecases/CreateTrainTrip"
 import * as ChangeTrainTrip from "./usecases/ChangeTrainTrip"
@@ -15,7 +14,7 @@ const getTrainTrip = KOA.route(
   "get",
   "/:trainTripId",
   pipe(
-    Do(T.effect)
+    T.Do()
       .bindL("input", () =>
         KOA.accessReqM((ctx) =>
           pipe(GetTrainTrip.validatePrimitives(joinData(ctx)), T.fromEither),
@@ -36,7 +35,7 @@ const createTrainTrip = KOA.route(
   "post",
   "/",
   pipe(
-    Do(T.effect)
+    T.Do()
       .bind(
         "input",
         KOA.accessReqM((ctx) =>
@@ -54,7 +53,7 @@ const changeTrainTrip = KOA.route(
   "patch",
   "/:trainTripId",
   pipe(
-    Do(T.effect)
+    T.Do()
       .bind(
         "input",
         KOA.accessReqM((ctx) =>
@@ -72,7 +71,7 @@ const deleteTrainTrip = KOA.route(
   "delete",
   "/:trainTripId",
   pipe(
-    Do(T.effect)
+    T.Do()
       .bindL("input", () =>
         KOA.accessReqM((ctx) =>
           pipe(DeleteTrainTrip.validatePrimitives(joinData(ctx)), T.fromEither),

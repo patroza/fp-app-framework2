@@ -1,5 +1,4 @@
 import TrainTrip, { Events } from "../TrainTrip"
-import { Do } from "fp-ts-contrib/lib/Do"
 import { T } from "@e/meffect"
 import * as PostCommit from "../eventhandlers/postCommit"
 import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
@@ -10,7 +9,7 @@ export const save = <TEvents extends readonly Events[]>(
   events: TEvents,
   method: "change" | "delete" | "add" = "change",
 ) =>
-  Do(T.effect)
+  T.Do()
     .do(
       method === "delete"
         ? TC.remove(tt)

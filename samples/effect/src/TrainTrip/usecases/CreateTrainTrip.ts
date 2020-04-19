@@ -14,7 +14,7 @@ import { createPrimitiveValidator } from "@e/utils"
 import save from "../infrastructure/saveTrainTrip"
 
 const CreateTrainTrip = (input: Input) =>
-  Do(T.effect)
+  T.Do()
     .bind("preferences", pipe(input, liftEitherSuspended(validateCreateTrainTripInfo)))
     .bindL("trip", ({ preferences }) => API.get(preferences.templateId))
     // TODO: new Date, should be a date service.. // T.sync(() => new Date())

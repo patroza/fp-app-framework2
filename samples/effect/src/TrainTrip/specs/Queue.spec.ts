@@ -1,7 +1,6 @@
 /* eslint-disable jest/no-standalone-expect */
 import * as J from "@matechs/test-jest"
 import { effect as T } from "@matechs/effect"
-import { Do } from "fp-ts-contrib/lib/Do"
 import executeReceived from "../queueRouter"
 import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 
@@ -11,7 +10,7 @@ import { pipe } from "@fp-app/fp-ts-extensions"
 
 const CustomerRequestedChanges = J.testM(
   "CustomerRequestedChanges",
-  Do(T.effect)
+  T.Do()
     .bind("trainTripId", H.createDefaultTrip)
     .bindL("trainTrip", ({ trainTripId }) => H.getTrainTrip(trainTripId))
     .doL(({ trainTripId }) =>
@@ -26,7 +25,7 @@ const CustomerRequestedChanges = J.testM(
 
 const RegisterOnCloud = J.testM(
   "RegisterOnCloud",
-  Do(T.effect)
+  T.Do()
     .bind("trainTripId", H.createDefaultTrip)
     .bindL("trainTrip", ({ trainTripId }) =>
       pipe(TC.loadE(trainTripId), provideRequestScoped()),

@@ -2,14 +2,13 @@
 
 import * as J from "@matechs/test-jest"
 import { effect as T } from "@matechs/effect"
-import { Do } from "fp-ts-contrib/lib/Do"
 
 import * as H from "./helpers.spec"
 
 // Test is the same for happy CreateTrainTrip path
 export const CreateTrainTripSpec = J.testM(
   "CreateTrainTrip",
-  Do(T.effect)
+  T.Do()
     .bind("result", H.createDefaultTrip)
     .bindL("trainTripAfter", ({ result }) => H.getTrainTrip(result))
     .return(({ result, trainTripAfter }) => {

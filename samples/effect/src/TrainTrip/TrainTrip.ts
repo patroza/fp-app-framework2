@@ -245,7 +245,7 @@ const lockedAtL = Lens.fromPath<TrainTrip>()(["lockedAt"])
 const handleUpdateTemplate = <S, R, E, TEvents extends readonly Events[]>(
   inp: T.Effect<S, R, E, [TrainTrip, TEvents, boolean]>,
 ) =>
-  Do(T.effect)
+  T.Do()
     .bind("result", inp)
     .bindL("result2", ({ result: [tt, , changed] }) =>
       changed ? T.effect.map(updateTemplate(tt), O.some) : T.pure(O.none),
