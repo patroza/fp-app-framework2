@@ -83,6 +83,7 @@ export interface Context {
   }
 }
 
+// TODO: move back into F.implement
 export const env = {
   [TrainTripContextURI]: {
     add: (tt: TrainTrip) =>

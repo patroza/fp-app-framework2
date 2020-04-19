@@ -38,7 +38,10 @@ const requestInfoMW = KOA.middleware((ctx, next) => {
   return next().then(() => {
     requestContext.finishedAt = getCurrentDate()
     ctx.set("X-Request-FinishedAt", requestContext.finishedAt.toISOString())
-    console.log("finishing request", JSON.stringify(requestContext, undefined, 2))
+    console.log(
+      "finishing request",
+      JSON.stringify({ requestContext, status: ctx.status }, undefined, 2),
+    )
   })
 })
 

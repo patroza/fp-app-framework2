@@ -94,7 +94,7 @@ export interface Context {
   }
 }
 
-export const env = {
+export const provideTrainTripPublisher = F.implement(TrainTripPublisher)({
   [TrainTripPublisherURI]: {
     register: (id: string) =>
       // Workaround for in-process fake queue
@@ -114,5 +114,4 @@ export const env = {
         ),
       ),
   },
-}
-export const provideTrainTripPublisher = F.implement(TrainTripPublisher)(env)
+})
