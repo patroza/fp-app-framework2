@@ -14,23 +14,27 @@ const provideRequestScoped = () => {
     })
   })
 
-  // TODO: use provide `flow()`...
-  const env = {
+  const provideRCContext = T.provide<RC.RCContext>({
     [RC.contextEnv]: {
       get ctx() {
         return readContext.value
       },
     },
+  })
+
+  const provideTTCContext = T.provide<TTC.TTCContext>({
     [TTC.contextEnv]: {
       get ctx() {
         return ctx.value
       },
     },
-  } as RC.RCContext & TTC.TTCContext
+  })
+
   return combineProviders()
     .with(TTC.provideTrainTripContext)
     .with(RC.provideReadContext)
-    .with(T.provide(env))
+    .with(provideRCContext)
+    .with(provideTTCContext)
     .done()
 }
 
