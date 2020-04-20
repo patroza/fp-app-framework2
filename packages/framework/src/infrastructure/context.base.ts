@@ -1,4 +1,4 @@
-import { O, RT, T } from "@fp-app/fp-ts-extensions"
+import { O, RT, Task } from "@fp-app/fp-ts-extensions"
 import { Disposable } from "../types"
 
 // // tslint:disable-next-line:max-classes-per-file
@@ -27,7 +27,7 @@ import { Disposable } from "../types"
 // }
 
 export interface UnitOfWork extends Disposable {
-  save: T.Task<void>
+  save: Task.Task<void>
 }
 
 export interface RecordContext<T> {

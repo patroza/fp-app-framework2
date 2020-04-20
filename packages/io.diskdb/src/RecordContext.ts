@@ -1,6 +1,6 @@
 import * as FW from "@fp-app/framework"
 import * as FWC from "@fp-app/framework-classic"
-import { pipe, O, RT, T, TO } from "@fp-app/fp-ts-extensions"
+import { pipe, O, RT, Task, TO } from "@fp-app/fp-ts-extensions"
 import * as PLF from "proper-lockfile"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
 import { flow } from "fp-ts/lib/function"
@@ -108,7 +108,7 @@ export default class DiskRecordContext<T extends DBRecord>
           }
         }),
         TO.fold(
-          () => T.of(void 0),
+          () => Task.of(void 0),
           ({ version }) => () => this.actualSave(record, version),
         ),
       ),
@@ -155,10 +155,15 @@ interface DBRecordWithEvents {
   intGetAndClearEvents: () => FWC.Event[]
 }
 
-const runSequentially = async <T>(...taskCreators: Array<T.Task<T>>): Promise<T[]> => {
+const runSequentially = async <T>(
+  ...taskCreators: Array<Task.Task<T>>
+): Promise<T[]> => {
   if (taskCreators.length) {
     // taskSeq required to run sequentially!!
-    const taskSequence = sequenceT(T.taskSeq)(taskCreators[0], ...taskCreators.slice(1))
+    const taskSequence = sequenceT(Task.taskSeq)(
+      taskCreators[0],
+      ...taskCreators.slice(1),
+    )
     return await taskSequence()
   } else {
     return []
@@ -183,7 +188,7 @@ interface CachedRecord<T> {
   data: T
 }
 
-const lockRecordOnDisk = async <T>(type: string, id: string, cb: T.Task<T>) => {
+const lockRecordOnDisk = async <T>(type: string, id: string, cb: Task.Task<T>) => {
   try {
     const release = await PLF.lock(getFilename(type, id))
     try {

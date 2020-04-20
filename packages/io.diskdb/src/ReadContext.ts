@@ -1,5 +1,4 @@
-import { O } from "@fp-app/fp-ts-extensions"
-import * as T from "fp-ts/lib/Task"
+import { O, Task } from "@fp-app/fp-ts-extensions"
 import { getFilename } from "./RecordContext"
 import { deleteFile, exists, readFile, writeFile } from "./utils"
 
@@ -24,7 +23,7 @@ export default class ReadContext<T> {
   readonly create = (id: string, value: T) =>
     createOrUpdateReadContextEntry(this.type, id, value)
   readonly delete = (id: string) => deleteReadContextEntry(this.type, id)
-  readonly read = (id: string): T.Task<O.Option<T>> => async () => {
+  readonly read = (id: string): Task.Task<O.Option<T>> => async () => {
     const filePath = getFilename(this.type, id)
     if (!(await exists(filePath))) {
       return O.none

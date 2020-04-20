@@ -5,11 +5,14 @@ import { M, T } from "@e/meffect"
 
 const provideRequestScoped = () => {
   const provideRCContext = T.provideM(
-    T.sync(() => ({
-      [RC.contextEnv]: {
-        ctx: new TrainTripReadContext(),
-      },
-    })),
+    T.sync(
+      () =>
+        ({
+          [RC.contextEnv]: {
+            ctx: new TrainTripReadContext(),
+          },
+        } as RC.RCContext),
+    ),
   )
 
   const provideTTCContext = M.provide(

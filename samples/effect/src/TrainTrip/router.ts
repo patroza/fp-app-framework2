@@ -1,14 +1,13 @@
 import { effect as T } from "@matechs/effect"
 import * as KOA from "@matechs/koa"
-import * as O from "fp-ts/lib/Option"
 // import { Do } from "fp-ts-contrib/lib/Do"
-import { pipe } from "fp-ts/lib/pipeable"
 import * as GetTrainTrip from "./usecases/GetTrainTrip"
 import * as CreateTrainTrip from "./usecases/CreateTrainTrip"
 import * as ChangeTrainTrip from "./usecases/ChangeTrainTrip"
 import * as DeleteTrainTrip from "./usecases/DeleteTrainTrip"
 import { joinData, handleErrors } from "@e/requestHelpers"
 import provideRequestScoped from "./provideRequestScoped"
+import { pipe, O } from "@fp-app/fp-ts-extensions"
 
 const getTrainTrip = KOA.route(
   "get",
