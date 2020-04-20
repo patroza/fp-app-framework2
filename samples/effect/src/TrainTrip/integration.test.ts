@@ -7,7 +7,6 @@ import { CreateTrainTripSpec } from "./specs/CreateTrainTrip.spec"
 import { GetTrainTripSpec } from "./specs/GetTrainTrip.spec"
 import { ChangeTrainTripSpec } from "./specs/ChangeTrainTrip.spec"
 import { DeleteTrainTripSpec } from "./specs/DeleteTrainTrip.spec"
-import { flow } from "fp-ts/lib/function"
 import { initialize } from "@e/server"
 import { combineProviders } from "@matechs/prelude"
 
