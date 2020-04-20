@@ -26,7 +26,7 @@ export const createTrainTrip = (inp: unknown) =>
       .bind("input", T.fromEither(CreateTrainTrip.validatePrimitives(inp)))
       .bindL("trainTripId", ({ input }) => CreateTrainTrip.default(input))
       .return((r) => r.trainTripId),
-    provideRequestScoped(),
+    provideRequestScoped,
   )
 
 export const createDefaultTrip = createTrainTrip({
@@ -43,7 +43,7 @@ export const changeTrainTrip = (inp: unknown) =>
         .doL(({ input }) => ChangeTrainTrip.default(input))
         .done(),
     ),
-    provideRequestScoped(),
+    provideRequestScoped,
   )
 
 export const deleteTrainTrip = (trainTripId: string) =>
@@ -52,7 +52,7 @@ export const deleteTrainTrip = (trainTripId: string) =>
       .bind("input", T.fromEither(DeleteTrainTrip.validatePrimitives({ trainTripId })))
       .bindL("result", ({ input }) => DeleteTrainTrip.default(input))
       .return((r) => r.result),
-    provideRequestScoped(),
+    provideRequestScoped,
   )
 
 export const getTrainTripO = (trainTripId: string) =>
@@ -61,7 +61,7 @@ export const getTrainTripO = (trainTripId: string) =>
       .bind("input", T.fromEither(GetTrainTrip.validatePrimitives({ trainTripId })))
       .bindL("result", ({ input }) => GetTrainTrip.default(input))
       .return((r) => r.result),
-    provideRequestScoped(),
+    provideRequestScoped,
   )
 
 export const getTrainTrip = (trainTripId: string) =>
