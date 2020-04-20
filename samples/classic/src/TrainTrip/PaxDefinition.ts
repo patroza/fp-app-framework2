@@ -1,12 +1,26 @@
-import { summon } from "@morphic-ts/batteries/lib/summoner-ESBASTJ"
 import { AType } from "@morphic-ts/batteries/lib/usage/utils"
-import { iotsConfig } from "@morphic-ts/io-ts-interpreters/lib"
 
 import * as FW from "@fp-app/framework"
 import { t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
 import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 import { flow } from "fp-ts/lib/function"
 import { map, mapLeft, either } from "@fp-app/fp-ts-extensions/src/Either"
+
+import { summonFor } from "@morphic-ts/batteries/lib/summoner-ESBASTJ"
+
+import { iotsConfig, IoTsURI } from "@morphic-ts/io-ts-interpreters/lib"
+import { withMessage as WM } from "io-ts-types/lib/withMessage"
+
+export const { summon } = summonFor<{
+  [IoTsURI]: IoTsEnv
+}>({
+  [IoTsURI]: { WM, withBla },
+})
+
+interface IoTsEnv {
+  WM: typeof WM
+  withBla: typeof withBla
+}
 
 /* Pax: No domain validation, just primitives. **/
 const Pax = t.type(
@@ -31,16 +45,17 @@ export interface PaxNumberBrand {
 }
 
 const PaxNumber = summon((F) =>
-  F.refined(
-    F.number(),
+  F.refinedCfg(
+    F.number,
     (n): n is t.Branded<number, PaxNumberBrand> => n >= 0 && n <= 6,
     "PaxNumber",
-    iotsConfig((x) =>
-      withBla(x, (value) => {
+  )({
+    ...iotsConfig((x, env: IoTsEnv) =>
+      env.withBla(x, (value) => {
         return `requires a number between 0 and max 6, but ${value} was specified.`
       }),
     ),
-  ),
+  }),
 )
 
 type PaxNumber = AType<typeof PaxNumber>
@@ -60,7 +75,7 @@ const _PaxDefinition = summon((F) => {
     FW.utils.typedKeysOf(p).some((k) => p[k] > 0) &&
     FW.utils.typedKeysOf(p).reduce((prev, cur) => (prev += p[cur]), 0) <= 6
 
-  return F.interface(
+  return F.interfaceCfg(
     {
       adults: PaxNumber(F),
       babies: PaxNumber(F),
@@ -69,8 +84,9 @@ const _PaxDefinition = summon((F) => {
       teenagers: PaxNumber(F),
     },
     "Pax",
-    iotsConfig((x) =>
-      withBla(
+  )({
+    ...iotsConfig((x, env: IoTsEnv) =>
+      env.withBla(
         new t.Type(
           "PaxDefinition",
           (p2): p2 is T => {
@@ -90,7 +106,7 @@ const _PaxDefinition = summon((F) => {
         },
       ),
     ),
-  )
+  })
 })
 
 const PaxDefinition = merge(_PaxDefinition, {
