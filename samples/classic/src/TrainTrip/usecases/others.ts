@@ -7,7 +7,7 @@ import {
   DbError,
 } from "@fp-app/framework"
 import { createCommandWithDeps } from "@fp-app/framework-classic"
-import { pipe, E, Do, TE, toVoid } from "@fp-app/fp-ts-extensions"
+import { pipe, E, TE, toVoid } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { defaultDependencies } from "./types"
@@ -24,7 +24,7 @@ export const changeStartDate = createCommand<
   void,
   ChangeStartDateError
 >("changeStartDate", ({ _, trainTrips }) => (input) =>
-  Do(TE.taskEither)
+  TE.Do()
     .bind(
       "startDate",
       pipe(input.startDate, pipe(FutureDate.create, _.RE.liftErr, E.toTaskEither)),
@@ -47,7 +47,7 @@ export const changeTravelClass = createCommand<
   void,
   ChangeTravelClassError
 >("changeTravelClass", ({ _, trainTrips }) => (input) =>
-  Do(TE.taskEither)
+  TE.Do()
     .bind(
       "travelClass",
       pipe(

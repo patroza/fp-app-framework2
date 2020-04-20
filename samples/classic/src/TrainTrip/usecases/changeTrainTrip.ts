@@ -27,7 +27,7 @@ const createCommand = createCommandWithDeps(() => ({
 const changeTrainTrip = createCommand<Input, void, ChangeTrainTripError>(
   "changeTrainTrip",
   ({ _, trainTrips }) => (input) =>
-    Do(TE.taskEither)
+    TE.Do()
       .bind(
         "proposal",
         pipe(input, pipe(validateStateProposition, _.RE.liftErr, E.toTaskEither)),

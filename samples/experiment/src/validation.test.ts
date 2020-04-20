@@ -1,5 +1,12 @@
 import { sequenceT } from "fp-ts/lib/Apply"
-import { Either, getValidation, left, map, mapLeft, right } from "fp-ts/lib/Either"
+import {
+  Either,
+  getValidation,
+  left,
+  map,
+  mapLeft,
+  right,
+} from "@matechs/prelude/lib/either"
 import { getSemigroup, NonEmptyArray } from "fp-ts/lib/NonEmptyArray"
 import { pipe } from "fp-ts/lib/pipeable"
 
@@ -15,10 +22,10 @@ const oneNumber = (s: string): Either<string, string> =>
 function lift<L, A>(
   check: (a: A) => Either<L, A>,
 ): (a: A) => Either<NonEmptyArray<L>, A> {
-  return a =>
+  return (a) =>
     pipe(
       check(a),
-      mapLeft(a => [a]),
+      mapLeft((a) => [a]),
     )
 }
 

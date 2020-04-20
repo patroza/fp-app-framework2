@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// export * from "fp-ts/lib/Either"
+// export * from "@matechs/prelude/lib/either"
 
 import { map } from "fp-ts/lib/TaskEither"
 import { pipe } from "fp-ts/lib/pipeable"
@@ -14,9 +14,11 @@ import { TaskEither } from "fp-ts/lib/TaskEither"
 import { flow, tuple } from "fp-ts/lib/function"
 import { toValue, tee, ThenArg } from "./general"
 import { pipe as _pipe } from "lodash/fp"
+import { Do as DoOriginal } from "fp-ts-contrib/lib/Do"
 
 export * from "fp-ts/lib/TaskEither"
 
+export const Do = () => DoOriginal(TE.taskEither)
 export type AsyncResult<TSuccess, TError> = TaskEither<TError, TSuccess>
 
 export const TFold = flow(E.fold, T.map)

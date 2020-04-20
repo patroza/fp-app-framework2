@@ -14,7 +14,7 @@ import {
   curryRequest,
   requestKey,
 } from "@fp-app/framework-classic"
-import { pipe, TE, Do, toVoid } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, toVoid } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"
 import { wrap } from "../infrastructure/utils"
@@ -87,7 +87,7 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
   /* on */ TrainTripStateChanged,
   "RefreshTripInfo",
   ({ _, getTrip, trainTrips }) => (event) =>
-    Do(TE.taskEither)
+    TE.Do()
       .bind(
         "trainTrip",
         pipe(event.trainTripId, pipe(wrap(trainTrips.load), _.RTE.liftErr)),

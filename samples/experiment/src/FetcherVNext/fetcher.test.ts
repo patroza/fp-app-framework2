@@ -1,4 +1,4 @@
-import * as E from "fp-ts/lib/Either"
+import * as E from "@matechs/prelude/lib/either"
 import { flow } from "fp-ts/lib/function"
 import { pipe } from "fp-ts/lib/pipeable"
 import * as TE from "fp-ts/lib/TaskEither"
@@ -49,13 +49,13 @@ it("works", async () => {
       TE.chain(
         flow(
           Users.decode,
-          E.bimap(decodeError, payload => ({ code: 200 as const, payload })),
+          E.bimap(decodeError, (payload) => ({ code: 200 as const, payload })),
           TE.fromEither,
         ),
       ),
     )
 
-  const headersDecoder: Decoder<Error, FourTwoTwo> = response =>
+  const headersDecoder: Decoder<Error, FourTwoTwo> = (response) =>
     pipe(
       E.tryCatch(
         () => ({
@@ -73,7 +73,7 @@ it("works", async () => {
       TE.chain(
         flow(
           FourTwoTwo.decode,
-          E.bimap(decodeError, payload => ({ code: 422 as const, payload })),
+          E.bimap(decodeError, (payload) => ({ code: 422 as const, payload })),
           TE.fromEither,
         ),
       ),
@@ -121,7 +121,7 @@ it("works", async () => {
       TE.chain(
         flow(
           Todo.decode,
-          E.bimap(decodeError, payload => ({ code: 200 as const, payload })),
+          E.bimap(decodeError, (payload) => ({ code: 200 as const, payload })),
           TE.fromEither,
         ),
       ),

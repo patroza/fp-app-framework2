@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// export * from "fp-ts/lib/Either"
+// export * from "@matechs/prelude/lib/either"
 
 import { Either } from "@matechs/prelude/lib/either"
 import { pipe } from "fp-ts/lib/pipeable"
@@ -13,7 +13,7 @@ import { flatten, zip } from "lodash"
 import { toValue, tee } from "./general"
 import { tuple, flow } from "fp-ts/lib/function"
 
-export * from "fp-ts/lib/Either"
+export * from "@matechs/prelude/lib/either"
 
 import { pipe as _pipe } from "lodash/fp"
 

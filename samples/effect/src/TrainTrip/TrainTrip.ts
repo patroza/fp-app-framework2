@@ -14,7 +14,6 @@ import {
   t,
   decodeErrors,
   convertCoolLens,
-  Do,
   O,
 } from "@fp-app/fp-ts-extensions"
 import isEqual from "lodash/fp/isEqual"
@@ -92,7 +91,7 @@ const proposeChangesE = (state: StateProposition) => (tt: TrainTrip) =>
   pipe(tt, liftEitherSuspended(proposeChanges(state)), handleUpdateTemplate)
 
 const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
-  Do(E.either)
+  E.Do()
     .do(
       pipe(
         tt,
@@ -111,7 +110,7 @@ const changePaxE = (pax: PaxDefinition) => (tt: TrainTrip) =>
 const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | "id">>(
   tt: This,
 ) =>
-  Do(E.either)
+  E.Do()
     .do(confirmUserChangeAllowed(tt))
     .let("result", pipe(tt, intChangePax(pax)))
     .return(({ result: [tt, events, changed] }) =>
@@ -126,7 +125,7 @@ const changeStartDate = (startDate: FutureDate) => <
 >(
   tt: This,
 ) =>
-  Do(E.either)
+  E.Do()
     .do(confirmUserChangeAllowed(tt))
     .let("result", pipe(tt, intChangeStartDate(startDate)))
     .return(({ result: [tt, events, changed] }) =>
@@ -137,7 +136,7 @@ const changeTravelClassE = (travelClass: TravelClassDefinition) => (tt: TrainTri
   pipe(tt, liftEitherSuspended(changeTravelClass(travelClass)), handleUpdateTemplate)
 
 const changeTravelClass = (travelClass: TravelClassDefinition) => (tt: TrainTrip) =>
-  Do(E.either)
+  E.Do()
     .do(
       pipe(
         tt,
@@ -274,7 +273,7 @@ const applyDefinedChanges = ({
   startDate,
   travelClass,
 }: StateProposition) => (tt: TrainTrip) =>
-  Do(E.either)
+  E.Do()
     .bind("tt", pipe(E.right({ value: tt }), E.liftErr<ApplyChangesError>()))
     .bindL("startDate", ({ tt }) => {
       if (startDate !== undefined) {
@@ -294,7 +293,7 @@ const applyDefinedChanges = ({
     })
     .bindL("travelClass", ({ tt }) => {
       if (travelClass !== undefined) {
-        return Do(E.either)
+        return E.Do()
           .bind("r", pipe(tt.value, intChangeTravelClass(travelClass)))
           .return(({ r }) => {
             const [newTT, events, changed] = r
