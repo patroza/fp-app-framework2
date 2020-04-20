@@ -1,14 +1,13 @@
 import { effect as T } from "@matechs/effect"
 import * as KOA from "@matechs/koa"
-import * as O from "fp-ts/lib/Option"
 // import { Do } from "fp-ts-contrib/lib/Do"
-import { pipe } from "fp-ts/lib/pipeable"
 import * as GetTrainTrip from "./usecases/GetTrainTrip"
 import * as CreateTrainTrip from "./usecases/CreateTrainTrip"
 import * as ChangeTrainTrip from "./usecases/ChangeTrainTrip"
 import * as DeleteTrainTrip from "./usecases/DeleteTrainTrip"
 import { joinData, handleErrors } from "@e/requestHelpers"
 import provideRequestScoped from "./provideRequestScoped"
+import { pipe, O } from "@fp-app/fp-ts-extensions"
 
 const getTrainTrip = KOA.route(
   "get",
@@ -27,7 +26,7 @@ const getTrainTrip = KOA.route(
           : KOA.routeResponse(404, null),
       ),
     handleErrors,
-    provideRequestScoped(),
+    provideRequestScoped,
   ),
 )
 
@@ -45,7 +44,7 @@ const createTrainTrip = KOA.route(
       .bindL("result", ({ input }) => CreateTrainTrip.default(input))
       .return(({ result }) => KOA.routeResponse(200, result)),
     handleErrors,
-    provideRequestScoped(),
+    provideRequestScoped,
   ),
 )
 
@@ -63,7 +62,7 @@ const changeTrainTrip = KOA.route(
       .bindL("result", ({ input }) => ChangeTrainTrip.default(input))
       .return(({ result }) => KOA.routeResponse(200, result)),
     handleErrors,
-    provideRequestScoped(),
+    provideRequestScoped,
   ),
 )
 
@@ -80,7 +79,7 @@ const deleteTrainTrip = KOA.route(
       .bindL("result", ({ input }) => DeleteTrainTrip.default(input))
       .return(({ result }) => KOA.routeResponse(200, result)),
     handleErrors,
-    provideRequestScoped(),
+    provideRequestScoped,
   ),
 )
 

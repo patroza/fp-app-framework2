@@ -1,37 +1,43 @@
-import { effect as T } from "@matechs/effect"
 import TrainTripReadContext, * as RC from "./infrastructure/TrainTripReadContext.disk"
 import DiskDBContext, * as TTC from "./infrastructure/TrainTripContext.disk"
-import { createLazy } from "@fp-app/framework/src/utils"
 import { combineProviders } from "@matechs/prelude"
+import { M, T } from "@e/meffect"
 
-const provideRequestScoped = () => {
-  const readContext = createLazy(() => new TrainTripReadContext())
-  const ctx = createLazy(() => {
-    const trainTrips = TTC.trainTrips()
-    return DiskDBContext({
-      readContext: readContext.value,
-      trainTrips,
-    })
-  })
+const provideRCContext = T.provideM(
+  T.sync(
+    () =>
+      ({
+        [RC.contextEnv]: {
+          ctx: new TrainTripReadContext(),
+        },
+      } as RC.RCContext),
+  ),
+)
 
-  // TODO: use provide `flow()`...
-  const env = {
-    [RC.contextEnv]: {
-      get ctx() {
-        return readContext.value
-      },
-    },
-    [TTC.contextEnv]: {
-      get ctx() {
-        return ctx.value
-      },
-    },
-  } as RC.RCContext & TTC.TTCContext
-  return combineProviders()
-    .with(TTC.provideTrainTripContext)
-    .with(RC.provideReadContext)
-    .with(T.provide(env))
-    .done()
-}
+const provideTTCContext = M.provide(
+  M.bracket(
+    T.accessM((r: RC.RCContext) =>
+      T.sync(
+        () =>
+          ({
+            [TTC.contextEnv]: {
+              ctx: DiskDBContext({
+                readContext: r[RC.contextEnv].ctx,
+                trainTrips: TTC.trainTrips(),
+              }),
+            },
+          } as TTC.TTCContext),
+      ),
+    ),
+    (ttc) => T.sync(() => ttc[TTC.contextEnv].ctx.dispose()),
+  ),
+)
+
+const provideRequestScoped = combineProviders()
+  .with(TTC.provideTrainTripContext)
+  .with(RC.provideReadContext)
+  .with(provideTTCContext)
+  .with(provideRCContext)
+  .done()
 
 export default provideRequestScoped

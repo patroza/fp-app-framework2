@@ -1,4 +1,3 @@
-import { effect as T } from "@matechs/effect"
 import Koa from "koa"
 import * as KOA from "@matechs/koa"
 import {
@@ -13,28 +12,35 @@ import {
   CouldNotAquireDbLockException,
   ConnectionException,
 } from "@fp-app/framework"
-import { completed } from "@matechs/effect/lib/effect"
-import { pipe } from "fp-ts/lib/pipeable"
+import { T, pipe } from "@fp-app/fp-ts-extensions"
 
 export const handleErrors = <S, R, E extends ErrorBase, A>(eff: T.Effect<S, R, E, A>) =>
   pipe(eff, mapErrorToHTTP, captureError)
 
-export const captureError = <S, R, E, A>(inp: T.Effect<S, R, E, A>) =>
-  T.foldExit((cause) => {
-    if (cause._tag !== "Abort") {
-      return completed(cause)
-    }
-    if (cause.abortedWith instanceof OptimisticLockException) {
-      return T.raiseError(KOA.routeError(409, {}))
-    } else if (cause.abortedWith instanceof CouldNotAquireDbLockException) {
-      return T.raiseError(KOA.routeError(503, {}))
-    } else if (cause.abortedWith instanceof ConnectionException) {
-      return T.raiseError(KOA.routeError(504, {}))
-    } else {
-      console.error("Unknown error ocurred", cause.abortedWith)
-      return T.raiseAbort(cause.abortedWith)
-    }
-  }, T.pure)(inp) as T.Effect<S, R, E & KOA.RouteError<unknown>, A>
+export const captureError = <S, R, A>(
+  inp: T.Effect<S, R, KOA.RouteError<{ message: string }>, A>,
+): T.Effect<S, R, KOA.RouteError<{ message: string }>, A> =>
+  pipe(
+    inp,
+    T.foldExit((cause) => {
+      if (cause._tag === "Abort") {
+        if (cause.abortedWith instanceof OptimisticLockException) {
+          return T.raiseError(KOA.routeError(409, { message: "Aborted" }))
+        } else if (cause.abortedWith instanceof CouldNotAquireDbLockException) {
+          return T.raiseError(KOA.routeError(503, { message: "Aborted" }))
+        } else if (cause.abortedWith instanceof ConnectionException) {
+          return T.raiseError(KOA.routeError(504, { message: "Aborted" }))
+        } else {
+          console.error("Unknown error ocurred", cause.abortedWith)
+          return T.raiseAbort(cause.abortedWith)
+        }
+      }
+      if (cause._tag === "Interrupt") {
+        return T.raiseInterrupt
+      }
+      return T.raiseError(cause.error)
+    }, T.pure),
+  )
 
 export const mapErrorToHTTP = T.mapError((err: ErrorBase) => {
   const { message } = err

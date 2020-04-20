@@ -7,8 +7,8 @@ import { CreateTrainTripSpec } from "./specs/CreateTrainTrip.spec"
 import { GetTrainTripSpec } from "./specs/GetTrainTrip.spec"
 import { ChangeTrainTripSpec } from "./specs/ChangeTrainTrip.spec"
 import { DeleteTrainTripSpec } from "./specs/DeleteTrainTrip.spec"
-import { flow } from "fp-ts/lib/function"
 import { initialize } from "@e/server"
+import { combineProviders } from "@matechs/prelude"
 
 beforeAll(() => initialize())
 
@@ -21,11 +21,13 @@ const integrationSuite = J.suite("Integration")(
 )
 
 J.run(integrationSuite)(
-  flow(
-    TA.provideTripApi,
-    TTP.provideTrainTripPublisher,
-    T.provide<TTP.Context>({
-      [TTP.contextEnv]: { ctx: new TTP.default() },
-    }),
-  ),
+  combineProviders()
+    .with(TA.provideTripApi)
+    .with(TTP.provideTrainTripPublisher)
+    .with(
+      T.provide<TTP.Context>({
+        [TTP.contextEnv]: { ctx: new TTP.default() },
+      }),
+    )
+    .done(),
 )

@@ -28,11 +28,11 @@ const RegisterOnCloud = J.testM(
   T.Do()
     .bind("trainTripId", H.createDefaultTrip)
     .bindL("trainTrip", ({ trainTripId }) =>
-      pipe(TC.loadE(trainTripId), provideRequestScoped()),
+      pipe(TC.loadE(trainTripId), provideRequestScoped),
     )
     .doL(({ trainTripId }) => executeReceived({ trainTripId, type: "RegisterOnCloud" }))
     .bindL("trainTripAfter", ({ trainTripId }) =>
-      pipe(TC.loadE(trainTripId), provideRequestScoped()),
+      pipe(TC.loadE(trainTripId), provideRequestScoped),
     )
     .return(({ trainTrip, trainTripAfter }) => {
       J.assert.equal(trainTrip.opportunityId, undefined)

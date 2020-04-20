@@ -8,7 +8,7 @@ import { ApiError, InvalidStateError, RecordNotFound, utils } from "@fp-app/fram
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
 import Trip, { TravelClass, TripWithSelectedTravelClass } from "../Trip"
-import { E, F, T } from "@e/meffect"
+import { E, Free, T } from "@e/meffect"
 import { pipe } from "fp-ts/lib/pipeable"
 import { trampoline, ToolDeps, TE, RE, RTE } from "@fp-app/fp-ts-extensions"
 
@@ -19,24 +19,24 @@ const getTrip = ({ getTemplate }: { getTemplate: getTemplateType }) =>
   )
 
 const TripApiURI = "@fp-app/effect/trip-api"
-const TripApi_ = F.define({
+const TripApi_ = Free.define({
   [TripApiURI]: {
-    get: F.fn<
+    get: Free.fn<
       (
         id: string,
       ) => T.AsyncE<ApiError | InvalidStateError, TripWithSelectedTravelClass>
     >(),
-    sendCloudSync: F.fn<(tt: TrainTrip) => T.AsyncE<ApiError, string>>(),
+    sendCloudSync: Free.fn<(tt: TrainTrip) => T.AsyncE<ApiError, string>>(),
   },
 })
 
-export interface TripApi extends F.TypeOf<typeof TripApi_> {}
+export interface TripApi extends Free.TypeOf<typeof TripApi_> {}
 
-export const TripApi = F.opaque<TripApi>()(TripApi_)
+export const TripApi = Free.opaque<TripApi>()(TripApi_)
 
-export const { get, sendCloudSync } = F.access(TripApi)[TripApiURI]
+export const { get, sendCloudSync } = Free.access(TripApi)[TripApiURI]
 
-export const provideTripApi = F.implement(TripApi)({
+export const provideTripApi = Free.implement(TripApi)({
   [TripApiURI]: {
     get: (id: string) => {
       // TODO: resolve shared dependency instead

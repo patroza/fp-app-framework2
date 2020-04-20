@@ -8,7 +8,7 @@ const executeReceived = (unknownEvent: unknown) =>
     T.Do()
       .do(T.sync(() => FW.utils.logger.log("Received integration event", unknownEvent)))
       .bind("event", parseEvent(unknownEvent))
-      .doL(({ event }) => provideRequestScoped()(handlers(event)))
+      .doL(({ event }) => provideRequestScoped(handlers(event)))
       .done(),
   )
 
