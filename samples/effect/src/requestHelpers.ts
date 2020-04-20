@@ -13,30 +13,34 @@ import {
   ConnectionException,
 } from "@fp-app/framework"
 import { T, pipe } from "@fp-app/fp-ts-extensions"
-import { completed } from "@matechs/effect/lib/effect"
-import { Cause } from "@matechs/prelude/lib/exit"
 
 export const handleErrors = <S, R, E extends ErrorBase, A>(eff: T.Effect<S, R, E, A>) =>
   pipe(eff, mapErrorToHTTP, captureError)
 
-export const captureError = <S, R, E, A>(inp: T.Effect<S, R, KOA.RouteError<E>, A>) =>
-  (T.foldExit((cause) => {
-    if (cause._tag === "Abort") {
-      if (cause.abortedWith instanceof OptimisticLockException) {
-        return T.raiseError(KOA.routeError(409, {}))
-      } else if (cause.abortedWith instanceof CouldNotAquireDbLockException) {
-        return T.raiseError(KOA.routeError(503, {}))
-      } else if (cause.abortedWith instanceof ConnectionException) {
-        return T.raiseError(KOA.routeError(504, {}))
-      } else {
-        console.error("Unknown error ocurred", cause.abortedWith)
-        return T.raiseAbort(cause.abortedWith)
+export const captureError = <S, R, A>(
+  inp: T.Effect<S, R, KOA.RouteError<{ message: string }>, A>,
+): T.Effect<S, R, KOA.RouteError<{ message: string }>, A> =>
+  pipe(
+    inp,
+    T.foldExit((cause) => {
+      if (cause._tag === "Abort") {
+        if (cause.abortedWith instanceof OptimisticLockException) {
+          return T.raiseError(KOA.routeError(409, { message: "Aborted" }))
+        } else if (cause.abortedWith instanceof CouldNotAquireDbLockException) {
+          return T.raiseError(KOA.routeError(503, { message: "Aborted" }))
+        } else if (cause.abortedWith instanceof ConnectionException) {
+          return T.raiseError(KOA.routeError(504, { message: "Aborted" }))
+        } else {
+          console.error("Unknown error ocurred", cause.abortedWith)
+          return T.raiseAbort(cause.abortedWith)
+        }
       }
-    }
-    const abc = (cause as unknown) as Cause<KOA.RouteError<E>>
-    return completed(abc)
-    // TODO: Why is this happening now? the E and A are inferring to unknown :/
-  }, T.pure)(inp) as unknown) as T.Effect<S, R, KOA.RouteError<{}>, A>
+      if (cause._tag === "Interrupt") {
+        return T.raiseInterrupt
+      }
+      return T.raiseError(cause.error)
+    }, T.pure),
+  )
 
 export const mapErrorToHTTP = T.mapError((err: ErrorBase) => {
   const { message } = err
