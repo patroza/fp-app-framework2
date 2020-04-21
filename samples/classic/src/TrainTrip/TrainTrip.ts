@@ -15,8 +15,6 @@ import {
   Result,
   E,
   pipe,
-  trampoline,
-  ToolDeps,
   t,
   decodeErrors,
   convertCoolLens,
@@ -163,33 +161,17 @@ export const changeStartDate = <This extends Pick<TrainTrip, "startDate" | "id">
     ),
   )
 
-export const changeTravelClass = (_this: TrainTrip) =>
-  trampoline(
-    (_: ToolDeps<ForbiddenError | InvalidStateError>) => (
-      travelClass: TravelClassDefinition,
-    ) =>
-      pipe(
-        confirmUserChangeAllowed(_this)(),
-        mapStatic(travelClass),
-        chain(pipe(intChangeTravelClass(_this), _.RE.liftErr)),
-        map(([_this, events, changed]) =>
-          tuple(_this, events.concat([...createChangeEvents(_this)(changed)])),
-        ),
-      ),
+export const changeTravelClass = (_this: TrainTrip) => (
+  travelClass: TravelClassDefinition,
+) =>
+  pipe(
+    confirmUserChangeAllowed(_this)(),
+    mapStatic(travelClass),
+    chain(pipe(intChangeTravelClass(_this))),
+    map(([_this, events, changed]) =>
+      tuple(_this, events.concat([...createChangeEvents(_this)(changed)])),
+    ),
   )
-// ALT
-// changeTravelClass: Tramp<
-//   TravelClassDefinition,
-//   void,
-//   ForbiddenError | InvalidStateError
-// > = trampolineE(_ => travelClass =>
-//   pipe(
-//     this.confirmUserChangeAllowed(),
-//     mapStatic(travelClass),
-//     chain(_.E.liftErr(this.intChangeTravelClass)),
-//     map(this.createChangeEvents),
-//   ),
-// )
 //// End Separate sample; not used other than testing
 ////////////
 
@@ -243,35 +225,30 @@ const updateTrip = (_this: TrainTrip) => (trip: Trip) => {
   return tuple(_this, void 0)
 }
 
-export const proposeChanges = (_this: TrainTrip) =>
-  trampoline(
-    (_: ToolDeps<ValidationError | InvalidStateError | ForbiddenError>) => (
-      state: StateProposition,
-    ) =>
-      pipe(
-        confirmUserChangeAllowed(_this)(),
-        mapStatic(state),
-        chain(pipe(applyDefinedChanges(_this), _.RE.liftErr)),
-        // TODO: push the events out as return
-        //E.map(x => [...createChangeEvents(_this)(x)]),
-        map(([_this, events, changed]) =>
-          tuple(_this, events.concat([...createChangeEvents(_this)(changed)])),
-        ),
-      ),
-    // ALT1
-    // pipe(
-    //   ok(state),
-    //   chainTee(this.confirmUserChangeAllowed),
-    //   chain(liftE(this.applyDefinedChanges)),
-    //   map(this.createChangeEvents),
-    // )
-    // ALT2
-    // pipe(
-    //   this.confirmUserChangeAllowed(),
-    //   chain(liftErr(() => this.applyDefinedChanges(state))),
-    //   map(this.createChangeEvents),
-    // )
+export const proposeChanges = (_this: TrainTrip) => (state: StateProposition) =>
+  pipe(
+    confirmUserChangeAllowed(_this)(),
+    mapStatic(state),
+    chain(pipe(applyDefinedChanges(_this))),
+    // TODO: push the events out as return
+    //E.map(x => [...createChangeEvents(_this)(x)]),
+    map(([_this, events, changed]) =>
+      tuple(_this, events.concat([...createChangeEvents(_this)(changed)])),
+    ),
   )
+// ALT1
+// pipe(
+//   ok(state),
+//   chainTee(this.confirmUserChangeAllowed),
+//   chain(liftE(this.applyDefinedChanges)),
+//   map(this.createChangeEvents),
+// )
+// ALT2
+// pipe(
+//   this.confirmUserChangeAllowed(),
+//   chain(liftErr(() => this.applyDefinedChanges(state))),
+//   map(this.createChangeEvents),
+// )
 
 // TODO: we have to return the object from each map
 // TODO: convert back from Imperative to Functional.

@@ -37,7 +37,7 @@ const uowDecorator = configure(
       }
       return pipe(
         request(key, input),
-        TE.chainTee(pipe(TE.tryExecuteFW(unitOfWork.save))),
+        TE.chainTee(() => TE.rightTask(() => unitOfWork.save())),
       )
     }
   },

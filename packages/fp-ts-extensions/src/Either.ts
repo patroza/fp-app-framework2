@@ -11,7 +11,7 @@ import * as TE from "fp-ts/lib/TaskEither"
 
 import { flatten, zip } from "lodash"
 import { toValue, tee } from "./general"
-import { tuple, flow } from "fp-ts/lib/function"
+import { tuple } from "fp-ts/lib/function"
 
 export * from "@matechs/prelude/lib/either"
 
@@ -20,6 +20,10 @@ import { pipe as _pipe } from "lodash/fp"
 export type Result<TSuccess, TError> = Either<TError, TSuccess>
 const err = E.left
 const ok = E.right
+
+export const chain: <E2, A, B>(
+  f: (a: A) => E.Either<E2, B>,
+) => <E1>(ma: E.Either<E1, A>) => E.Either<E1 | E2, B> = E.chain as any
 
 export const fromBool = <T, TInput extends T = T>(
   value: TInput,
@@ -195,56 +199,6 @@ export const toTaskEither = <T, T2, TE>(func: (i: T) => Either<TE, T2>) => <
 >(
   i: TI,
 ) => TE.fromEither(func(i))
-
-// compose = flow(E.right, ...rest)
-export function compose<TInput, TError, TOutput>(
-  ab: (c: E.Either<TError, TInput>) => E.Either<TError, TOutput>,
-): (input: TInput) => E.Either<TError, TOutput>
-export function compose<TInput, TError, B, TOutput>(
-  ab: (a: E.Either<TError, TInput>) => E.Either<TError, B>,
-  bc: (c: E.Either<TError, B>) => E.Either<TError, TOutput>,
-): (input: TInput) => E.Either<TError, TOutput>
-// TODO: Copy BError/CError etc behavior
-export function compose<TInput, TError, B, BError, C, CError, TErr, TOutput>(
-  ab: (a: E.Either<TError, TInput>) => E.Either<BError, B>,
-  bc: (b: E.Either<BError, B>) => E.Either<CError, C>,
-  cd: (c: E.Either<CError, C>) => E.Either<TErr, TOutput>,
-): (input: TInput) => E.Either<TErr, TOutput>
-export function compose<TInput, TError, B, C, D, TOutput>(
-  ab: (a: E.Either<TError, TInput>) => E.Either<TError, B>,
-  bc: (b: E.Either<TError, B>) => E.Either<TError, C>,
-  cd: (b: E.Either<TError, C>) => E.Either<TError, D>,
-  de: (c: E.Either<TError, D>) => E.Either<TError, TOutput>,
-): (input: TInput) => E.Either<TError, TOutput>
-export function compose<TInput, TError, B, C, D, E, TOutput>(
-  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
-  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
-  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
-  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
-  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, TOutput>,
-): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, D, E, F, TOutput>(
-  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
-  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
-  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
-  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
-  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, F>,
-  fg: (f: TE.TaskEither<TError, F>) => TE.TaskEither<TError, TOutput>,
-): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, D, E, F, G, TOutput>(
-  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
-  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
-  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
-  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
-  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, F>,
-  fg: (f: TE.TaskEither<TError, F>) => TE.TaskEither<TError, G>,
-  gh: (g: TE.TaskEither<TError, G>) => TE.TaskEither<TError, TOutput>,
-): (input: TInput) => TE.TaskEither<TError, TOutput>
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function compose(...a: any[]) {
-  const anyFlow: any = flow
-  return anyFlow(E.right, ...a)
-}
 
 export function chainTasks<TErr, T = void>(
   tasks: (() => Either<TErr, T>)[],

@@ -21,11 +21,13 @@ export * from "fp-ts/lib/TaskEither"
 export const Do = () => DoOriginal(TE.taskEither)
 export type AsyncResult<TSuccess, TError> = TaskEither<TError, TSuccess>
 
+export const chain: <E2, A, B>(
+  f: (a: A) => TE.TaskEither<E2, B>,
+) => <E1>(ma: TE.TaskEither<E1, A>) => TE.TaskEither<E1 | E2, B> = TE.chain as any
+
 export const TFold = flow(E.fold, T.map)
 
-// useful tools for .compose( continuations
-export const mapStatic = <TCurrent, TNew>(value: TNew) =>
-  map<TCurrent, TNew>(toValue(value))
+const mapStatic = <TCurrent, TNew>(value: TNew) => map<TCurrent, TNew>(toValue(value))
 export const toVoid = toValue<void>(void 0)
 // export const endResult = mapStatic<void>(void 0)
 
@@ -33,15 +35,6 @@ export const toVoid = toValue<void>(void 0)
  * Execute promise, if success return right, if fail; won't catch thrown Exception.
  */
 export const tryExecute = <T, TE>(func: T.Task<T>) => TE.rightTask<TE, T>(func)
-
-/**
- * Execute promise, if success return right, if fail; won't catch thrown Exception.
- */
-export const tryExecuteFW = <T, TI, TE>(func: (input: TI) => Promise<T>) => <
-  TI2 extends TI
->(
-  i: TI2,
-): TE.TaskEither<TE, T> => TE.rightTask<TE, T>(() => func(i))
 
 export function chainTee<T, TDontCare, E>(
   f: RTE.ReaderTaskEither<T, E, TDontCare>,
@@ -88,55 +81,6 @@ export function chainFlatTup(f: any) {
       TE.map((x) => tuple(x, ...input)),
     ),
   )
-}
-
-// compose = flow(TE.right, ...rest)
-export function compose<TInput, TError, TOutput>(
-  ab: (c: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, TOutput>,
-): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, TOutput>(
-  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
-  bc: (c: TE.TaskEither<TError, B>) => TE.TaskEither<TError, TOutput>,
-): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, TOutput>(
-  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
-  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
-  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, TOutput>,
-): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, D, TOutput>(
-  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
-  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
-  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
-  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, TOutput>,
-): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, D, E, TOutput>(
-  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
-  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
-  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
-  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
-  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, TOutput>,
-): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, D, E, F, TOutput>(
-  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
-  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
-  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
-  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
-  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, F>,
-  fg: (f: TE.TaskEither<TError, F>) => TE.TaskEither<TError, TOutput>,
-): (input: TInput) => TE.TaskEither<TError, TOutput>
-export function compose<TInput, TError, B, C, D, E, F, G, TOutput>(
-  ab: (a: TE.TaskEither<TError, TInput>) => TE.TaskEither<TError, B>,
-  bc: (b: TE.TaskEither<TError, B>) => TE.TaskEither<TError, C>,
-  cd: (c: TE.TaskEither<TError, C>) => TE.TaskEither<TError, D>,
-  de: (d: TE.TaskEither<TError, D>) => TE.TaskEither<TError, E>,
-  ef: (e: TE.TaskEither<TError, E>) => TE.TaskEither<TError, F>,
-  fg: (f: TE.TaskEither<TError, F>) => TE.TaskEither<TError, G>,
-  gh: (g: TE.TaskEither<TError, G>) => TE.TaskEither<TError, TOutput>,
-): (input: TInput) => TE.TaskEither<TError, TOutput>
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function compose(...a: any[]) {
-  const anyFlow: any = flow
-  return anyFlow(TE.right, ...a)
 }
 
 export const asyncCreateResult = <TErrorOutput = string, TInput = any, TOutput = any>(

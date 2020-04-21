@@ -7,7 +7,7 @@ import {
   ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { Do, Result, pipe, E, NA, TE } from "@fp-app/fp-ts-extensions"
+import { Do, Result, pipe, E, NA, TE, RE } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
@@ -25,11 +25,14 @@ const createCommand = createCommandWithDeps(() => ({
 
 const createTrainTrip = createCommand<Input, string, CreateError>(
   "createTrainTrip",
-  ({ _, getTrip, trainTrips }) => (input) =>
+  ({ getTrip, trainTrips }) => (input) =>
     TE.Do()
       .bind(
         "preferences",
-        pipe(input, pipe(validateCreateTrainTripInfo, _.RE.liftErr, E.toTaskEither)),
+        pipe(
+          input,
+          pipe(validateCreateTrainTripInfo, RE.liftErr<CreateError>(), E.toTaskEither),
+        ),
       )
       .bindL("trip", ({ preferences }) => getTrip(preferences.templateId))
       .letL("trainTrip", ({ preferences, trip }) =>

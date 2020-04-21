@@ -20,7 +20,6 @@ import {
   sendCloudSyncKey,
   TrainTripPublisherKey,
 } from "./TrainTrip/usecases/types"
-import { toolDeps } from "@fp-app/fp-ts-extensions"
 
 const createRoot = () => {
   const {
@@ -54,7 +53,6 @@ const createRoot = () => {
     return getTripF
   })
 
-  container.registerSingletonF(toolDeps, toolDeps)
   container.registerSingletonF(FWC.resolveEventKey, resolveEvent)
 
   // Prevent stack-overflow; as logger depends on requestcontext

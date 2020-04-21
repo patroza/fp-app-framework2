@@ -5,73 +5,56 @@ import {
   getTravelPlanType,
 } from "@c/TrainTrip/usecases/types"
 import { ApiError, InvalidStateError, RecordNotFound, utils } from "@fp-app/framework"
-import { pipe, TE, E, trampoline, ToolDeps, RTE, RE } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, E, RTE, RE } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
 import Trip, { TravelClass, TripWithSelectedTravelClass } from "../Trip"
 
-const getTrip = trampoline(
-  (_: ToolDeps<ApiError | InvalidStateError>) => ({
-    getTemplate,
-  }: {
-    getTemplate: getTemplateType
-  }) =>
-    TE.compose(
-      TE.chain(pipe(getTemplate, _.RTE.liftErr)),
-      TE.chain(toTrip(getTemplate)),
+const getTrip = ({ getTemplate }: { getTemplate: getTemplateType }) => (r: string) =>
+  pipe(getTemplate(r), TE.chain(toTrip(getTemplate)))
+
+const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
+  const getTravelClass = pipe(
+    (tpl: Template) => tplToTravelClass(tpl, new Date()),
+    RE.mapLeft((x) => new InvalidStateError("TravelClass: " + x)),
+  )
+  // TODO: cleanup imperative.
+  const currentTravelClass = getTravelClass(tpl)
+  if (E.isLeft(currentTravelClass)) {
+    return TE.left(currentTravelClass.left)
+  }
+
+  const curTC = currentTravelClass.right
+
+  const createTripWithSelectedTravelClass = (trip: Trip) =>
+    pipe(
+      TripWithSelectedTravelClass.create({ trip, travelClassName: curTC.name }),
+      E.mapLeft((x) => new InvalidStateError("TravelClass: " + x)),
+    )
+
+  return pipe(
+    TE.traverse(
+      [TE.right<RecordNotFound | InvalidStateError, typeof curTC>(curTC)].concat(
+        utils
+          .typedKeysOf(tpl.travelClasses)
+          .filter((x) => x !== curTC.name)
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          .map((slKey) => tpl.travelClasses[slKey]!)
+          .map((sl) =>
+            pipe(getTemplate(sl.id), TE.chain(pipe(getTravelClass, E.toTaskEither))),
+          ),
+      ),
     ),
-)
-
-// would be great to merge here also the dependency configuration
-// and the trampoline
-const toTrip = trampoline(
-  (_: ToolDeps<ApiError | InvalidStateError>) => (getTemplate: getTemplateType) => (
-    tpl: Template,
-  ) => {
-    const getTravelClass = pipe(
-      (tpl: Template) => tplToTravelClass(tpl, new Date()),
-      RE.mapLeft((x) => new InvalidStateError("TravelClass: " + x)),
-      _.RE.liftErr,
-    )
-    // TODO: cleanup imperative.
-    const currentTravelClass = getTravelClass(tpl)
-    if (E.isLeft(currentTravelClass)) {
-      return TE.left(currentTravelClass.left)
-    }
-
-    const curTC = currentTravelClass.right
-
-    const createTripWithSelectedTravelClass = (trip: Trip) =>
+    TE.chain(
       pipe(
-        TripWithSelectedTravelClass.create({ trip, travelClassName: curTC.name }),
-        E.mapLeft((x) => new InvalidStateError("TravelClass: " + x)),
-      )
-
-    return pipe(
-      TE.traverse(
-        [_.TE.startWith(curTC)].concat(
-          utils
-            .typedKeysOf(tpl.travelClasses)
-            .filter((x) => x !== curTC.name)
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            .map((slKey) => tpl.travelClasses[slKey]!)
-            .map((sl) =>
-              pipe(getTemplate(sl.id), TE.chain(pipe(getTravelClass, E.toTaskEither))),
-            ),
-        ),
+        Trip.create,
+        RE.mapLeft((x) => new InvalidStateError(x.message)),
+        E.toTaskEither,
       ),
-      TE.chain(
-        pipe(
-          Trip.create,
-          RE.mapLeft((x) => new InvalidStateError(x.message)),
-          _.RE.liftErr,
-          E.toTaskEither,
-        ),
-      ),
-      TE.chain(pipe(createTripWithSelectedTravelClass, _.RE.liftErr, E.toTaskEither)),
-    )
-  },
-)
+    ),
+    TE.chain(pipe(createTripWithSelectedTravelClass, E.toTaskEither)),
+  )
+}
 
 const tplToTravelClass = (tpl: Template, currentDate: Date) =>
   TravelClass.create({

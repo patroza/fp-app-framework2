@@ -1,5 +1,5 @@
 import { DbError } from "@fp-app/framework"
-import { pipe, TE, toVoid } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, toVoid, RTE } from "@fp-app/fp-ts-extensions"
 import { defaultDependencies } from "./types"
 import { wrap } from "../infrastructure/utils"
 import { trainTrips } from "@c/TrainTrip/infrastructure/TrainTripContext.disk"
@@ -12,11 +12,14 @@ const createCommand = createCommandWithDeps(() => ({
 
 const deleteTrainTrip = createCommand<Input, void, DeleteTrainTripError>(
   "deleteTrainTrip",
-  ({ _, trainTrips }) => (input) =>
+  ({ trainTrips }) => (input) =>
     TE.Do()
       .bind(
         "trainTrip",
-        pipe(input.trainTripId, pipe(wrap(trainTrips.load), _.RTE.liftErr)),
+        pipe(
+          input.trainTripId,
+          pipe(wrap(trainTrips.load), RTE.liftErr<DeleteTrainTripError>()),
+        ),
       )
       .doL(({ trainTrip }) => pipe(trainTrip.delete(), TE.right))
       .doL(({ trainTrip }) => pipe(trainTrips.remove(trainTrip), TE.right))

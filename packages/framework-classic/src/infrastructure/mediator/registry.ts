@@ -1,4 +1,4 @@
-import { AsyncResult, ToolDeps, toolDeps, RTE, O } from "@fp-app/fp-ts-extensions"
+import { AsyncResult, RTE, O } from "@fp-app/fp-ts-extensions"
 import chalk from "chalk"
 import Event from "../../event"
 import { Constructor, utils } from "@fp-app/framework"
@@ -41,7 +41,6 @@ export type UsecaseWithDependencies<
   TError = any
 > = HandlerWithDependencies<TDependencies, TInput, TOutput, TError>
 
-// TODO: one with built in trampoline?
 export const configureDependencies = <TDependencies, T>(
   deps: () => TDependencies,
   name: string,
@@ -57,7 +56,7 @@ export type resolveEventType = (evt: unknown) => O.Option<Event>
 export const resolveEventKey = generateKey<resolveEventType>("resolveEvent")
 
 type HandlerWithDependencies<TDependencies, TInput, TOutput, TError> = WithDependencies<
-  TDependencies & { _: () => ToolDeps<TError> },
+  TDependencies,
   RTE.ReaderTaskEither<TInput, TError, TOutput>
 >
 
@@ -121,10 +120,7 @@ const createCommandWithDeps = <TDependencies>(deps: () => TDependencies) => <
   handler: UsecaseWithDependencies<TDependencies, TInput, TOutput, TErr>,
 ) => {
   handler = wrapHandler(handler)
-  const setupWithDeps = registerUsecaseHandler(() => ({
-    ...deps(),
-    _: toolDeps,
-  }))
+  const setupWithDeps = registerUsecaseHandler(deps)
   const newHandler = setupWithDeps(name + "Command", "COMMAND")(handler)
   logger.debug(chalk.magenta(`Created Command handler ${name}`))
   return newHandler
@@ -140,10 +136,7 @@ const createQueryWithDeps = <TDependencies>(deps: () => TDependencies) => <
   handler: UsecaseWithDependencies<TDependencies, TInput, TOutput, TErr>,
 ) => {
   handler = wrapHandler(handler)
-  const setupWithDeps = registerUsecaseHandler(() => ({
-    ...deps(),
-    _: toolDeps,
-  }))
+  const setupWithDeps = registerUsecaseHandler(deps)
   const newHandler = setupWithDeps(name + "Query", "QUERY")(handler)
   logger.debug(chalk.magenta(`Created Query handler ${name}`))
   return newHandler
@@ -160,10 +153,7 @@ const createDomainEventHandlerWithDeps = <TDependencies>(deps: () => TDependenci
   handler: UsecaseWithDependencies<TDependencies, TInput, TOutput, TErr>,
 ) => {
   handler = wrapHandler(handler)
-  const setupWithDeps = registerUsecaseHandler(() => ({
-    ...deps(),
-    _: toolDeps,
-  }))
+  const setupWithDeps = registerUsecaseHandler(deps)
   const newHandler = setupWithDeps(`on${event.name}${name}`, "DOMAINEVENT")(handler)
   registerDomainEventHandler(event, handler)
   return newHandler
@@ -178,10 +168,7 @@ const createIntegrationEventHandlerWithDeps = <TDependencies>(
   handler: UsecaseWithDependencies<TDependencies, TInput, TOutput, TErr>,
 ) => {
   handler = wrapHandler(handler)
-  const setupWithDeps = registerUsecaseHandler(() => ({
-    ...deps(),
-    _: toolDeps,
-  }))
+  const setupWithDeps = registerUsecaseHandler(deps)
   const newHandler = setupWithDeps(
     `on${event.name}${name}`,
     "INTEGRATIONEVENT",

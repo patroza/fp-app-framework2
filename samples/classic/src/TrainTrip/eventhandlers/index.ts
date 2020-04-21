@@ -14,11 +14,10 @@ import {
   curryRequest,
   requestKey,
 } from "@fp-app/framework-classic"
-import { pipe, TE, toVoid } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, toVoid, RTE } from "@fp-app/fp-ts-extensions"
 import lockTrainTrip from "../usecases/lockTrainTrip"
 import { CustomerRequestedChanges } from "./integration.events"
 import { wrap } from "../infrastructure/utils"
-import { compose, map, chain } from "@fp-app/fp-ts-extensions/src/TaskEither"
 
 // Domain Events should primarily be used to be turned into Integration Event (Post-Commit, call other service)
 // There may be other small reasons to use it, like to talk to an external system Pre-Commit.
@@ -38,31 +37,22 @@ const createIntegrationEventHandler = createIntegrationEventHandlerWithDeps(() =
 createIntegrationEventHandler<TrainTripCreated, void, never>(
   /* on */ TrainTripCreated,
   "ScheduleCloudSync",
-  ({ trainTripPublisher }) =>
-    compose(
-      map((x) => x.trainTripId),
-      chain(TE.tryExecuteFW(trainTripPublisher.register)),
-    ),
+  ({ trainTripPublisher }) => (input) =>
+    TE.rightTask(() => trainTripPublisher.register(input.trainTripId)),
 )
 
 createIntegrationEventHandler<TrainTripStateChanged, void, never>(
   /* on */ TrainTripStateChanged,
   "EitherDebounceOrScheduleCloudSync",
-  ({ trainTripPublisher }) =>
-    compose(
-      map((x) => x.trainTripId),
-      chain(TE.tryExecuteFW(trainTripPublisher.register)),
-    ),
+  ({ trainTripPublisher }) => (input) =>
+    TE.rightTask(() => trainTripPublisher.register(input.trainTripId)),
 )
 
 createIntegrationEventHandler<UserInputReceived, void, never>(
   /* on */ UserInputReceived,
   "DebouncePendingCloudSync",
-  ({ trainTripPublisher }) =>
-    compose(
-      map((x) => x.trainTripId),
-      chain(TE.tryExecuteFW(trainTripPublisher.registerIfPending)),
-    ),
+  ({ trainTripPublisher }) => (input) =>
+    TE.rightTask(() => trainTripPublisher.registerIfPending(input.trainTripId)),
 )
 
 const createIntegrationCommandEventHandler = createIntegrationEventHandlerWithDeps(
@@ -86,16 +76,19 @@ const createDomainEventHandler = createDomainEventHandlerWithDeps(() => ({
 createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
   /* on */ TrainTripStateChanged,
   "RefreshTripInfo",
-  ({ _, getTrip, trainTrips }) => (event) =>
+  ({ getTrip, trainTrips }) => (event) =>
     TE.Do()
       .bind(
         "trainTrip",
-        pipe(event.trainTripId, pipe(wrap(trainTrips.load), _.RTE.liftErr)),
+        pipe(
+          event.trainTripId,
+          pipe(wrap(trainTrips.load), RTE.liftErr<RefreshTripInfoError>()),
+        ),
       )
       .bindL("trip", ({ trainTrip }) =>
         pipe(
           trainTrip.currentTravelClassConfiguration.travelClass.templateId,
-          pipe(getTrip, _.RTE.liftErr),
+          pipe(getTrip),
         ),
       )
       .doL(({ trainTrip, trip }) => pipe(trainTrip.updateTrip(trip), TE.right))
