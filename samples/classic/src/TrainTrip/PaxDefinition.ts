@@ -8,7 +8,8 @@ import { map, mapLeft, either } from "@fp-app/fp-ts-extensions/src/Either"
 
 import { summonFor } from "@morphic-ts/batteries/lib/summoner-ESBASTJ"
 
-import { iotsConfig, IoTsURI } from "@morphic-ts/io-ts-interpreters/lib"
+import { IoTsURI } from "@morphic-ts/io-ts-interpreters/lib"
+import { iotsConfig } from "@morphic-ts/io-ts-interpreters/lib/config"
 import { withMessage as WM } from "io-ts-types/lib/withMessage"
 
 export const { summon } = summonFor<{

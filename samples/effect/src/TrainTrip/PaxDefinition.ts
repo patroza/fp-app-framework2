@@ -1,5 +1,6 @@
 import { summonFor } from "@morphic-ts/batteries/lib/summoner-ESBASTJ"
-import { IoTsURI, iotsConfig } from "@morphic-ts/io-ts-interpreters/lib"
+import { IoTsURI } from "@morphic-ts/io-ts-interpreters"
+import { iotsConfig } from "@morphic-ts/io-ts-interpreters/lib/config"
 import { withMessage as WM } from "io-ts-types/lib/withMessage"
 import { AType } from "@morphic-ts/batteries/lib/usage/utils"
 
