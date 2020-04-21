@@ -5,7 +5,7 @@ import {
   getTravelPlanType,
 } from "@c/TrainTrip/usecases/types"
 import { ApiError, InvalidStateError, RecordNotFound, utils } from "@fp-app/framework"
-import { pipe, TE, E, RTE, RE } from "@fp-app/fp-ts-extensions"
+import { pipe, TE, E } from "@fp-app/fp-ts-extensions"
 import { v4 } from "uuid"
 import { Pax } from "../PaxDefinition"
 import Trip, { TravelClass, TripWithSelectedTravelClass } from "../Trip"
@@ -14,10 +14,11 @@ const getTrip = ({ getTemplate }: { getTemplate: getTemplateType }) => (r: strin
   pipe(getTemplate(r), TE.chain(toTrip(getTemplate)))
 
 const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
-  const getTravelClass = pipe(
-    (tpl: Template) => tplToTravelClass(tpl, new Date()),
-    RE.mapLeft((x) => new InvalidStateError("TravelClass: " + x)),
-  )
+  const getTravelClass = (tpl: Template) =>
+    pipe(
+      tplToTravelClass(tpl, new Date()),
+      E.mapLeft((x) => new InvalidStateError("TravelClass: " + x)),
+    )
   // TODO: cleanup imperative.
   const currentTravelClass = getTravelClass(tpl)
   if (E.isLeft(currentTravelClass)) {
@@ -41,18 +42,19 @@ const toTrip = (getTemplate: getTemplateType) => (tpl: Template) => {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           .map((slKey) => tpl.travelClasses[slKey]!)
           .map((sl) =>
-            pipe(getTemplate(sl.id), TE.chain(pipe(getTravelClass, E.toTaskEither))),
+            pipe(getTemplate(sl.id), TE.chain(E.liftToTaskEither(getTravelClass))),
           ),
       ),
     ),
-    TE.chain(
+    TE.chain((tc) =>
       pipe(
-        Trip.create,
-        RE.mapLeft((x) => new InvalidStateError(x.message)),
-        E.toTaskEither,
+        Trip.create(tc),
+        E.chain(createTripWithSelectedTravelClass),
+        E.mapLeft((x) => new InvalidStateError(x.message)),
+        TE.fromEither,
       ),
     ),
-    TE.chain(pipe(createTripWithSelectedTravelClass, E.toTaskEither)),
+    TE.chain(E.liftToTaskEither(createTripWithSelectedTravelClass)),
   )
 }
 
@@ -103,7 +105,7 @@ const getFakePriceFromTemplate = () => ({ price: { amount: 100, currency: "EUR" 
 const createTravelPlanFake = (): createTravelPlanType => () => async () =>
   E.ok<ApiError, string>(v4())
 
-const sendCloudSyncFake = (): RTE.ReaderTaskEither<TrainTrip, ApiError, string> => () =>
+const sendCloudSyncFake = () => (_: TrainTrip): TE.TaskEither<ApiError, string> =>
   TE.right<ApiError, string>(v4())
 
 const getTravelPlanFake = (): getTravelPlanType => (travelPlanId) =>

@@ -20,7 +20,7 @@ import {
   NamedHandlerWithDependencies,
   requestType,
 } from "@fp-app/framework-classic"
-import { Result, pipe, TE, E } from "@fp-app/fp-ts-extensions"
+import { Result, pipe, TE } from "@fp-app/fp-ts-extensions"
 
 export default function generateKoaHandler<
   TDeps,
@@ -47,8 +47,7 @@ export default function generateKoaHandler<
     const handleError = handleDefaultError(ctx)
 
     return pipe(
-      TE.ok(input),
-      TE.chain(pipe(validate, E.toTaskEither)),
+      pipe(validate(input), TE.fromEither),
       TE.chain(handleRequest),
       TE.bimap(
         (err) => (shouldHandleError(err) ? handleError(err) : undefined),

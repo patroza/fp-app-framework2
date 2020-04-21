@@ -7,7 +7,7 @@ import {
   DbError,
 } from "@fp-app/framework"
 import { createCommandWithDeps } from "@fp-app/framework-classic"
-import { pipe, E, TE, toVoid, RE } from "@fp-app/fp-ts-extensions"
+import { pipe, E, TE, toVoid } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { defaultDependencies } from "./types"
@@ -29,12 +29,14 @@ export const changeStartDate = createCommand<
       "startDate",
       pipe(
         input.startDate,
-        pipe(FutureDate.create, RE.liftErr<ChangeStartDateError>(), E.toTaskEither),
+        FutureDate.create,
+        E.liftErr<ChangeStartDateError>(),
+        TE.fromEither,
       ),
     )
     .bind("trainTrip", pipe(input.trainTripId, pipe(wrap(trainTrips.load))))
     .doL(({ startDate, trainTrip }) =>
-      pipe(startDate, pipe(trainTrip.changeStartDate, E.toTaskEither)),
+      pipe(startDate, trainTrip.changeStartDate, TE.fromEither),
     )
     .return(toVoid),
 )
@@ -55,16 +57,14 @@ export const changeTravelClass = createCommand<
       "travelClass",
       pipe(
         input.travelClass,
-        pipe(
-          TravelClassDefinition.create,
-          RE.liftErr<ChangeTravelClassError>(),
-          E.toTaskEither,
-        ),
+        TravelClassDefinition.create,
+        E.liftErr<ChangeTravelClassError>(),
+        TE.fromEither,
       ),
     )
     .bind("trainTrip", pipe(input.trainTripId, wrap(trainTrips.load)))
     .doL(({ trainTrip, travelClass }) =>
-      pipe(travelClass, pipe(trainTrip.changeTravelClass, E.toTaskEither)),
+      pipe(travelClass, trainTrip.changeTravelClass, TE.fromEither),
     )
     .return(toVoid),
 )

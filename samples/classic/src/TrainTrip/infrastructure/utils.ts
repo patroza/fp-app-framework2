@@ -1,16 +1,16 @@
-import { RT, O, E, Task, RTE } from "@fp-app/fp-ts-extensions"
+import { O, E, Task, TE } from "@fp-app/fp-ts-extensions"
 import { RecordNotFound } from "@fp-app/framework"
 import { pipe } from "fp-ts/lib/pipeable"
 
-export const wrap = <T>(
-  f: RT.ReaderTask<string, O.Option<T>>,
-): RTE.ReaderTaskEither<string, RecordNotFound, T> => (id: string) =>
+export const wrap = <T>(f: (id: string) => Task.Task<O.Option<T>>) => (
+  id: string,
+): TE.TaskEither<RecordNotFound, T> =>
   pipe(
     f(id),
-    Task.map((x) => {
-      if (O.isSome(x)) {
-        return E.ok(x.value)
-      }
-      return E.err(new RecordNotFound("TrainTrip", id))
-    }),
+    Task.map(
+      O.fold(
+        () => E.err(new RecordNotFound("TrainTrip", id)),
+        (x) => E.ok(x),
+      ),
+    ),
   )

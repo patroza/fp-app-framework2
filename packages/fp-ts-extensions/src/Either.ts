@@ -194,7 +194,7 @@ export function chainFlatTup(f: any) {
 
 const success = <TErr>() => ok<TErr, void>(void 0)
 
-export const toTaskEither = <T, T2, TE>(func: (i: T) => Either<TE, T2>) => <
+export const liftToTaskEither = <T, T2, TE>(func: (i: T) => Either<TE, T2>) => <
   TI extends T
 >(
   i: TI,
