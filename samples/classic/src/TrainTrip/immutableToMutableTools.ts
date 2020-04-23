@@ -1,11 +1,11 @@
 import { Event } from "@fp-app/framework-classic"
-import { Either, either } from "@matechs/prelude/lib/either"
+import { E } from "@fp-app/fp-ts-extensions"
 
 export const captureEventsEither = <TE, TEvent extends Event, TArgs extends unknown[]>(
-  func: (...args: TArgs) => Either<TE, readonly TEvent[]>,
+  func: (...args: TArgs) => E.Either<TE, readonly TEvent[]>,
   registerDomainEvent: (evt: Event) => void,
 ) => (...args: TArgs) =>
-  either.map(func(...args), (evts) => evts.forEach(registerDomainEvent))
+  E.either.map(func(...args), (evts) => evts.forEach(registerDomainEvent))
 
 export const captureEvents = <TEvent extends Event, TArgs extends unknown[]>(
   func: (...args: TArgs) => readonly TEvent[],
@@ -14,9 +14,9 @@ export const captureEvents = <TEvent extends Event, TArgs extends unknown[]>(
 
 export const unwrapResultEither = <This, TE, T, T2, TArgs extends unknown[]>(
   t: This,
-  func: (t: This) => (...args: TArgs) => Either<TE, readonly [T, T2]>,
+  func: (t: This) => (...args: TArgs) => E.Either<TE, readonly [T, T2]>,
 ) => (...args: TArgs) =>
-  either.map(func(t)(...args), ([newT, r]) => {
+  E.either.map(func(t)(...args), ([newT, r]) => {
     // this unifies the FP and OO world right now
     Object.assign(t, newT)
     return r

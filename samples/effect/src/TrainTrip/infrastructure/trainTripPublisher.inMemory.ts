@@ -1,6 +1,6 @@
 import { TrainTripId } from "@e/TrainTrip/TrainTrip"
 import { utils } from "@fp-app/framework"
-import { Free, T } from "@e/meffect"
+import { Service, T } from "@e/framework"
 import executeReceived from "@e/TrainTrip/queueRouter"
 import * as API from "@e/TrainTrip/infrastructure/api"
 
@@ -72,17 +72,20 @@ const requestInNewScope = (r: RequiredDeps) => <E, A>(
 const CLOUD_PUBLISH_DELAY = 10 * 1000
 
 const TrainTripPublisherURI = "@fp-app/effect/traintrip-publisher"
-const TrainTripPublisher_ = Free.define({
+const TrainTripPublisher_ = Service.define({
   [TrainTripPublisherURI]: {
-    register: Free.fn<(id: string) => T.Sync<void>>(),
-    registerIfPending: Free.fn<(id: string) => T.Sync<void>>(),
+    register: Service.fn<(id: string) => T.Sync<void>>(),
+    registerIfPending: Service.fn<(id: string) => T.Sync<void>>(),
   },
 })
-export interface TrainTripPublisher extends Free.TypeOf<typeof TrainTripPublisher_> {}
+export interface TrainTripPublisher
+  extends Service.TypeOf<typeof TrainTripPublisher_> {}
 
-export const TrainTripPublisher = Free.opaque<TrainTripPublisher>()(TrainTripPublisher_)
+export const TrainTripPublisher = Service.opaque<TrainTripPublisher>()(
+  TrainTripPublisher_,
+)
 
-export const { register, registerIfPending } = Free.access(TrainTripPublisher)[
+export const { register, registerIfPending } = Service.access(TrainTripPublisher)[
   TrainTripPublisherURI
 ]
 
@@ -94,7 +97,7 @@ export interface Context {
   }
 }
 
-export const provideTrainTripPublisher = Free.implement(TrainTripPublisher)({
+export const provideTrainTripPublisher = Service.implement(TrainTripPublisher)({
   [TrainTripPublisherURI]: {
     register: (id: string) =>
       // Workaround for in-process fake queue

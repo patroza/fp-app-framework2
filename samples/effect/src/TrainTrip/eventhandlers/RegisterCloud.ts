@@ -1,5 +1,5 @@
 import { toVoid, pipe } from "@fp-app/fp-ts-extensions"
-import { T } from "@e/meffect"
+import { T } from "@e/framework"
 import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 import * as API from "@e/TrainTrip/infrastructure/api"
 import TrainTrip from "@e/TrainTrip/TrainTrip"

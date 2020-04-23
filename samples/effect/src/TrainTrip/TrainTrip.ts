@@ -30,7 +30,7 @@ import {
   success,
   mapLeft,
 } from "@fp-app/fp-ts-extensions/src/Either"
-import { T, liftEitherSuspended } from "@e/meffect"
+import { T } from "@e/framework"
 
 import * as API from "@e/TrainTrip/infrastructure/api"
 
@@ -88,7 +88,7 @@ const create = (
     you must strap a more complex environment or mock more.
 */
 const proposeChangesE = (state: StateProposition) => (tt: TrainTrip) =>
-  pipe(tt, liftEitherSuspended(proposeChanges(state)), handleUpdateTemplate)
+  pipe(tt, T.liftEither(proposeChanges(state)), handleUpdateTemplate)
 
 const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
   E.Do()
@@ -105,7 +105,7 @@ const proposeChanges = (state: StateProposition) => (tt: TrainTrip) =>
     )
 
 const changePaxE = (pax: PaxDefinition) => (tt: TrainTrip) =>
-  pipe(tt, liftEitherSuspended(changePax(pax)), handleUpdateTemplate)
+  pipe(tt, T.liftEither(changePax(pax)), handleUpdateTemplate)
 
 const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | "id">>(
   tt: This,
@@ -118,7 +118,7 @@ const changePax = (pax: PaxDefinition) => <This extends Pick<TrainTrip, "pax" | 
     )
 
 const changeStartDateE = (startDate: FutureDate) => (tt: TrainTrip) =>
-  pipe(tt, liftEitherSuspended(changeStartDate(startDate)), handleUpdateTemplate)
+  pipe(tt, T.liftEither(changeStartDate(startDate)), handleUpdateTemplate)
 
 const changeStartDate = (startDate: FutureDate) => <
   This extends Pick<TrainTrip, "startDate" | "id">
@@ -133,7 +133,7 @@ const changeStartDate = (startDate: FutureDate) => <
     )
 
 const changeTravelClassE = (travelClass: TravelClassDefinition) => (tt: TrainTrip) =>
-  pipe(tt, liftEitherSuspended(changeTravelClass(travelClass)), handleUpdateTemplate)
+  pipe(tt, T.liftEither(changeTravelClass(travelClass)), handleUpdateTemplate)
 
 const changeTravelClass = (travelClass: TravelClassDefinition) => (tt: TrainTrip) =>
   E.Do()

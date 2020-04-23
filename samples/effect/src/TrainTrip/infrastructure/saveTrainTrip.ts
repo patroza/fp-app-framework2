@@ -1,5 +1,5 @@
 import TrainTrip, { Events } from "../TrainTrip"
-import { T } from "@e/meffect"
+import { T } from "@e/framework"
 import * as PostCommit from "../eventhandlers/postCommit"
 import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 import { tupled } from "fp-ts/lib/function"

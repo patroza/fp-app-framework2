@@ -1,4 +1,4 @@
-import { T } from "@e/meffect"
+import { T } from "@e/framework"
 import * as FW from "@fp-app/framework"
 import { handlers, parseEvent } from "./eventhandlers/external"
 import provideRequestScoped from "./provideRequestScoped"

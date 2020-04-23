@@ -1,4 +1,4 @@
-import * as E from "@matechs/prelude/lib/either"
+import { E } from "@fp-app/fp-ts-extensions"
 import { flow } from "fp-ts/lib/function"
 import { pipe } from "fp-ts/lib/pipeable"
 import * as TE from "fp-ts/lib/TaskEither"

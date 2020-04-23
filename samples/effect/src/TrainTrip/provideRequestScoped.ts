@@ -1,7 +1,6 @@
 import TrainTripReadContext, * as RC from "./infrastructure/TrainTripReadContext.disk"
 import DiskDBContext, * as TTC from "./infrastructure/TrainTripContext.disk"
-import { combineProviders } from "@matechs/prelude"
-import { M, T } from "@e/meffect"
+import { combineProviders, M, T } from "@e/framework"
 
 const provideRCContext = T.provideM(
   T.sync(

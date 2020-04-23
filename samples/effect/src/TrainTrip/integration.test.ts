@@ -8,7 +8,7 @@ import { GetTrainTripSpec } from "./specs/GetTrainTrip.spec"
 import { ChangeTrainTripSpec } from "./specs/ChangeTrainTrip.spec"
 import { DeleteTrainTripSpec } from "./specs/DeleteTrainTrip.spec"
 import { initialize } from "@e/server"
-import { combineProviders } from "@matechs/prelude"
+import { combineProviders } from "@e/framework"
 
 beforeAll(() => initialize())
 

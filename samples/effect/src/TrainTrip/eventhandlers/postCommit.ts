@@ -4,7 +4,7 @@ import {
   UserInputReceived,
   Events,
 } from "@e/TrainTrip/TrainTrip"
-import { T } from "@e/meffect"
+import { T } from "@e/framework"
 import * as TTP from "@e/TrainTrip/infrastructure/trainTripPublisher.inMemory"
 
 // Domain Events should primarily be used to be turned into Integration Event (Post-Commit, call other service)

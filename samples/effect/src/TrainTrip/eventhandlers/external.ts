@@ -1,7 +1,7 @@
 import { t, E } from "@fp-app/fp-ts-extensions"
 import ChangeTrainTrip from "../usecases/ChangeTrainTrip"
 import RegisterCloud from "./RegisterCloud"
-import { T, liftEitherSuspended } from "@e/meffect"
+import { T } from "@e/framework"
 
 export const RegisterOnCloud = t.type({
   type: t.literal("RegisterOnCloud"),
@@ -47,7 +47,7 @@ export const handlers = <TEvent extends SupportedIntegrationEvents>(evt: TEvent)
   }
 }
 
-export const parseEvent = liftEitherSuspended((unknownEvent: unknown) =>
+export const parseEvent = T.liftEither((unknownEvent: unknown) =>
   E.either.map(
     SupportedIntegrationEvents.decode(unknownEvent),
     (a) => a as SupportedIntegrationEvents,

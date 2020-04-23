@@ -7,7 +7,7 @@ import { TravelClass } from "../Trip"
 import { TrainTripView } from "../usecases/GetTrainTrip"
 import TrainTripReadContext from "./TrainTripReadContext.disk"
 import PaxDefinition, { Pax } from "../PaxDefinition"
-import { T, Free, O } from "@e/meffect"
+import { T, Service, O } from "@e/framework"
 import { pipe } from "fp-ts/lib/pipeable"
 
 // Since we assume that saving a valid object, means restoring a valid object
@@ -46,20 +46,20 @@ export function trainTrips() {
 }
 
 const TrainTripContextURI = "@fp-app/effect/traintrip-context"
-const TrainTripContext_ = Free.define({
+const TrainTripContext_ = Service.define({
   [TrainTripContextURI]: {
-    add: Free.fn<(tt: TrainTrip) => T.Sync<void>>(),
-    load: Free.fn<(id: string) => T.Async<O.Option<TrainTrip>>>(),
-    remove: Free.fn<(tt: TrainTrip) => T.Sync<void>>(),
-    save: Free.fn<() => T.Async<void>>(),
-    registerChanged: Free.fn<(tt: TrainTrip) => T.Sync<void>>(),
+    add: Service.fn<(tt: TrainTrip) => T.Sync<void>>(),
+    load: Service.fn<(id: string) => T.Async<O.Option<TrainTrip>>>(),
+    remove: Service.fn<(tt: TrainTrip) => T.Sync<void>>(),
+    save: Service.fn<() => T.Async<void>>(),
+    registerChanged: Service.fn<(tt: TrainTrip) => T.Sync<void>>(),
   },
 })
-export interface TrainTripContext extends Free.TypeOf<typeof TrainTripContext_> {}
+export interface TrainTripContext extends Service.TypeOf<typeof TrainTripContext_> {}
 
-export const TrainTripContext = Free.opaque<TrainTripContext>()(TrainTripContext_)
+export const TrainTripContext = Service.opaque<TrainTripContext>()(TrainTripContext_)
 
-export const { add, load, registerChanged, remove, save } = Free.access(
+export const { add, load, registerChanged, remove, save } = Service.access(
   TrainTripContext,
 )[TrainTripContextURI]
 
@@ -83,7 +83,7 @@ export interface TTCContext {
   }
 }
 
-export const provideTrainTripContext = Free.implement(TrainTripContext)({
+export const provideTrainTripContext = Service.implement(TrainTripContext)({
   [TrainTripContextURI]: {
     add: (tt: TrainTrip) =>
       T.accessM((r: TTCContext) => T.sync(() => r[contextEnv].ctx.trainTrips.add(tt))),

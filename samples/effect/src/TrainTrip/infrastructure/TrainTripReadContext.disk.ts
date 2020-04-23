@@ -1,6 +1,6 @@
 import { ReadContext as RC } from "@fp-app/io.diskdb"
 import { TrainTripView } from "../usecases/GetTrainTrip"
-import { T, Free, O } from "@e/meffect"
+import { T, Service, O } from "@e/framework"
 
 export default class TrainTripReadContext extends RC<TrainTripView> {
   constructor() {
@@ -9,16 +9,16 @@ export default class TrainTripReadContext extends RC<TrainTripView> {
 }
 
 const ReadContextURI = "@fp-app/effect/traintrip-read-context"
-const ReadContext_ = Free.define({
+const ReadContext_ = Service.define({
   [ReadContextURI]: {
-    read: Free.fn<(id: string) => T.Async<O.Option<TrainTripView>>>(),
+    read: Service.fn<(id: string) => T.Async<O.Option<TrainTripView>>>(),
   },
 })
-export interface ReadContext extends Free.TypeOf<typeof ReadContext_> {}
+export interface ReadContext extends Service.TypeOf<typeof ReadContext_> {}
 
-export const ReadContext = Free.opaque<ReadContext>()(ReadContext_)
+export const ReadContext = Service.opaque<ReadContext>()(ReadContext_)
 
-export const { read } = Free.access(ReadContext)[ReadContextURI]
+export const { read } = Service.access(ReadContext)[ReadContextURI]
 
 export const contextEnv = "@fp-app/effect/traintrip-read-context/ctx"
 
@@ -28,7 +28,7 @@ export interface RCContext {
   }
 }
 
-// TODO: move back into Free.implement
+// TODO: move back into Service.implement
 export const env = {
   [ReadContextURI]: {
     read: (id: string) =>
@@ -36,4 +36,4 @@ export const env = {
   },
 }
 
-export const provideReadContext = Free.implement(ReadContext)(env)
+export const provideReadContext = Service.implement(ReadContext)(env)

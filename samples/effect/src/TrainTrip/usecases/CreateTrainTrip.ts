@@ -9,13 +9,13 @@ import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
 import * as API from "@e/TrainTrip/infrastructure/api"
 import { getMonoid } from "fp-ts/lib/Array"
-import { T, liftEitherSuspended } from "@e/meffect"
+import { T } from "@e/framework"
 import { createPrimitiveValidator } from "@e/utils"
 import save from "../infrastructure/saveTrainTrip"
 
 const CreateTrainTrip = (input: Input) =>
   T.Do()
-    .bind("preferences", pipe(input, liftEitherSuspended(validateCreateTrainTripInfo)))
+    .bind("preferences", pipe(input, T.liftEither(validateCreateTrainTripInfo)))
     .bindL("trip", ({ preferences }) => API.get(preferences.templateId))
     // TODO: new Date, should be a date service.. // T.sync(() => new Date())
     .letL("result", ({ preferences, trip }) =>

@@ -9,7 +9,7 @@ import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
 import { Do } from "fp-ts-contrib/lib/Do"
 import { getMonoid } from "fp-ts/lib/Array"
-import { T, liftEitherSuspended } from "@e/meffect"
+import { T } from "@e/framework"
 import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 import TrainTrip from "../TrainTrip"
 import { createPrimitiveValidator } from "@e/utils"
@@ -19,7 +19,7 @@ import { O } from "ts-toolbelt"
 const ChangeTrainTrip = (input: Input) =>
   T.asUnit(
     T.Do()
-      .bind("proposal", pipe(input, liftEitherSuspended(validateStateProposition)))
+      .bind("proposal", pipe(input, T.liftEither(validateStateProposition)))
       .bindL("trainTrip", ({ proposal }) => TC.loadE(proposal.trainTripId))
       .bindL("result", ({ proposal, trainTrip }) =>
         pipe(trainTrip, TrainTrip.proposeChangesE(proposal)),

@@ -1,7 +1,7 @@
 import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
 import { t } from "@fp-app/fp-ts-extensions"
 import { createPrimitiveValidator } from "@e/utils"
-import { T } from "@e/meffect"
+import { T } from "@e/framework"
 import TrainTrip from "../TrainTrip"
 import save from "../infrastructure/saveTrainTrip"
 
