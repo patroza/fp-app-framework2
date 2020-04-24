@@ -9,7 +9,7 @@ const getHelloWorldRoute = KOA.route(
   "get",
   "/",
   T.pure(
-    KOA.routeResponse(200, {
+    KOA.routeResponse(200)({
       message: "OK",
     }),
   ),

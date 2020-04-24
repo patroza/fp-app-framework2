@@ -8,21 +8,24 @@ import { joinData, handleErrors } from "@e/requestHelpers"
 import provideRequestScoped from "./provideRequestScoped"
 import { pipe, O, T } from "@fp-app/fp-ts-extensions"
 
+const accessReqM = KOA.accessReqM()
+
 const getTrainTrip = KOA.route(
   "get",
   "/:trainTripId",
   pipe(
     T.Do()
       .bindL("input", () =>
-        KOA.accessReqM((ctx) =>
+        accessReqM((ctx) =>
           pipe(GetTrainTrip.validatePrimitives(joinData(ctx)), T.fromEither),
         ),
       )
       .bindL("result", ({ input }) => GetTrainTrip.default(input))
       .return(({ result }) =>
-        O.isSome(result)
-          ? KOA.routeResponse(200, result.value)
-          : KOA.routeResponse(404, null),
+        pipe(
+          result,
+          O.fold(() => KOA.routeResponse(404)(null), KOA.routeResponse(200)),
+        ),
       ),
     handleErrors,
     provideRequestScoped,
@@ -36,12 +39,12 @@ const createTrainTrip = KOA.route(
     T.Do()
       .bind(
         "input",
-        KOA.accessReqM((ctx) =>
+        accessReqM((ctx) =>
           pipe(CreateTrainTrip.validatePrimitives(joinData(ctx)), T.fromEither),
         ),
       )
       .bindL("result", ({ input }) => CreateTrainTrip.default(input))
-      .return(({ result }) => KOA.routeResponse(200, result)),
+      .return(({ result }) => pipe(result, KOA.routeResponse(200))),
     handleErrors,
     provideRequestScoped,
   ),
@@ -54,12 +57,12 @@ const changeTrainTrip = KOA.route(
     T.Do()
       .bind(
         "input",
-        KOA.accessReqM((ctx) =>
+        accessReqM((ctx) =>
           pipe(ChangeTrainTrip.validatePrimitives(joinData(ctx)), T.fromEither),
         ),
       )
       .bindL("result", ({ input }) => ChangeTrainTrip.default(input))
-      .return(({ result }) => KOA.routeResponse(200, result)),
+      .return(({ result }) => pipe(result, KOA.routeResponse(200))),
     handleErrors,
     provideRequestScoped,
   ),
@@ -71,12 +74,12 @@ const deleteTrainTrip = KOA.route(
   pipe(
     T.Do()
       .bindL("input", () =>
-        KOA.accessReqM((ctx) =>
+        accessReqM((ctx) =>
           pipe(DeleteTrainTrip.validatePrimitives(joinData(ctx)), T.fromEither),
         ),
       )
       .bindL("result", ({ input }) => DeleteTrainTrip.default(input))
-      .return(({ result }) => KOA.routeResponse(200, result)),
+      .return(({ result }) => pipe(result, KOA.routeResponse(200))),
     handleErrors,
     provideRequestScoped,
   ),
