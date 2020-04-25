@@ -1,6 +1,5 @@
 import { summonFor } from "@morphic-ts/batteries/lib/summoner-ESBASTJ"
 import { IoTsURI } from "@morphic-ts/io-ts-interpreters"
-import { iotsConfig } from "@morphic-ts/io-ts-interpreters/lib/config"
 import { withMessage as WM } from "io-ts-types/lib/withMessage"
 import { AType } from "@morphic-ts/batteries/lib/usage/utils"
 
@@ -44,17 +43,17 @@ export interface PaxNumberBrand {
 }
 
 const PaxNumber = summon((F) =>
-  F.refinedCfg(
-    F.number,
+  F.refined(
+    F.number(),
     (n): n is t.Branded<number, PaxNumberBrand> => n >= 0 && n <= 6,
     "PaxNumber",
-  )({
-    ...iotsConfig((x, env: IoTsEnv) =>
-      env.withBla(x, (value) => {
-        return `requires a number between 0 and max 6, but ${value} was specified.`
-      }),
-    ),
-  }),
+    {
+      [IoTsURI]: (x, env) =>
+        env.withBla(x, (value) => {
+          return `requires a number between 0 and max 6, but ${value} was specified.`
+        }),
+    },
+  ),
 )
 
 type PaxNumber = AType<typeof PaxNumber>
@@ -71,7 +70,7 @@ const _PaxDefinition = summon((F) => {
     FW.utils.typedKeysOf(p).some((k) => p[k] > 0) &&
     FW.utils.typedKeysOf(p).reduce((prev, cur) => (prev += p[cur]), 0) <= 6
 
-  return F.interfaceCfg(
+  return F.interface(
     {
       adults: PaxNumber(F),
       babies: PaxNumber(F),
@@ -80,29 +79,29 @@ const _PaxDefinition = summon((F) => {
       teenagers: PaxNumber(F),
     },
     "Pax",
-  )({
-    ...iotsConfig((x, env: IoTsEnv) =>
-      env.withBla(
-        new t.Type(
-          "PaxDefinition",
-          (p2): p2 is T => {
-            const p = p2 as T
-            return validatePax(p)
+    {
+      [IoTsURI]: (x, env) =>
+        env.withBla(
+          new t.Type(
+            "PaxDefinition",
+            (p2): p2 is T => {
+              const p = p2 as T
+              return validatePax(p)
+            },
+            (u, c) =>
+              either.chain(x.validate(u, c), (v) =>
+                validatePax(v) ? t.success(v) : t.failure(u, c),
+              ),
+            x.encode,
+          ),
+          (value: T) => {
+            return `requires at least 1 and max 6 people, but ${FW.utils
+              .typedKeysOf(value)
+              .reduce((prev, cur) => (prev += value[cur]), 0)} were specified`
           },
-          (u, c) =>
-            either.chain(x.validate(u, c), (v) =>
-              validatePax(v) ? t.success(v) : t.failure(u, c),
-            ),
-          x.encode,
         ),
-        (value: T) => {
-          return `requires at least 1 and max 6 people, but ${FW.utils
-            .typedKeysOf(value)
-            .reduce((prev, cur) => (prev += value[cur]), 0)} were specified`
-        },
-      ),
-    ),
-  })
+    },
+  )
 })
 
 const PaxDefinition = merge(_PaxDefinition, {
