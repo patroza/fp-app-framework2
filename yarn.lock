@@ -1246,7 +1246,21 @@
     npmlog "^4.1.2"
     write-file-atomic "^2.3.0"
 
-"@matechs/effect@^6.0.0-beta.3", "@matechs/effect@^6.0.1":
+"@matechs/aio@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@matechs/aio/-/aio-1.0.1.tgz#c15961cd4b4458b28d5ea8fb29a78134e05a6bba"
+  integrity sha512-zlT2MnLz9vhRIKSlzEUJw1YTLThL29D7+z1LKc4oStKitodFcEH6au4Ql3aZDgl3Wikqx2dldTC7SL25Ehakaw==
+  dependencies:
+    "@matechs/prelude" "^1.0.1"
+    "@morphic-ts/batteries" "^1.4.1"
+    fp-ts "^2.5.3"
+    io-ts "^2.2.1"
+    io-ts-types "^0.5.6"
+    monocle-ts "^2.1.0"
+    newtype-ts "^0.3.4"
+    retry-ts "^0.1.2"
+
+"@matechs/effect@^6.0.1":
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/@matechs/effect/-/effect-6.0.1.tgz#89d6c6a72ad5d93a75a99aaf7ae3f65c65e8b81f"
   integrity sha512-iUeArDiutICTvUx2rgE195u+EUKsqVRDJpESuf4xXYy+gpLj9+YO+mDgIzWOU+vj2P7kC0hQeCKnJMZMYfJlpQ==
@@ -1255,21 +1269,21 @@
     fp-ts-contrib "^0.1.15"
     retry-ts "^0.1.2"
 
-"@matechs/koa@^1.0.0-beta.5":
+"@matechs/koa@^1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@matechs/koa/-/koa-1.0.2.tgz#92ee6840f9afd5781f8aa5645b7f4dd81cdaaa9a"
   integrity sha512-cVH8v6PCp+zmpfWZhdd1K0uQKm3bFmSYbbVPwuQf4/CN1MnkyEJ+UsQZ3qhjJXyCO97pnFSKdvlaf0Qlbn+MsA==
   dependencies:
     "@matechs/prelude" "^1.0.1"
 
-"@matechs/prelude@^1.0.0-beta.5", "@matechs/prelude@^1.0.1":
+"@matechs/prelude@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@matechs/prelude/-/prelude-1.0.1.tgz#5928764b526ad757563771accac3725dfc13a2de"
   integrity sha512-p0u4aPM257Z20SeiZaGaopr7y9ZVIVpYIorN/P7JJmMzgqm+BBHEcdXhvMzD+kGRVrmvH9S5hYkz8rI2mJWGWg==
   dependencies:
     "@matechs/effect" "^6.0.1"
 
-"@matechs/test-jest@^1.0.0-beta.6":
+"@matechs/test-jest@^1.0.1":
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/@matechs/test-jest/-/test-jest-1.0.1.tgz#a3fc62397d65da16fe27b928bf092bbffa82ec52"
   integrity sha512-4Uwsug77qBWXXHds4omoxk5gbJscg7y/VfQz1viqhApMo/K+Eo9JYxlIAtOUi3CpO3IahfBrB8urySLtmg6iww==
@@ -1299,7 +1313,7 @@
   dependencies:
     "@morphic-ts/common" "^1.2.0"
 
-"@morphic-ts/batteries@^1.1.0":
+"@morphic-ts/batteries@^1.1.0", "@morphic-ts/batteries@^1.4.1":
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/@morphic-ts/batteries/-/batteries-1.4.1.tgz#11b00d60b4943a6c5938e3cd07dc3d71dbe1c65a"
   integrity sha512-jp3ohY17ZvdYxGtXF2l2Dq69btlA84dLGGoxhdGst81UdWrfwMr85o01hKlUi77EaEUhYL9BeAVf+QxJnOi0cA==
@@ -3506,7 +3520,7 @@ escodegen@^1.11.1:
   optionalDependencies:
     source-map "~0.6.1"
 
-eslint-config-prettier@^6.10.1:
+eslint-config-prettier@^6.10.1, eslint-config-prettier@^6.11.0:
   version "6.11.0"
   resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-6.11.0.tgz#f6d2238c1290d01c859a8b5c1f7d352a0b0da8b1"
   integrity sha512-oB8cpLWSAjOVFEJhhyMZh6NOEOtBVziaqdDQ86+qhDHFbZXoRTM7pNSvFRfW/W/L/LrQ38C99J5CGuRBBzBsdA==
@@ -6951,7 +6965,7 @@ prettier-linter-helpers@^1.0.0:
   dependencies:
     fast-diff "^1.1.2"
 
-prettier@^2.0.4:
+prettier@^2.0.4, prettier@^2.0.5:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.0.5.tgz#d6d56282455243f2f92cc1716692c08aa31522d4"
   integrity sha512-7PtVymN48hGcO4fGjybyBSIWDsLU4H4XlvOHfq91pz9kkGlonzwTfYkaIEwiRg/dAJF9YlbsduBAgtYLi+8cFg==

@@ -11,7 +11,8 @@ import {
   Result,
   E,
   pipe,
-  t,
+  I,
+  IT,
   decodeErrors,
   convertCoolLens,
   O,
@@ -392,35 +393,35 @@ const createChangeEvents = (changed: boolean) => {
   }
 }
 
-const Options = t.readonly(
-  t.type({
-    option1: t.boolean,
-    option2: t.number,
+const Options = I.readonly(
+  I.type({
+    option1: I.boolean,
+    option2: I.number,
   }),
 )
 
-const B = t.readonly(
-  t.partial({
-    priceLastUpdated: t.date,
+const B = I.readonly(
+  I.partial({
+    priceLastUpdated: IT.date.date,
     options: Options,
   }),
 )
 
-const Price2 = t.readonly(
-  t.type({
-    amount: t.number,
-    currency: t.NonEmptyString,
+const Price2 = I.readonly(
+  I.type({
+    amount: I.number,
+    currency: IT.NonEmptyString.NonEmptyString,
   }),
 )
 
-const A = t.readonly(
-  t.type({
+const A = I.readonly(
+  I.type({
     price: Price2,
     travelClass: TravelClass,
   }),
 )
 
-const _TravelClassConfiguration = t.intersection([A, B])
+const _TravelClassConfiguration = I.intersection([A, B])
 const createTravelClassConfiguration = (travelClass: TravelClass) => {
   return _TravelClassConfiguration.decode({
     travelClass,
@@ -433,7 +434,7 @@ const TravelClassConfiguration = merge(_TravelClassConfiguration, {
     mapLeft((x) => new ValidationError(decodeErrors(x))),
   ),
 })
-type TravelClassConfigurationType = t.TypeOf<typeof TravelClassConfiguration>
+type TravelClassConfigurationType = I.TypeOf<typeof TravelClassConfiguration>
 
 interface TravelClassConfiguration extends TravelClassConfigurationType {}
 
@@ -450,7 +451,7 @@ export type Events =
   | TrainTripDeleted
   | UserInputReceived
 
-const createEvent = <TO>(t: t.TypeC<any>) => ({
+const createEvent = <TO>(t: I.TypeC<any>) => ({
   ...t,
   create: (trainTripId: string) =>
     (({
@@ -459,37 +460,37 @@ const createEvent = <TO>(t: t.TypeC<any>) => ({
     } as unknown) as TO),
 })
 
-const TrainTripCreated_ = t.type({
-  trainTripId: t.string,
-  type: t.literal("TrainTripCreated"),
+const TrainTripCreated_ = I.type({
+  trainTripId: I.string,
+  type: I.literal("TrainTripCreated"),
 })
 
 export const TrainTripCreated = createEvent<TrainTripCreated>(TrainTripCreated_)
-export interface TrainTripCreated extends t.TypeOf<typeof TrainTripCreated_> {}
+export interface TrainTripCreated extends I.TypeOf<typeof TrainTripCreated_> {}
 
-const UserInputReceived_ = t.type({
-  trainTripId: t.string,
-  type: t.literal("UserInputReceived"),
+const UserInputReceived_ = I.type({
+  trainTripId: I.string,
+  type: I.literal("UserInputReceived"),
 })
 export const UserInputReceived = createEvent<UserInputReceived>(UserInputReceived_)
-export interface UserInputReceived extends t.TypeOf<typeof UserInputReceived_> {}
+export interface UserInputReceived extends I.TypeOf<typeof UserInputReceived_> {}
 
-const TrainTripStateChanged_ = t.type({
-  trainTripId: t.string,
-  type: t.literal("TrainTripStateChanged"),
+const TrainTripStateChanged_ = I.type({
+  trainTripId: I.string,
+  type: I.literal("TrainTripStateChanged"),
 })
 export const TrainTripStateChanged = createEvent<TrainTripStateChanged>(
   TrainTripStateChanged_,
 )
 export interface TrainTripStateChanged
-  extends t.TypeOf<typeof TrainTripStateChanged_> {}
+  extends I.TypeOf<typeof TrainTripStateChanged_> {}
 
-const TrainTripDeleted_ = t.type({
-  trainTripId: t.string,
-  type: t.literal("TrainTripDeleted"),
+const TrainTripDeleted_ = I.type({
+  trainTripId: I.string,
+  type: I.literal("TrainTripDeleted"),
 })
 export const TrainTripDeleted = createEvent<TrainTripDeleted>(TrainTripDeleted_)
-export interface TrainTripDeleted extends t.TypeOf<typeof TrainTripDeleted_> {}
+export interface TrainTripDeleted extends I.TypeOf<typeof TrainTripDeleted_> {}
 
 export interface StateProposition {
   locked?: boolean

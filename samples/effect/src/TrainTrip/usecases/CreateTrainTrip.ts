@@ -3,7 +3,7 @@ import {
   toFieldError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { Do, pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
+import { Do, pipe, E, NA, I, IT } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TrainTrip from "../TrainTrip"
@@ -27,15 +27,15 @@ const CreateTrainTrip = (input: Input) =>
 
 export default CreateTrainTrip
 
-export const Input = t.type(
+export const Input = I.type(
   {
-    templateId: t.NonEmptyString,
+    templateId: IT.NonEmptyString.NonEmptyString,
     pax: Pax,
-    startDate: t.DateFromISOString,
+    startDate: IT.DateFromISOString.DateFromISOString,
   },
   "GetTrainTripInput",
 )
-export interface Input extends t.TypeOf<typeof Input> {}
+export interface Input extends I.TypeOf<typeof Input> {}
 
 export const validatePrimitives = createPrimitiveValidator<Input, typeof Input>(Input)
 

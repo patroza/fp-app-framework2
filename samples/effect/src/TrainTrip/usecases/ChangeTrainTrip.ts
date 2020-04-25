@@ -3,7 +3,7 @@ import {
   toFieldError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { pipe, E, NA, t } from "@fp-app/fp-ts-extensions"
+import { pipe, E, NA, I, IT } from "@fp-app/fp-ts-extensions"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
 import TravelClassDefinition from "../TravelClassDefinition"
@@ -30,19 +30,19 @@ const ChangeTrainTrip = (input: Input) =>
 
 export default ChangeTrainTrip
 
-export const Input = t.type(
+export const Input = I.type(
   {
-    trainTripId: t.NonEmptyString,
-    locked: t.union([t.boolean, t.undefined]),
-    pax: t.union([Pax, t.undefined]),
-    startDate: t.union([t.DateFromISOString, t.undefined]),
-    travelClass: t.union([t.NonEmptyString, t.undefined]),
+    trainTripId: IT.NonEmptyString.NonEmptyString,
+    locked: I.union([I.boolean, I.undefined]),
+    pax: I.union([Pax, I.undefined]),
+    startDate: I.union([IT.DateFromISOString.DateFromISOString, I.undefined]),
+    travelClass: I.union([IT.NonEmptyString.NonEmptyString, I.undefined]),
   },
   "GetTrainTripInput",
 )
 export interface Input
   extends O.Optional<
-    t.TypeOf<typeof Input>,
+    I.TypeOf<typeof Input>,
     "pax" | "startDate" | "travelClass" | "locked"
   > {}
 

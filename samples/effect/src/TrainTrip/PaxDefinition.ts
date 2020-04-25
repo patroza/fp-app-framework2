@@ -4,7 +4,7 @@ import { withMessage as WM } from "io-ts-types/lib/withMessage"
 import { AType } from "@morphic-ts/batteries/lib/usage/utils"
 
 import * as FW from "@fp-app/framework"
-import { t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
+import { I, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
 import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 import { flow } from "fp-ts/lib/function"
 import { map, mapLeft, either } from "@fp-app/fp-ts-extensions/src/Either"
@@ -21,13 +21,13 @@ interface IoTsEnv {
 }
 
 /* Pax: No domain validation, just primitives. **/
-const Pax = t.type(
+const Pax = I.type(
   {
-    adults: t.number,
-    babies: t.number,
-    children: t.number,
-    infants: t.number,
-    teenagers: t.number,
+    adults: I.number,
+    babies: I.number,
+    children: I.number,
+    infants: I.number,
+    teenagers: I.number,
   },
   "Pax",
 )
@@ -35,7 +35,7 @@ const Pax = t.type(
 // TODO: For Validation, we could brand any type as `readonly validated: unique symbol`...
 // Think about the applications.
 
-interface Pax extends t.TypeOf<typeof Pax> {}
+interface Pax extends I.TypeOf<typeof Pax> {}
 export { Pax }
 
 export interface PaxNumberBrand {
@@ -45,7 +45,7 @@ export interface PaxNumberBrand {
 const PaxNumber = summon((F) =>
   F.refined(
     F.number(),
-    (n): n is t.Branded<number, PaxNumberBrand> => n >= 0 && n <= 6,
+    (n): n is I.Branded<number, PaxNumberBrand> => n >= 0 && n <= 6,
     "PaxNumber",
     {
       [IoTsURI]: (x, env) =>
@@ -82,7 +82,7 @@ const _PaxDefinition = summon((F) => {
     {
       [IoTsURI]: (x, env) =>
         env.withBla(
-          new t.Type(
+          new I.Type(
             "PaxDefinition",
             (p2): p2 is T => {
               const p = p2 as T
@@ -90,7 +90,7 @@ const _PaxDefinition = summon((F) => {
             },
             (u, c) =>
               either.chain(x.validate(u, c), (v) =>
-                validatePax(v) ? t.success(v) : t.failure(u, c),
+                validatePax(v) ? I.success(v) : I.failure(u, c),
               ),
             x.encode,
           ),

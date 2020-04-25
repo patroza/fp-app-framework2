@@ -7,7 +7,7 @@ import {
   ValidationError,
   FieldValidationError,
 } from "@fp-app/framework"
-import { pipe, E, NA, t, TE, toVoid } from "@fp-app/fp-ts-extensions"
+import { pipe, E, NA, IT, TE, toVoid } from "@fp-app/fp-ts-extensions"
 import { trainTrips } from "@c/TrainTrip/infrastructure/TrainTripContext.disk"
 import FutureDate from "../FutureDate"
 import PaxDefinition, { Pax } from "../PaxDefinition"
@@ -95,7 +95,7 @@ const validateStateProposition = ({
 const validateId = (id: string) =>
   flow(
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    t.NonEmptyString.decode,
+    IT.NonEmptyString.NonEmptyString.decode,
     E.mapLeft((err) => new ValidationError(err.map((x) => x.message).join(","))),
   )(id)
 

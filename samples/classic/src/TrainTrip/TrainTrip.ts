@@ -15,7 +15,8 @@ import {
   Result,
   E,
   pipe,
-  t,
+  I,
+  IT,
   decodeErrors,
   convertCoolLens,
 } from "@fp-app/fp-ts-extensions"
@@ -358,35 +359,35 @@ const createChangeEvents = <This extends Pick<TrainTrip, "id">>(_this: This) =>
     }
   }
 
-const Options = t.readonly(
-  t.type({
-    option1: t.boolean,
-    option2: t.number,
+const Options = I.readonly(
+  I.type({
+    option1: I.boolean,
+    option2: I.number,
   }),
 )
 
-const B = t.readonly(
-  t.partial({
-    priceLastUpdated: t.date,
+const B = I.readonly(
+  I.partial({
+    priceLastUpdated: IT.date.date,
     options: Options,
   }),
 )
 
-const Price2 = t.readonly(
-  t.type({
-    amount: t.number,
-    currency: t.NonEmptyString,
+const Price2 = I.readonly(
+  I.type({
+    amount: I.number,
+    currency: IT.NonEmptyString.NonEmptyString,
   }),
 )
 
-const A = t.readonly(
-  t.type({
+const A = I.readonly(
+  I.type({
     price: Price2,
     travelClass: TravelClass,
   }),
 )
 
-const _TravelClassConfiguration = t.intersection([A, B])
+const _TravelClassConfiguration = I.intersection([A, B])
 const createTravelClassConfiguration = (travelClass: TravelClass) => {
   return _TravelClassConfiguration.decode({
     travelClass,
@@ -399,7 +400,7 @@ const TravelClassConfiguration = merge(_TravelClassConfiguration, {
     mapLeft((x) => new ValidationError(decodeErrors(x))),
   ),
 })
-type TravelClassConfigurationType = t.TypeOf<typeof TravelClassConfiguration>
+type TravelClassConfigurationType = I.TypeOf<typeof TravelClassConfiguration>
 
 interface TravelClassConfiguration extends TravelClassConfigurationType {}
 

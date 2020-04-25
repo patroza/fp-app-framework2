@@ -1,5 +1,5 @@
 import * as TC from "@e/TrainTrip/infrastructure/TrainTripContext.disk"
-import { t } from "@fp-app/fp-ts-extensions"
+import { IT, I } from "@fp-app/fp-ts-extensions"
 import { createPrimitiveValidator } from "@e/utils"
 import { T } from "@e/framework"
 import TrainTrip from "../TrainTrip"
@@ -15,12 +15,12 @@ const DeleteTrainTrip = (input: Input) =>
   )
 
 export default DeleteTrainTrip
-export const Input = t.type(
+export const Input = I.type(
   {
-    trainTripId: t.NonEmptyString,
+    trainTripId: IT.NonEmptyString.NonEmptyString,
   },
   "GetTrainTripInput",
 )
-export interface Input extends t.TypeOf<typeof Input> {}
+export interface Input extends I.TypeOf<typeof Input> {}
 
 export const validatePrimitives = createPrimitiveValidator<Input, typeof Input>(Input)

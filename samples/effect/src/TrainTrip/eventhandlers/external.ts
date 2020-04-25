@@ -1,20 +1,20 @@
-import { t, E } from "@fp-app/fp-ts-extensions"
+import { I, E, IT } from "@fp-app/fp-ts-extensions"
 import ChangeTrainTrip from "../usecases/ChangeTrainTrip"
 import RegisterCloud from "./RegisterCloud"
 import { T } from "@e/framework"
 
-export const RegisterOnCloud = t.type({
-  type: t.literal("RegisterOnCloud"),
-  trainTripId: t.NonEmptyString,
+export const RegisterOnCloud = I.type({
+  type: I.literal("RegisterOnCloud"),
+  trainTripId: IT.NonEmptyString.NonEmptyString,
 })
-export interface RegisterOnCloud extends t.TypeOf<typeof RegisterOnCloud> {}
+export interface RegisterOnCloud extends I.TypeOf<typeof RegisterOnCloud> {}
 
-export const CustomerRequestedChanges = t.type({
-  trainTripId: t.NonEmptyString,
-  type: t.literal("CustomerRequestedChanges"),
+export const CustomerRequestedChanges = I.type({
+  trainTripId: IT.NonEmptyString.NonEmptyString,
+  type: I.literal("CustomerRequestedChanges"),
 })
 
-export const SupportedIntegrationEvents = t.union([
+export const SupportedIntegrationEvents = I.union([
   CustomerRequestedChanges,
   RegisterOnCloud,
 ])
@@ -22,7 +22,7 @@ export const SupportedIntegrationEvents = t.union([
 export type SupportedIntegrationEvents = CustomerRequestedChanges | RegisterOnCloud
 
 export interface CustomerRequestedChanges
-  extends t.TypeOf<typeof CustomerRequestedChanges> {}
+  extends I.TypeOf<typeof CustomerRequestedChanges> {}
 
 const OnCustomerRequestedChanges = ({ trainTripId }: CustomerRequestedChanges) =>
   ChangeTrainTrip({ trainTripId, locked: true })

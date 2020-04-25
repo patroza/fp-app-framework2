@@ -20,20 +20,27 @@ import * as RANE from "fp-ts/lib/ReadonlyNonEmptyArray"
 import * as RT from "fp-ts/lib/ReaderTask"
 import * as RTE from "./ReaderTaskEither"
 
-import * as t from "./Io"
+import * as I from "./Io"
+import * as IT from "./IoTypes"
 
-export * from "@matechs/prelude"
-export { O, NA, t, RA, RANE, RE, RT, RTE, Task, ReadonlyNonEmptyArray, TO }
+export * from "@matechs/aio"
+export { O, NA, I, IT, RA, RANE, RE, RT, RTE, Task, ReadonlyNonEmptyArray, TO }
 
 export { AsyncResult, Result }
 export { TE, E }
 export { pipe }
+export const unsafeUnwrapDecode = <A, E extends I.Errors>(e: Result<A, E>) => {
+  if (E.isErr(e)) {
+    throw new Error(decodeErrors(e.left))
+  }
+  return e.right
+}
 
 export function withBla<T, TI>(
   codec: T & { validate: any },
   message: (i: TI) => string,
 ) {
-  return t.withValidate(codec as any, function (i: any, c: any) {
+  return IT.withValidate.withValidate(codec as any, function (i: any, c: any) {
     return E.mapLeft(function (errors: any[]) {
       // When children have errors, report them
       // otherwise if parent has errors, report that
@@ -52,17 +59,10 @@ export function withBla<T, TI>(
   }) as T
 }
 
-export const unsafeUnwrapDecode = <A, E extends t.Errors>(e: Result<A, E>) => {
-  if (E.isErr(e)) {
-    throw new Error(decodeErrors(e.left))
-  }
-  return e.right
-}
-
-export function decodeErrors(x: t.Errors) {
+export function decodeErrors(x: I.Errors) {
   return x
     .map(({ message, context: [root, ...rest], value }) => {
-      const processCtx = (current: t.ContextEntry, path?: string) =>
+      const processCtx = (current: I.ContextEntry, path?: string) =>
         `${path ? `[${path}]: ` : ""}${current.type.name}: ${
           message ? message : getErrorMessage(current, value)
         }`
@@ -76,7 +76,7 @@ export function decodeErrors(x: t.Errors) {
 // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getErrorMessage = (current: t.ContextEntry, value: any) => {
+const getErrorMessage = (current: I.ContextEntry, value: any) => {
   switch (current.type.name) {
     case "NonEmptyString":
       return "Must not be empty"

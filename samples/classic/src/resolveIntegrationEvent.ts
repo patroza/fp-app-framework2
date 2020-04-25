@@ -1,7 +1,7 @@
 import * as FW from "@fp-app/framework"
 import * as FWC from "@fp-app/framework-classic"
 import { CustomerRequestedChanges } from "./TrainTrip/eventhandlers/integration.events"
-import { O, t, E, pipe } from "@fp-app/fp-ts-extensions"
+import { O, I, E, pipe } from "@fp-app/fp-ts-extensions"
 
 const resolveEvent = (): FWC.resolveEventType => (unknownEvent) => {
   FW.utils.logger.log("Received integration event", unknownEvent)
@@ -33,19 +33,19 @@ const resolveEvent = (): FWC.resolveEventType => (unknownEvent) => {
   )
 }
 
-const SomeOtherEventDTO = t.type({
-  type: t.keyof({ SomeOther: null }),
-  payload: t.type({}),
+const SomeOtherEventDTO = I.type({
+  type: I.keyof({ SomeOther: null }),
+  payload: I.type({}),
 })
 
-const CustomerRequestedChangesDTO = t.type({
-  type: t.keyof({ CustomerRequestedChanges: null }),
-  payload: t.type({ trainTripId: t.string, itineraryId: t.string }),
+const CustomerRequestedChangesDTO = I.type({
+  type: I.keyof({ CustomerRequestedChanges: null }),
+  payload: I.type({ trainTripId: I.string, itineraryId: I.string }),
 })
-const SupportedIntegrationEvents = t.union([
+const SupportedIntegrationEvents = I.union([
   CustomerRequestedChangesDTO,
   SomeOtherEventDTO,
 ])
-export type CustomerRequestedChangesDTO = t.TypeOf<typeof CustomerRequestedChangesDTO>
+export type CustomerRequestedChangesDTO = I.TypeOf<typeof CustomerRequestedChangesDTO>
 
 export default resolveEvent

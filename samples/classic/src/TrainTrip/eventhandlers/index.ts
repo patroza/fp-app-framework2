@@ -86,10 +86,7 @@ createDomainEventHandler<TrainTripStateChanged, void, RefreshTripInfoError>(
         ),
       )
       .bindL("trip", ({ trainTrip }) =>
-        pipe(
-          trainTrip.currentTravelClassConfiguration.travelClass.templateId,
-          pipe(getTrip),
-        ),
+        getTrip(trainTrip.currentTravelClassConfiguration.travelClass.templateId),
       )
       .doL(({ trainTrip, trip }) => pipe(trainTrip.updateTrip(trip), TE.right))
       .return(toVoid),

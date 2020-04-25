@@ -1,5 +1,5 @@
 import { flow } from "fp-ts/lib/function"
-import { t, withBla, decodeErrors } from "@fp-app/fp-ts-extensions"
+import { withBla, decodeErrors, IT, I } from "@fp-app/fp-ts-extensions"
 import { ValidationError } from "@fp-app/framework"
 import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 import { map, mapLeft } from "@fp-app/fp-ts-extensions/src/Either"
@@ -12,13 +12,13 @@ export interface FutureDate2Brand {
 }
 
 export const _FutureDate = withBla(
-  t.brand(
-    t.date, // a codec representing the type to be refined
-    (n): n is t.Branded<Date, FutureDate2Brand> => isInFuture(n), // a custom type guard using the build-in helper `Branded`
+  I.brand(
+    IT.date.date, // a codec representing the type to be refined
+    (n): n is I.Branded<Date, FutureDate2Brand> => isInFuture(n), // a custom type guard using the build-in helper `Branded`
     "FutureDate", // the name must match the readonly field in the brand
   ),
   (value) => {
-    if (!t.date.is(value)) {
+    if (!IT.date.date.is(value)) {
       return "invalid value"
     }
     return `${value.toDateString()} is not in the Future`
@@ -34,6 +34,6 @@ const FutureDate = merge(_FutureDate, {
   ),
 })
 
-interface FutureDate extends t.TypeOf<typeof _FutureDate> {}
+interface FutureDate extends I.TypeOf<typeof _FutureDate> {}
 
 export default FutureDate

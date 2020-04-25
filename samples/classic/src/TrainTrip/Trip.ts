@@ -1,15 +1,15 @@
 import { ValidationError } from "@fp-app/framework"
-import { t, decodeErrors, withBla, pipe } from "@fp-app/fp-ts-extensions"
+import { I, decodeErrors, withBla, pipe, IT } from "@fp-app/fp-ts-extensions"
 import TravelClassDefinition from "./TravelClassDefinition"
 import { flow } from "fp-ts/lib/function"
 import { merge } from "@fp-app/fp-ts-extensions/src/Io"
 import { mapLeft, Either, chain } from "@fp-app/fp-ts-extensions/src/Either"
 // TODO: Value or Entity?
 
-const _TravelClass = t.readonly(
-  t.type({
-    createdAt: t.date,
-    templateId: t.NonEmptyString,
+const _TravelClass = I.readonly(
+  I.type({
+    createdAt: IT.date.date,
+    templateId: IT.NonEmptyString.NonEmptyString,
     name: TravelClassDefinition.type,
   }),
 )
@@ -22,9 +22,9 @@ const fromWire = ({
   createdAt: string
   name: string
   templateId: string
-}): Either<t.Errors, TravelClass> =>
+}): Either<I.Errors, TravelClass> =>
   pipe(
-    t.DateFromISOString.decode(createdAt),
+    IT.DateFromISOString.DateFromISOString.decode(createdAt),
     chain((createdAt) => _TravelClass.decode({ createdAt, name, templateId })),
   )
 
@@ -37,17 +37,17 @@ const TravelClass = merge(_TravelClass, {
   fromWire,
 })
 
-interface TravelClass extends t.TypeOf<typeof TravelClass> {}
+interface TravelClass extends I.TypeOf<typeof TravelClass> {}
 
 export { TravelClass }
 
-const _Trip = t.readonly(
-  t.type({
-    travelClasses: t.readonlyNonEmptyArray(TravelClass),
+const _Trip = I.readonly(
+  I.type({
+    travelClasses: IT.readonlyNonEmptyArray(TravelClass),
   }),
 )
 
-const createTrip = (travelClasses: TravelClass[]): Either<t.Errors, Trip> =>
+const createTrip = (travelClasses: TravelClass[]): Either<I.Errors, Trip> =>
   _Trip.decode({ travelClasses })
 const Trip = merge(_Trip, {
   create: flow(
@@ -56,18 +56,18 @@ const Trip = merge(_Trip, {
   ),
 })
 
-interface Trip extends t.TypeOf<typeof Trip> {}
+interface Trip extends I.TypeOf<typeof Trip> {}
 
 export default Trip
 
-const SelectedTravelClass = t.readonly(t.type({ currentTravelClass: TravelClass }))
+const SelectedTravelClass = I.readonly(I.type({ currentTravelClass: TravelClass }))
 
-const TripWithSelectedTravelClassFields = t.intersection(
+const TripWithSelectedTravelClassFields = I.intersection(
   [SelectedTravelClass, Trip],
   "TripWithSelectedTravelClassFields",
 )
 
-type TripWithSelectedTravelClassFields = t.TypeOf<
+type TripWithSelectedTravelClassFields = I.TypeOf<
   typeof TripWithSelectedTravelClassFields
 >
 
@@ -76,11 +76,11 @@ export interface TripWithSelectedTravelClassBrand {
 }
 
 const _TripWithSelectedTravelClass = withBla(
-  t.brand(
+  I.brand(
     TripWithSelectedTravelClassFields, // a codec representing the type to be refined
     (
       p,
-    ): p is t.Branded<
+    ): p is I.Branded<
       TripWithSelectedTravelClassFields,
       TripWithSelectedTravelClassBrand
     > =>
@@ -102,7 +102,7 @@ const createTripWithSelectedTravelClass = ({
 }: {
   trip: Trip
   travelClassName: string
-}): Either<t.Errors, TripWithSelectedTravelClass> => {
+}): Either<I.Errors, TripWithSelectedTravelClass> => {
   const selectedTravelClass = trip.travelClasses.find((x) => x.name === travelClassName)
   return _TripWithSelectedTravelClass.decode({
     travelClasses: trip.travelClasses,
@@ -118,6 +118,6 @@ const TripWithSelectedTravelClass = merge(_TripWithSelectedTravelClass, {
 })
 
 interface TripWithSelectedTravelClass
-  extends t.TypeOf<typeof TripWithSelectedTravelClass> {}
+  extends I.TypeOf<typeof TripWithSelectedTravelClass> {}
 
 export { TripWithSelectedTravelClass }
